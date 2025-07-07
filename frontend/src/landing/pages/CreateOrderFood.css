@@ -1,0 +1,85 @@
+/* Add to CreateOrderFood.css or create CheckoutPage.css */
+
+/* Blue color palette */
+.bg-blue-900 {
+    background-color: #1e3a8a;
+}
+
+.bg-blue-800 {
+    background-color: #1e40af;
+}
+
+.bg-blue-50 {
+    background-color: #eff6ff;
+}
+
+.text-blue-900 {
+    color: #1e3a8a;
+}
+
+.text-blue-800 {
+    color: #1e40af;
+}
+
+.hover\:bg-blue-800:hover {
+    background-color: #1e40af;
+}
+
+/* Form focus states */
+.focus\:ring-blue-500:focus {
+    --tw-ring-color: #3b82f6;
+}
+
+.focus\:border-blue-500:focus {
+    border-color: #3b82f6;
+}
+
+/* Transition effects */
+.transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+.transition-colors {
+    transition-property: background-color, border-color, color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .checkout-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Add to your existing CSS file */
+
+/* Leaflet map container */
+.leaflet-container {
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+}
+
+/* Fix for Leaflet marker icons */
+.leaflet-div-icon {
+    background: transparent;
+    border: none;
+}
+
+.leaflet-marker-icon .leaflet-zoom-animated {
+    transition: transform 0.25s ease;
+}
+
+/* RTL adjustments for map controls */
+[dir="rtl"] .leaflet-control-container .leaflet-left {
+    left: auto;
+    right: 0;
+}
+
+[dir="rtl"] .leaflet-control-container .leaflet-right {
+    right: auto;
+    left: 0;
+}

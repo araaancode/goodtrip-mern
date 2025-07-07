@@ -1,0 +1,107 @@
+/* Custom Datepicker Styles - Alibaba-like */
+.react-datepicker2 {
+  font-family: "IRANSans", sans-serif;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  width: 100%;
+}
+
+.react-datepicker2__header {
+  background-color: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.5rem 0;
+}
+
+.react-datepicker2__navigation {
+  color: #1e3a8a;
+  border: none;
+  background: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.react-datepicker2__current-month {
+  color: #1e3a8a;
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0.5rem 0;
+}
+
+.react-datepicker2__day-names {
+  display: flex;
+  justify-content: space-around;
+  margin: 0.5rem 0;
+}
+
+.react-datepicker2__day-name {
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.react-datepicker2__month {
+  margin: 0;
+  padding: 0.5rem;
+}
+
+.react-datepicker2__week {
+  display: flex;
+  justify-content: space-around;
+}
+
+.react-datepicker2__day {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.1rem;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+}
+
+.react-datepicker2__day:hover {
+  background-color: #e0e7ff;
+}
+
+.react-datepicker2__day--selected {
+  background-color: #1e3a8a;
+  color: white;
+}
+
+.react-datepicker2__day--disabled {
+  color: #d1d5db;
+  cursor: not-allowed;
+}
+
+.react-datepicker2__day--today {
+  font-weight: bold;
+  color: #1e3a8a;
+}
+
+.react-datepicker2__day--today:not(.react-datepicker2__day--selected) {
+  background-color: #e0e7ff;
+}
+
+.react-datepicker2__day--weekend {
+  color: #ef4444;
+}
+
+.react-datepicker2__input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  text-align: right;
+  font-family: "IRANSans", sans-serif;
+}
+
+.react-datepicker2__input:focus {
+  outline: none;
+  border-color: #1e3a8a;
+  box-shadow: 0 0 0 1px #1e3a8a;
+}

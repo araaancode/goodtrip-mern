@@ -1,0 +1,13 @@
+.persian-datepicker {
+  direction: rtl;
+  font-family: "Vazir", sans-serif;
+}
+.calendar-day:hover {
+  background-color: #f0f0f0;
+  cursor: pointer;
+}
+.selected-day {
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 50%;
+}

@@ -1,0 +1,50 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    width: 50%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    padding: 10px 30px;
+}
+
+.open-modal-button,
+.close-modal-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: rgb(30, 64, 175);
+    color: #fff;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.close-modal-button {
+    margin: 15px;
+}
+
+.modal-btn{
+    padding: 8px;
+    margin: 20px 8px;
+    cursor: pointer;
+    border-radius: 12px;
+    font-size: 15px;
+}
+
+#update-role-modal{
+    width: 450px;
+}

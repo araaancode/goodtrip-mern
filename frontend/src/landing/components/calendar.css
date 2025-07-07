@@ -1,0 +1,40 @@
+/* custom-datepicker.css */
+.custom-calendar {
+  direction: rtl;
+  font-family: "Vazirmatn", sans-serif;
+  background-color: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.custom-calendar .Calendar__day {
+  border-radius: 12px;
+  transition: all 0.2s ease-in-out;
+}
+
+.custom-calendar .Calendar__day.-selected {
+  background-color: #1b3a54 !important;
+  color: #fff !important;
+}
+
+.custom-calendar .Calendar__monthArrowWrapper {
+  color: #1b3a54 !important;
+}
+
+.custom-calendar .Calendar__monthYear {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.custom-calendar .Calendar__weekDay {
+  font-weight: 500;
+  color: #666;
+}
+
+@media (max-width: 640px) {
+  .custom-calendar {
+    padding: 1rem;
+    font-size: 0.875rem;
+  }
+}
