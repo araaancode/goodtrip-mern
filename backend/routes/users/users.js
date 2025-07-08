@@ -68,6 +68,138 @@ router.put("/houses/:houseId/add-review", protect, userCtrls.addReviewToHouse);
 router.post("/foods/orders", protect, userCtrls.createOrderFood);
 
 
+// // @desc    Get order by ID
+// // @route   GET /api/orders/:id
+// // @access  Private
+// exports.getOrderById = async (req, res) => {
+//   try {
+//     const order = await Order.findById(req.params.id)
+//       .populate('user', 'name email')
+//       .populate('cook', 'name')
+//       .populate('items.food', 'name price photo');
+
+//     if (!order) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'سفارش یافت نشد'
+//       });
+//     }
+
+//     // Check authorization
+//     if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+//       return res.status(401).json({
+//         success: false,
+//         message: 'دسترسی غیر مجاز'
+//       });
+//     }
+
+//     res.json({
+//       success: true,
+//       order
+//     });
+
+//   } catch (error) {
+//     console.error('Error getting order:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'خطا در دریافت سفارش'
+//     });
+//   }
+// };
+
+// // @desc    Get logged in user orders
+// // @route   GET /api/orders/myorders
+// // @access  Private
+// exports.getMyOrders = async (req, res) => {
+//   try {
+//     const orders = await Order.find({ user: req.user._id })
+//       .sort({ createdAt: -1 })
+//       .populate('items.food', 'name price photo')
+//       .populate('cook', 'name');
+
+//     res.json({
+//       success: true,
+//       count: orders.length,
+//       orders
+//     });
+//   } catch (error) {
+//     console.error('Error getting user orders:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'خطا در دریافت سفارشات'
+//     });
+//   }
+// };
+
+// // @desc    Update order status
+// // @route   PUT /api/orders/:id/status
+// // @access  Private/Admin
+// exports.updateOrderStatus = async (req, res) => {
+//   try {
+//     const { status } = req.body;
+//     const validStatuses = ['pending', 'preparing', 'ready', 'delivering', 'completed', 'cancelled'];
+
+//     if (!validStatuses.includes(status)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'وضعیت سفارش نامعتبر است'
+//       });
+//     }
+
+//     const order = await Order.findById(req.params.id);
+//     if (!order) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'سفارش یافت نشد'
+//       });
+//     }
+
+//     order.status = status;
+    
+//     // Set deliveredAt time if order is completed
+//     if (status === 'completed') {
+//       order.deliveredAt = Date.now();
+//     }
+
+//     const updatedOrder = await order.save();
+
+//     res.json({
+//       success: true,
+//       order: updatedOrder
+//     });
+
+//   } catch (error) {
+//     console.error('Error updating order status:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'خطا در به‌روزرسانی وضعیت سفارش'
+//     });
+//   }
+// };
+
+// // @desc    Get orders for cook
+// // @route   GET /api/orders/cook/myorders
+// // @access  Private/Cook
+// exports.getCookOrders = async (req, res) => {
+//   try {
+//     const orders = await Order.find({ cook: req.user._id })
+//       .sort({ createdAt: -1 })
+//       .populate('user', 'name phone')
+//       .populate('items.food', 'name price');
+
+//     res.json({
+//       success: true,
+//       count: orders.length,
+//       orders
+//     });
+//   } catch (error) {
+//     console.error('Error getting cook orders:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'خطا در دریافت سفارشات'
+//     });
+//   }
+// };
 
 // router.get("/foods/orders", protect, userCtrls.getAllOrderFoods);
 // router.get("/foods", userCtrls.getFoods);

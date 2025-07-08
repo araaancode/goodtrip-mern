@@ -10,6 +10,8 @@ const OrderFood = require("../../models/OrderFood");
 const BusTicket = require("../../models/BusTicket");
 const UserNotification = require("../../models/UserNotification");
 const UserSupportTicket = require("../../models/UserSupportTicket");
+const { calculateDistance } = require('../../utils/geoUtils');
+
 
 const moment = require("moment-jalaali");
 const crypto = require("crypto");
@@ -865,54 +867,109 @@ exports.deleteFavoriteFood = async (req, res) => {
 // @route /api/users/foods/orders
 exports.createOrderFood = async (req, res) => {
   try {
-    const userId = req.user._id;
     const {
       items,
-      totalAmount,
-      deliveryAddress,
-      contactNumber,
-      deliveryDate,
-      deliveryTime,
-      paymentMethod,
-      specialInstructions,
-      location
+      customerInfo,
+      deliveryOption,
+      location,
+      notes,
+      subtotal,
+      deliveryFee,
+      tax,
+      total
     } = req.body;
 
-    // Validate location data
-    if (!location || !location.lat || !location.lng) {
-      return res.status(400).json({ message: 'Location coordinates are required' });
+    // Validate required fields
+    if (!items || !customerInfo || !subtotal || !tax || !total) {
+      return res.status(400).json({
+        success: false,
+        message: 'لطفا تمام اطلاعات ضروری را وارد کنید'
+      });
     }
 
-    const order = new Order({
-      user: userId,
+    // Check if cart is empty
+    if (items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'سبد خرید شما خالی است'
+      });
+    }
+
+    // Validate food items availability
+    for (const item of items) {
+      const food = await Food.findById(item.food);
+      if (!food || !food.isAvailable) {
+        return res.status(400).json({
+          success: false,
+          message: `محصول ${item.name} در حال حاضر موجود نمی‌باشد`
+        });
+      }
+    }
+
+    // For delivery orders, validate location
+    if (deliveryOption === 'delivery') {
+      if (!location || !location.coordinates) {
+        return res.status(400).json({
+          success: false,
+          message: 'لطفا موقعیت مکانی را مشخص کنید'
+        });
+      }
+
+      // Check if delivery location is within range (example: 10km)
+      const restaurantLocation = [51.3890, 35.6892]; // Example coordinates
+      const distance = calculateDistance(
+        restaurantLocation,
+        location.coordinates
+      );
+      
+      if (distance > 10) { // 10km radius
+        return res.status(400).json({
+          success: false,
+          message: 'متاسفانه به آدرس شما سرویس دهی نداریم'
+        });
+      }
+    }
+
+    // Create the order
+    const order = new OrderFood({
+      user: req.user._id,
       items,
-      totalAmount,
-      deliveryAddress: {
-        text: deliveryAddress,
-        coordinates: {
-          lat: location.lat,
-          lng: location.lng
-        }
-      },
-      contactNumber,
-      deliveryDate,
-      deliveryTime,
-      paymentMethod,
-      specialInstructions
+      customerInfo,
+      deliveryOption,
+      location: deliveryOption === 'delivery' ? location : undefined,
+      notes,
+      subtotal,
+      deliveryFee: deliveryOption === 'delivery' ? deliveryFee : 0,
+      tax,
+      total,
+      status: 'pending'
     });
 
+    // Get cook from first food item
+    const firstFood = await Food.findById(items[0].food);
+    order.cook = firstFood.cook;
+
+    // Save the order
     const createdOrder = await order.save();
-    
+
     // Clear user's cart
     await Cart.findOneAndUpdate(
-      { user: userId },
+      { user: req.user._id },
       { $set: { items: [], total: 0 } }
     );
 
-    res.status(201).json(createdOrder);
+    res.status(201).json({
+      success: true,
+      order: createdOrder,
+      trackingCode: createdOrder.trackingCode
+    });
+
   } catch (error) {
-    console.log(error)
-    res.status(500).json({ message: error.message });
+    console.error('Error creating order:', error);
+    res.status(500).json({
+      success: false,
+      message: 'خطا در ثبت سفارش'
+    });
   }
 };
 
