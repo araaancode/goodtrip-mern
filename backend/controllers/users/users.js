@@ -10,8 +10,7 @@ const OrderFood = require("../../models/OrderFood");
 const BusTicket = require("../../models/BusTicket");
 const UserNotification = require("../../models/UserNotification");
 const UserSupportTicket = require("../../models/UserSupportTicket");
-const { calculateDistance } = require('../../utils/geoUtils');
-
+const { calculateDistance } = require("../../utils/geoUtils");
 
 const moment = require("moment-jalaali");
 const crypto = require("crypto");
@@ -858,7 +857,6 @@ exports.deleteFavoriteFood = async (req, res) => {
   }
 };
 
-
 // *********************** order foods ***********************
 // *********************** *********** ***********************
 // *********************** *********** ***********************
@@ -868,112 +866,100 @@ exports.deleteFavoriteFood = async (req, res) => {
 exports.createOrderFood = async (req, res) => {
   try {
     const {
-      items,
-      customerInfo,
-      deliveryOption,
-      location,
-      notes,
-      subtotal,
-      deliveryFee,
-      tax,
-      total
+      deliveryAddress,
+      contactNumber,
+      deliveryDate,
+      deliveryTime,
+      description,
     } = req.body;
 
-    // Validate required fields
-    if (!items || !customerInfo || !subtotal || !tax || !total) {
-      return res.status(400).json({
-        success: false,
-        message: 'لطفا تمام اطلاعات ضروری را وارد کنید'
-      });
+    // Get user's cart
+    const cart = await Cart.findOne({ user: req.user._id }).populate(
+      "items.food"
+    );
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ message: "Cart is empty" });
     }
 
-    // Check if cart is empty
-    if (items.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'سبد خرید شما خالی است'
-      });
-    }
-
-    // Validate food items availability
-    for (const item of items) {
-      const food = await Food.findById(item.food);
-      if (!food || !food.isAvailable) {
+    // Validate all items are still available
+    for (const item of cart.items) {
+      const food = await Food.findById(item.food._id);
+      if (!food || !food.isAvailable || !food.isActive) {
         return res.status(400).json({
-          success: false,
-          message: `محصول ${item.name} در حال حاضر موجود نمی‌باشد`
+          message: `Item ${item.name} is no longer available`,
+          unavailableItem: item,
         });
       }
     }
 
-    // For delivery orders, validate location
-    if (deliveryOption === 'delivery') {
-      if (!location || !location.coordinates) {
-        return res.status(400).json({
-          success: false,
-          message: 'لطفا موقعیت مکانی را مشخص کنید'
-        });
-      }
+    // Prepare order items
+    const orderItems = cart.items.map((item) => ({
+      food: item.food._id,
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price,
+      cook: item.food.cook,
+    }));
 
-      // Check if delivery location is within range (example: 10km)
-      const restaurantLocation = [51.3890, 35.6892]; // Example coordinates
-      const distance = calculateDistance(
-        restaurantLocation,
-        location.coordinates
-      );
-      
-      if (distance > 10) { // 10km radius
-        return res.status(400).json({
-          success: false,
-          message: 'متاسفانه به آدرس شما سرویس دهی نداریم'
-        });
-      }
-    }
-
-    // Create the order
+    // Create order
     const order = new OrderFood({
       user: req.user._id,
-      items,
-      customerInfo,
-      deliveryOption,
-      location: deliveryOption === 'delivery' ? location : undefined,
-      notes,
-      subtotal,
-      deliveryFee: deliveryOption === 'delivery' ? deliveryFee : 0,
-      tax,
-      total,
-      status: 'pending'
+      items: orderItems,
+      totalAmount: cart.total,
+      deliveryAddress,
+      contactNumber,
+      deliveryDate,
+      deliveryTime,
+      description,
     });
 
-    // Get cook from first food item
-    const firstFood = await Food.findById(items[0].food);
-    order.cook = firstFood.cook;
+    await order.save();
 
-    // Save the order
-    const createdOrder = await order.save();
-
-    // Clear user's cart
+    // Clear the cart after successful order
     await Cart.findOneAndUpdate(
       { user: req.user._id },
       { $set: { items: [], total: 0 } }
     );
 
-    res.status(201).json({
-      success: true,
-      order: createdOrder,
-      trackingCode: createdOrder.trackingCode
-    });
-
+    res.status(201).json(order);
   } catch (error) {
-    console.error('Error creating order:', error);
-    res.status(500).json({
-      success: false,
-      message: 'خطا در ثبت سفارش'
-    });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
+// # description -> HTTP VERB -> Accesss -> Access Type
+// # get all food orders -> GET -> USER -> PRIVATE
+// @route /api/users/foods/orders
+exports.getAllOrderFoods = async (req, res) => {
+  try {
+    const orders = await OrderFood.find({ user: req.user._id })
+      .sort({ createdAt: -1 })
+      .populate("items.food items.cook");
+    res.status(200).json({ count: orders.length, orders });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
+// # description -> HTTP VERB -> Accesss -> Access Type
+// # get single food order -> GET -> USER -> PRIVATE
+// @route /api/users/foods/orders/:orderId
+exports.getSingleOrderFood = async (req, res) => {
+  try {
+    const order = await OrderFood.findOne({
+      _id: req.params.orderId,
+      user: req.user._id,
+    }).populate("items.food items.cook");
+
+    if (!order) {
+      return res.status(404).json({ message: "سفارش پیدا نشد" });
+    }
+
+    res.status(200).json(order);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
 // # description -> HTTP VERB -> Accesss -> Access Type
 // # search foods -> GET -> USER -> PRIVATE
@@ -986,6 +972,8 @@ exports.searchFoods = async (req, res) => {
         msg: "نام غذا باید یک رشته معتبر باشد",
       });
     }
+
+    console.log(req.body);
 
     let foods = await Food.find({ name: req.body.name }).populate(
       "cook",
@@ -1014,62 +1002,33 @@ exports.searchFoods = async (req, res) => {
   }
 };
 
-
 // # description -> HTTP VERB -> Accesss -> Access Type
-// # get all food orders -> GET -> USER -> PRIVATE
-// @route /api/users/foods/orders
-exports.getAllOrderFoods = async (req, res) => {
-  try {
-    let orderFoods = await OrderFood.find({ user: req.user._id });
+// # cancel order food -> PUT -> USER -> PRIVATE
+// @route /api/users/foods/orders/:orderId/cancel
+exports.cancelOrderFood = async (req, res) => {
+      try {
+      const order = await OrderFood.findOneAndUpdate(
+        {
+          _id: req.params.orderId,
+          user: req.user._id,
+          orderStatus: { $in: ['Pending', 'Processing'] }
+        },
+        { $set: { orderStatus: 'Cancelled' } },
+        { new: true }
+      );
 
-    if (orderFoods) {
-      return res.status(StatusCodes.OK).json({
-        msg: " سفارش های غذا پیدا شدند",
-        count: orderFoods.length,
-        orderFoods: orderFoods,
-      });
-    } else {
-      return res.status(400).json({
-        msg: " سفارش های غذا پیدا نشدند",
-      });
+      if (!order) {
+        return res.status(400).json({ 
+          message: 'سفارش پیدا نشد یا نمیتوان آن را لغو کرد' 
+        });
+      }
+
+      res.status(200).json(order);
+    } catch (error) {
+      res.status(500).json({ message: 'Server error', error: error.message });
     }
-  } catch (error) {
-    console.error(error);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      msg: "خطای داخلی سرور",
-      error,
-    });
-  }
 };
 
-// # description -> HTTP VERB -> Accesss -> Access Type
-// # get single food order -> GET -> USER -> PRIVATE
-// @route /api/users/foods/orders/:orderId
-exports.getSingleOrderFood = async (req, res) => {
-  try {
-    let orderFood = await OrderFood.findOne({
-      user: req.user._id,
-      _id: req.params.orderId,
-    });
-
-    if (orderFood) {
-      return res.status(StatusCodes.OK).json({
-        msg: " سفارش غذا پیدا شد",
-        orderFood: orderFood,
-      });
-    } else {
-      return res.status(400).json({
-        msg: " سفارش غذا پیدا نشد",
-      });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      msg: "خطای داخلی سرور",
-      error,
-    });
-  }
-};
 
 // # description -> HTTP VERB -> Accesss -> Access Type
 // # confirm order food -> PUT -> USER -> PRIVATE
@@ -1101,35 +1060,7 @@ exports.confirmOrderFood = async (req, res) => {
   }
 };
 
-// # description -> HTTP VERB -> Accesss -> Access Type
-// # cancel order food -> PUT -> USER -> PRIVATE
-// @route /api/users/foods/orders/:orderId/cancel
-exports.cancelOrderFood = async (req, res) => {
-  try {
-    await OrderFood.findByIdAndUpdate(
-      req.params.orderId,
-      { orderStatus: "Cancelled" },
-      { new: true }
-    ).then((order) => {
-      if (order) {
-        return res.status(StatusCodes.OK).json({
-          msg: "سفارش غذا لغو شد",
-          order,
-        });
-      } else {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-          msg: "سفارش غذا لغو نشد",
-        });
-      }
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      msg: "خطای داخلی سرور",
-      error,
-    });
-  }
-};
+
 
 // ********************* buses *********************
 // # description -> HTTP VERB -> Accesss -> Access Type
@@ -2580,7 +2511,7 @@ exports.updateCartItem = async (req, res) => {
     );
 
     await cart.save();
-    cart = await Cart.populate(cart, { path: "items.food" }); 
+    cart = await Cart.populate(cart, { path: "items.food" });
 
     res.json(cart);
   } catch (err) {
