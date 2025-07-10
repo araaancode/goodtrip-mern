@@ -1006,29 +1006,28 @@ exports.searchFoods = async (req, res) => {
 // # cancel order food -> PUT -> USER -> PRIVATE
 // @route /api/users/foods/orders/:orderId/cancel
 exports.cancelOrderFood = async (req, res) => {
-      try {
-      const order = await OrderFood.findOneAndUpdate(
-        {
-          _id: req.params.orderId,
-          user: req.user._id,
-          orderStatus: { $in: ['Pending', 'Processing'] }
-        },
-        { $set: { orderStatus: 'Cancelled' } },
-        { new: true }
-      );
+  try {
+    const order = await OrderFood.findOneAndUpdate(
+      {
+        _id: req.params.orderId,
+        user: req.user._id,
+        orderStatus: { $in: ["Pending", "Processing"] },
+      },
+      { $set: { orderStatus: "Cancelled" } },
+      { new: true }
+    );
 
-      if (!order) {
-        return res.status(400).json({ 
-          message: 'سفارش پیدا نشد یا نمیتوان آن را لغو کرد' 
-        });
-      }
-
-      res.status(200).json(order);
-    } catch (error) {
-      res.status(500).json({ message: 'Server error', error: error.message });
+    if (!order) {
+      return res.status(400).json({
+        message: "سفارش پیدا نشد یا نمیتوان آن را لغو کرد",
+      });
     }
-};
 
+    res.status(200).json(order);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
 // # description -> HTTP VERB -> Accesss -> Access Type
 // # confirm order food -> PUT -> USER -> PRIVATE
@@ -1060,7 +1059,35 @@ exports.confirmOrderFood = async (req, res) => {
   }
 };
 
+// # description -> HTTP VERB -> Accesss -> Access Type
+// # confirm order food -> PUT -> USER -> PRIVATE
+// @route /api/users/foods/orders/:orderId/update-status
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
 
+    const order = await OrderFood.findOneAndUpdate(
+      {
+        _id: req.params.orderId,
+        "items.cook": req.user._id, // Ensure the user is the cook for this order
+      },
+      { $set: { orderStatus: status } },
+      { new: true }
+    );
+
+
+
+    if (!order) {
+      return res
+        .status(404)
+        .json({ message: "سفارش پیدا نشد یا مشکل احراز هویت وجود دارد" });
+    }
+
+    res.status(200).json(order);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
 // ********************* buses *********************
 // # description -> HTTP VERB -> Accesss -> Access Type

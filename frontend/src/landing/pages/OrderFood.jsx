@@ -276,7 +276,6 @@ const OrderFood = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <HeaderPages isActive={activeLink} />
 
       <main className="flex-grow">
         {/* Search Section */}
@@ -778,8 +777,6 @@ const OrderFood = () => {
           </div>
         )}
       </main>
-
-      <Footer />
 
       <ToastContainer
         position="top-left"

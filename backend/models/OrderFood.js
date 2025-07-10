@@ -77,14 +77,7 @@ const orderFoodSchema = new mongoose.Schema(
       enum: ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"],
       default: "Pending",
     },
-    deliveryDate: {
-      type: Date,
-      required: true,
-    },
-    deliveryTime: {
-      type: String,
-      required: true,
-    },
+   
     description: {
       type: String,
     },

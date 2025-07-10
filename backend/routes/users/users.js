@@ -70,168 +70,17 @@ router.post("/foods/orders", protect, userCtrls.createOrderFood);
 router.get("/foods/orders", protect, userCtrls.getAllOrderFoods);
 router.get("/foods/orders/:orderId", protect, userCtrls.getSingleOrderFood);
 router.put("/foods/orders/:orderId/cancel", protect, userCtrls.cancelOrderFood);
+router.put(
+  "/foods/orders/:orderId/confirm",
+  protect,
+  userCtrls.confirmOrderFood
+);
 
-
-// // Order Controllers
-// const orderControllers = {
-//   // Create order from cart
-//   createOrder: async (req, res) => {
-    // try {
-    //   const { deliveryAddress, contactNumber, deliveryDate, deliveryTime, description } = req.body;
-
-    //   // Get user's cart
-    //   const cart = await Cart.findOne({ user: req.user._id }).populate('items.food');
-    //   if (!cart || cart.items.length === 0) {
-    //     return res.status(400).json({ message: 'Cart is empty' });
-    //   }
-
-    //   // Validate all items are still available
-    //   for (const item of cart.items) {
-    //     const food = await Food.findById(item.food._id);
-    //     if (!food || !food.isAvailable || !food.isActive) {
-    //       return res.status(400).json({ 
-    //         message: `Item ${item.name} is no longer available`,
-    //         unavailableItem: item
-    //       });
-    //     }
-    //   }
-
-    //   // Prepare order items
-    //   const orderItems = cart.items.map(item => ({
-    //     food: item.food._id,
-    //     name: item.name,
-    //     quantity: item.quantity,
-    //     price: item.price,
-    //     cook: item.food.cook
-    //   }));
-
-    //   // Create order
-    //   const order = new OrderFood({
-    //     user: req.user._id,
-    //     items: orderItems,
-    //     totalAmount: cart.total,
-    //     deliveryAddress,
-    //     contactNumber,
-    //     deliveryDate,
-    //     deliveryTime,
-    //     description
-    //   });
-
-    //   await order.save();
-
-    //   // Clear the cart after successful order
-    //   await Cart.findOneAndUpdate(
-    //     { user: req.user._id },
-    //     { $set: { items: [], total: 0 } }
-    //   );
-
-    //   res.status(201).json(order);
-    // } catch (error) {
-    //   res.status(500).json({ message: 'Server error', error: error.message });
-    // }
-//   },
-
-//   // Get user's orders
-//   getUserOrders: async (req, res) => {
-//     try {
-//       const orders = await OrderFood.find({ user: req.user._id })
-//         .sort({ createdAt: -1 })
-//         .populate('items.food items.cook');
-//       res.status(200).json(orders);
-//     } catch (error) {
-//       res.status(500).json({ message: 'Server error', error: error.message });
-//     }
-//   },
-
-//   // Get order by ID
-//   getOrderById: async (req, res) => {
-//     try {
-//       const order = await OrderFood.findOne({
-//         _id: req.params.id,
-//         user: req.user._id
-//       }).populate('items.food items.cook');
-
-//       if (!order) {
-//         return res.status(404).json({ message: 'Order not found' });
-//       }
-
-//       res.status(200).json(order);
-//     } catch (error) {
-//       res.status(500).json({ message: 'Server error', error: error.message });
-//     }
-//   },
-
-//   // Cancel order
-//   cancelOrder: async (req, res) => {
-//     try {
-//       const order = await OrderFood.findOneAndUpdate(
-//         {
-//           _id: req.params.id,
-//           user: req.user._id,
-//           orderStatus: { $in: ['Pending', 'Processing'] }
-//         },
-//         { $set: { orderStatus: 'Cancelled' } },
-//         { new: true }
-//       );
-
-//       if (!order) {
-//         return res.status(400).json({ 
-//           message: 'Order cannot be cancelled or not found' 
-//         });
-//       }
-
-//       res.status(200).json(order);
-//     } catch (error) {
-//       res.status(500).json({ message: 'Server error', error: error.message });
-//     }
-//   },
-
-//   // Update order status (for admin/cook)
-//   updateOrderStatus: async (req, res) => {
-//     try {
-//       const { status } = req.body;
-
-//       const order = await OrderFood.findOneAndUpdate(
-//         {
-//           _id: req.params.id,
-//           'items.cook': req.user._id // Ensure the user is the cook for this order
-//         },
-//         { $set: { orderStatus: status } },
-//         { new: true }
-//       );
-
-//       if (!order) {
-//         return res.status(404).json({ message: 'Order not found or unauthorized' });
-//       }
-
-//       res.status(200).json(order);
-//     } catch (error) {
-//       res.status(500).json({ message: 'Server error', error: error.message });
-//     }
-//   }
-// };
-
-
-
-
-
-// router.get("/foods", userCtrls.getFoods);
-// router.get("/foods/:foodId", userCtrls.getFood);
-// router.put("/foods/add-favorite-food", protect, userCtrls.addFavoriteFood);
-// router.delete(
-//   "/foods/delete-favorite-food/:foodId",
-//   protect,
-//   userCtrls.deleteFavoriteFood
-// );
-
-// router.put(
-//   "/foods/orders/:orderId/confirm",
-//   protect,
-//   userCtrls.confirmOrderFood
-// );
-
-
-
+router.put(
+  "/foods/orders/:orderId/update-status",
+  protect,
+  userCtrls.updateOrderStatus
+);
 
 // buses
 router.get("/buses", userCtrls.getBuses);
