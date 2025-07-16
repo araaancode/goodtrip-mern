@@ -30,6 +30,7 @@ import BookingBus from "./landing/pages/BookingBus";
 import OrderFood from "./landing/pages/OrderFood";
 import CreateOrderFood from "./landing/pages/CreateOrderFood";
 import CartPage from "./landing/pages/CartPage";
+import SingleFoodPage from "./landing/pages/SingleFoodPage";
 
 import PublicRoutes from "./landing/routing/publicRoutes";
 import PrivateRoutes from "./landing/routing/privateRoutes";
@@ -226,13 +227,17 @@ function App() {
             <Route path="/support" element={<SupportPage />} />
             <Route path="/booking-bus" element={<BookingBus />} />
 
-            <Route path="/cart" element={isAuthenticated ? <CartPage /> : <Navigate to="/login" />} />
+            {/* foods */}
+            <Route
+              path="/cart"
+              element={
+                isAuthenticated ? <CartPage /> : <Navigate to="/login" />
+              }
+            />
 
             <Route path="/order-food" element={<OrderFood />} />
-            <Route
-              path="/create-order"
-              element={<CreateOrderFood />}
-            />
+            <Route path="/create-order" element={<CreateOrderFood />} />
+            <Route path="/foods/:foodId" element={<SingleFoodPage />} />
           </Route>
 
           {/* 404 Page */}

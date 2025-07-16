@@ -648,7 +648,7 @@ const OrderFood = () => {
                               {/* Header with Food Info and Cook Details */}
                               <div className="flex justify-between items-start gap-2">
                                 <div className="flex-1">
-                                  <h3 className="font-bold text-lg text-gray-800">{food.name}</h3>
+                                  <h3 className="font-bold text-lg text-gray-800"><Link to={`/foods/${food._id}`}>{food.name}</Link></h3>
                                   <p className="text-gray-500 text-sm mt-1">{food.category}</p>
                                 </div>
 
