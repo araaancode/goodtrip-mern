@@ -9,9 +9,6 @@ import Spinner from "../components/Spinner";
 import PhotoSlider from "../components/PhotoSlider.jsx";
 import { houseTypes, enviornmentTypes, favoriteCities } from "../data/data.js";
 
-import HeaderPages from "../components/HeaderPages.jsx";
-import Footer from "../components/Footer.jsx";
-
 // Fallback image in case of loading failure
 const fallbackImage = 'https://via.placeholder.com/400x300?text=Image+Not+Found';
 

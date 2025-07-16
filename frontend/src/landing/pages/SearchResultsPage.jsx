@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from "react-router-dom";
-import Footer from "../components/Footer";
 import axios from "axios";
-import HeaderPages from '../components/HeaderPages';
 import Spinner from 'react-spinner';
 import PhotoCard from "../components/PhotoCard";
 
@@ -64,7 +62,6 @@ const SearchResultsPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <HeaderPages />
 
       <main className="flex-grow">
         {loading ? (
@@ -105,7 +102,7 @@ const SearchResultsPage = () => {
                   <button
                     key={index + 1}
                     onClick={() => handlePageChange(index + 1)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${currentPage === index + 1
+                    className={`px-3 py-2 rounded-full text-sm mx-3 font-bold transition-all duration-300 ${currentPage === index + 1
                       ? 'bg-blue-900 text-white'
                       : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                       }`}
@@ -120,7 +117,6 @@ const SearchResultsPage = () => {
         )}
       </main>
 
-      <Footer />
     </div>
   );
 };
