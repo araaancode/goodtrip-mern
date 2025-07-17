@@ -69,7 +69,6 @@ const houseStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await axios.put('/api/users/houses/add-favorite-house', { house: houseId });
-      // Update both favoriteHouses and houses state
       set(state => ({
         favoriteHouses: response.data.newUser.favoriteHouses,
         houses: state.houses.map(house => 

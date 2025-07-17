@@ -6,36 +6,12 @@ import ArrowRightIcon from '@iconscout/react-unicons/icons/uil-angle-right';
 import Hero from "../components/Hero";
 import PhotoCard from "../components/PhotoCard";
 import Spinner from "../components/Spinner";
-import PhotoSlider from "../components/PhotoSlider.jsx";
 import { houseTypes, enviornmentTypes, favoriteCities } from "../data/data.js";
 
 // Fallback image in case of loading failure
 const fallbackImage = 'https://via.placeholder.com/400x300?text=Image+Not+Found';
 
-// Updated images with high-quality Unsplash photos
-const images = [
-  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1512917774080-9991f7c4c60d?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1613977257592-6205e87d6a3e?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1600607687920-4e43c4e7787b?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1626178793926-22b28830aa30?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1578683014728-c73504a258f9?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1562438668-3e4812b795bc?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1618221710543-77851c25b6f0?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1600585152915-18c64a6b3b0c?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1600585153490-416c5d7f4e4d?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1600585153780-4e5b5c7f4e4d?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1613977257365-707ba2508a90?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1600585152915-18c64a6b3b0c?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1600585153490-416c5d7f4e4d?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1600585153780-4e5b5c7f4e4d?auto=format&fit=crop&w=800&q=80'
-];
+
 
 export default function IndexPage() {
   const [houses, setHouses] = useState([]);
@@ -95,18 +71,6 @@ export default function IndexPage() {
     return () => window.removeEventListener('resize', updateImagesPerPage);
   }, []);
 
-  // Accommodation slider navigation
-  const nextSlide = () => {
-    if (currentIndex < images.length - imagesPerPage) {
-      setCurrentIndex(currentIndex + imagesPerPage);
-    }
-  };
-
-  const prevSlide = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - imagesPerPage);
-    }
-  };
 
   // Cities/types/environment slider navigation
   const nextSlideCities = () => {
@@ -123,7 +87,6 @@ export default function IndexPage() {
 
   return (
     <div className="bg-gray-50 min-h-screen font-iran">
-      {/* <HeaderPages /> */}
       <Hero />
 
       {/* Latest Accommodations */}
@@ -209,17 +172,7 @@ export default function IndexPage() {
         )}
       </section>
 
-      {/* Budget Accommodations */}
-      {loading ? (
-        <Spinner />
-      ) : error ? (
-        <div className="text-center py-12 text-red-600">
-          خطا در بارگذاری داده‌ها: {error}
-        </div>
-      ) : (
-        <PhotoSlider houses={houses} />
-      )}
-
+    
       {/* Environment Types Slider */}
       <section className="px-4 sm:px-6 md:px-8 py-8 sm:py-12">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
@@ -330,7 +283,6 @@ export default function IndexPage() {
         )}
       </section>
 
-      {/* <Footer /> */}
     </div>
   );
 }

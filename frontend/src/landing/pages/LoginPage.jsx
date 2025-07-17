@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { RiLoader2Fill } from '@remixicon/react';
+import { RiLoader2Fill, RiEye2Line, RiEyeCloseLine, RiPhoneLine } from '@remixicon/react';
 import { useNavigate } from 'react-router-dom';
 import Spinner from "../components/Spinner";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { RiEye2Line, RiEyeCloseLine, RiPhoneLine } from "@remixicon/react";
 import { MdOutlineSms } from "react-icons/md";
 import useUserAuthStore from '../store/authStore';
 
@@ -26,7 +25,7 @@ const LoginPage = () => {
 
   const navigate = useNavigate();
 
-  // Validation functions
+  // Validation functions remain the same
   const validatePhone = (phone) => {
     if (!phone) return 'شماره تلفن الزامی است';
     if (!/^(\+98|0)?9\d{9}$/.test(phone)) return 'شماره تلفن معتبر نیست';
@@ -52,7 +51,6 @@ const LoginPage = () => {
       [name]: value
     }));
 
-    // Validate on change
     if (name === 'phone') {
       setErrors(prev => ({ ...prev, phone: validatePhone(value) }));
     } else if (name === 'password') {
@@ -71,26 +69,20 @@ const LoginPage = () => {
       phone: validatePhone(formData.phone),
       password: validatePassword(formData.password)
     };
-
     setErrors(newErrors);
     return !newErrors.phone && !newErrors.password;
   };
 
+  // handleLogin and handleVerify functions remain the same
   const handleLogin = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
       setLoading(true);
       const loginResult = await login(formData.phone, formData.password);
 
-      console.log(loginResult)
-
       if (loginResult?.status === "success") {
-
         toast.info('کد یکبار مصرف ارسال شد', {
           position: "top-left",
           autoClose: 5000,
@@ -101,8 +93,7 @@ const LoginPage = () => {
           progress: undefined,
         });
         setIsLogin(true);
-        await sendOtp(loginResult.phone)
-
+        await sendOtp(loginResult.phone);
       } else {
         toast.error(loginResult?.msg || 'خطایی وجود دارد', {
           position: "top-left",
@@ -131,7 +122,6 @@ const LoginPage = () => {
 
   const handleVerify = async (e) => {
     e.preventDefault();
-
     const codeError = validateCode(formData.code);
     if (codeError) {
       setErrors(prev => ({ ...prev, code: codeError }));
@@ -169,159 +159,160 @@ const LoginPage = () => {
   };
 
   return (
-    <div dir="rtl" className="flex justify-center items-center h-screen bg-gray-50 shadow-md">
-      {isLogin ? (
-        <div className="w-full max-w-md p-8 space-y-4 bg-white rounded border">
-          <h2 className="text-xl font-bold text-gray-700">تایید کد</h2>
-          <p className='text-gray-500 mt-1 mb-4'>کد ارسال شده را در زیر وارد کنید.</p>
-          <form className="space-y-4">
-            <div className="flex flex-col mb-6">
-              <label htmlFor="code" className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">
-                کد یکبار مصرف
-              </label>
-              <div className="relative">
-                <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                  <MdOutlineSms className='w-6 h-6 text-gray-400' />
-                </div>
-                <input
-                  style={{ borderRadius: '5px' }}
-                  type="text"
-                  name="code"
-                  value={formData.code}
-                  onChange={handleChange}
-                  className={`text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border ${errors.code ? 'border-red-500' : 'border-gray-400'
-                    } w-full py-2 focus:outline-none focus:border-blue-800`}
-                  placeholder="کد یکبار مصرف"
-                />
-              </div>
-              {errors.code && <span className="text-red-500 text-sm mt-1">{errors.code}</span>}
-            </div>
-            <button
-              type="button"
-              className="w-full rounded mb-10 p-2 text-white bg-blue-900 hover:bg-blue-800 disabled:opacity-50"
-              onClick={handleVerify}
-              disabled={loading}
-            >
-              {loading ? <Spinner /> : 'تایید کد'}
-            </button>
-          </form>
-        </div>
-      ) : (
-        <div className="w-full max-w-md px-10 space-y-4 bg-white rounded border">
-          <div className="flex flex-col bg-white px-4 sm:px-6 md:px-6 lg:px-6 py-6 w-full max-w-md m-auto">
-            <div className="font-medium self-center text-xl sm:text-2xl uppercase text-gray-800">
-              <div className="w-12 h-12 mx-3 bg-white rounded-full">
-                <svg
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  fill="currentColor"
-                  className="remixicon w-12 h-12"
-                >
-                  <path d="M22.1034 19L12.8659 3.00017C12.7782 2.84815 12.6519 2.72191 12.4999 2.63414C12.0216 2.358 11.41 2.52187 11.1339 3.00017L1.89638 19H1V21C8.33333 21 15.6667 21 23 21V19H22.1034ZM7.59991 19.0002H4.20568L11.9999 5.50017L19.7941 19.0002H16.4001L12 11L7.59991 19.0002ZM12 15.1501L14.1175 19H9.88254L12 15.1501Z"></path>
-                </svg>
-              </div>
-            </div>
-
-            <div className="relative mt-10 h-px bg-gray-300">
-              <div className="absolute left-0 top-0 flex justify-center w-full -mt-2">
-                <span className="bg-white px-4 text-xs text-gray-500 uppercase">
-                  ورود به سایت
-                </span>
-              </div>
-            </div>
+    <div dir="rtl" className="min-h-screen flex items-center justify-center bg-gray-50">
+      {/* Background Image Section */}
+      <div className="hidden lg:block lg:w-1/2 bg-cover bg-center h-screen" 
+           style={{ backgroundImage: 'url(https://images.pexels.com/photos/147411/italy-mountains-dawn-daybreak-147411.jpeg)' }}>
+        <div className="h-full bg-black bg-opacity-40 flex items-center justify-center">
+          <div className="text-center p-8 text-white">
+            <h1 className="text-4xl font-bold mb-4">به پنل کاربری خوش آمدید</h1>
+            <p className="text-xl">لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از صنعت چاپ</p>
           </div>
-          <p className="text-center text-gray-500 mt-1 mb-4">
-            برای ورود شماره موبایل خود را وارد کنید.
-          </p>
-          <form className="space-y-4">
-            <div className="flex flex-col mb-6">
-              <label htmlFor="phone" className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">
-                شماره تلفن
-              </label>
-              <div className="relative">
-                <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                  <RiPhoneLine />
+        </div>
+      </div>
+      
+      {/* Login Form Section */}
+      <div className="w-full lg:w-1/2 p-8">
+        <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+          {isLogin ? (
+            <div className="p-8">
+              <div className="text-center mb-6">
+                <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                  <MdOutlineSms className="w-8 h-8 text-blue-900" />
                 </div>
-                <input
-                  style={{ borderRadius: '5px' }}
-                  type="text"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className={`text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border ${errors.phone ? 'border-red-500' : 'border-gray-400'
-                    } w-full py-2 focus:outline-none focus:border-blue-800`}
-                  placeholder="شماره تلفن"
-                />
+                <h2 className="mt-4 text-2xl font-bold text-gray-800">تایید کد</h2>
+                <p className="mt-2 text-gray-600">کد ارسال شده به شماره {formData.phone} را وارد کنید</p>
               </div>
-              {errors.phone && <span className="text-red-500 text-sm mt-1">{errors.phone}</span>}
-            </div>
-            <div>
-              <div className="flex flex-col mb-1">
-                <div className="mb-2 relative">
-                  <label
-                    className="block mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-                    htmlFor="password"
+              
+              <form className="space-y-6">
+                <div>
+                  <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1">
+                    کد یکبار مصرف
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <MdOutlineSms className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="code"
+                      name="code"
+                      type="text"
+                      value={formData.code}
+                      onChange={handleChange}
+                      className={`block w-full pl-10 pr-3 py-2 border ${errors.code ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                      placeholder="12345"
+                    />
+                  </div>
+                  {errors.code && <p className="mt-1 text-sm text-red-600">{errors.code}</p>}
+                </div>
+
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleVerify}
+                    disabled={loading}
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-900  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                   >
+                    {loading ? <Spinner /> : 'تایید کد'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          ) : (
+            <div className="p-8">
+              <div className="text-center mb-8">
+                <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                  <svg
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    fill="currentColor"
+                    className="w-8 h-8 text-blue-900"
+                  >
+                    <path d="M22.1034 19L12.8659 3.00017C12.7782 2.84815 12.6519 2.72191 12.4999 2.63414C12.0216 2.358 11.41 2.52187 11.1339 3.00017L1.89638 19H1V21C8.33333 21 15.6667 21 23 21V19H22.1034ZM7.59991 19.0002H4.20568L11.9999 5.50017L19.7941 19.0002H16.4001L12 11L7.59991 19.0002ZM12 15.1501L14.1175 19H9.88254L12 15.1501Z"></path>
+                  </svg>
+                </div>
+                <h2 className="mt-4 text-2xl font-bold text-gray-800">ورود به حساب کاربری</h2>
+                <p className="mt-2 text-gray-600">لطفا اطلاعات خود را وارد کنید</p>
+              </div>
+
+              <form className="space-y-6">
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    شماره تلفن
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <RiPhoneLine className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="text"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className={`block w-full pl-10 pr-3 py-2 border ${errors.phone ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                      placeholder="09123456789"
+                    />
+                  </div>
+                  {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                     گذرواژه
                   </label>
-
-                  <input
-                    type={passwordVisible ? "text" : "password"}
-                    id="password"
-                    name="password"
-                    onChange={handleChange}
-                    value={formData.password}
-                    className={`w-full px-4 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-400'
-                      } placeholder-gray-400 rounded-sm focus:outline-none focus:border-blue-800`}
-                    placeholder="گذرواژه"
-                    style={{ borderRadius: '5px' }}
-                  />
-
-                  <div
-                    onClick={togglePasswordVisibility}
-                    className="absolute inset-y-0 left-3 flex items-center cursor-pointer top-6"
-                  >
-                    {passwordVisible ? (
-                      <RiEye2Line className="text-gray-400" />
-                    ) : (
-                      <RiEyeCloseLine className="text-gray-400" />
-                    )}
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      {passwordVisible ? (
+                        <RiEye2Line className="h-5 w-5 text-gray-400 cursor-pointer" onClick={togglePasswordVisibility} />
+                      ) : (
+                        <RiEyeCloseLine className="h-5 w-5 text-gray-400 cursor-pointer" onClick={togglePasswordVisibility} />
+                      )}
+                    </div>
+                    <input
+                      id="password"
+                      name="password"
+                      type={passwordVisible ? "text" : "password"}
+                      value={formData.password}
+                      onChange={handleChange}
+                      className={`block w-full pl-10 pr-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                      placeholder="••••••••"
+                    />
                   </div>
-                  {errors.password && (
-                    <span className="text-red-500 text-sm mt-2">{errors.password}</span>
-                  )}
-                </div>
-                <div className="flex items-center mb-2">
-                  <div className="flex ml-auto">
-                    <a
-                      href="/forgot-password"
-                      className="inline-flex text-xs font-bold sm:text-sm text-blue-800 hover:text-blue-900"
-                    >
-                      گذرواژه خود را فراموش کردید؟
+                  {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
+                  <div className="flex justify-end mt-2">
+                    <a href="/forgot-password" className="text-sm text-blue-900 ">
+                      گذرواژه خود را فراموش کرده‌اید؟
                     </a>
                   </div>
                 </div>
+
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleLogin}
+                    disabled={loading}
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-900  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                  >
+                    {loading ? <RiLoader2Fill className="animate-spin h-5 w-5" /> : 'ورود'}
+                  </button>
+                </div>
+              </form>
+
+              <div className="mt-6 text-center">
+                <p className="text-sm text-gray-600">
+                  حساب ندارید؟{' '}
+                  <a href="/register" className="font-medium text-blue-900 ">
+                    ثبت نام کنید
+                  </a>
+                </p>
               </div>
             </div>
-            <button
-              onClick={handleLogin}
-              type="button"
-              className="w-full rounded mb-10 p-2 text-white bg-blue-900 hover:bg-blue-800 disabled:opacity-50"
-              disabled={loading}
-            >
-              {loading ? <RiLoader2Fill className="animate-spin mx-auto" /> : 'ورود'}
-            </button>
-            <p style={{ marginBottom: '20px' }} className="text-sm text-gray-800">
-              حساب ندارید؟{' '}
-              <a href="/register" className="hover:text-blue-800 hover:cursor-pointer">
-                ثبت نام
-              </a>
-            </p>
-          </form>
+          )}
         </div>
-      )}
+      </div>
       <ToastContainer />
     </div>
   );
