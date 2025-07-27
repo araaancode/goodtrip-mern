@@ -1,6 +1,6 @@
-// stores/busStore.js
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import axios from 'axios';
 
 export const useBusStore = create(
   persist(
@@ -19,51 +19,39 @@ export const useBusStore = create(
       fetchBuses: async () => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch('/api/users/buses');
-          const data = await response.json();
-          if (response.ok) {
-            set({ buses: data.buses, loading: false });
-          } else {
-            throw new Error(data.msg || 'Failed to fetch buses');
-          }
+          const { data } = await axios.get('/api/users/buses');
+          set({ buses: data.buses, loading: false });
         } catch (err) {
-          set({ error: err.message, loading: false });
+          set({ 
+            error: err.response?.data?.msg || 'Failed to fetch buses',
+            loading: false 
+          });
         }
       },
 
       fetchBusById: async (id) => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch(`/api/users/buses/${id}`);
-          const data = await response.json();
-          if (response.ok) {
-            set({ currentBus: data.bus, loading: false });
-          } else {
-            throw new Error(data.msg || 'Bus not found');
-          }
+          const { data } = await axios.get(`/api/users/buses/${id}`);
+          set({ currentBus: data.bus, loading: false });
         } catch (err) {
-          set({ error: err.message, loading: false });
+          set({ 
+            error: err.response?.data?.msg || 'Bus not found',
+            loading: false 
+          });
         }
       },
 
       searchBuses: async (query) => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch('/api/users/buses/search-buses', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(query),
-          });
-          const data = await response.json();
-          if (response.ok) {
-            set({ searchResults: data.buses, loading: false });
-          } else {
-            throw new Error(data.msg || 'Search failed');
-          }
+          const { data } = await axios.post('/api/users/buses/search-buses', query);
+          set({ searchResults: data.buses, loading: false });
         } catch (err) {
-          set({ error: err.message, loading: false });
+          set({ 
+            error: err.response?.data?.msg || 'Search failed',
+            loading: false 
+          });
         }
       },
 
@@ -74,184 +62,173 @@ export const useBusStore = create(
             ? '/api/users/buses/search-two-side-bus-tickets' 
             : '/api/users/buses/search-one-side-bus-tickets';
           
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(params),
-          });
-          const data = await response.json();
-          if (response.ok) {
-            set({ searchResults: data.buses, loading: false });
-          } else {
-            throw new Error(data.msg || 'Ticket search failed');
-          }
+          const { data } = await axios.post(endpoint, params);
+          set({ searchResults: data.buses, loading: false });
         } catch (err) {
-          set({ error: err.message, loading: false });
+          set({ 
+            error: err.response?.data?.msg || 'Ticket search failed',
+            loading: false 
+          });
         }
       },
 
       addFavoriteBus: async (busId) => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch('/api/users/buses/add-favorite-bus', {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            },
-            body: JSON.stringify({ bus: busId }),
-          });
-          const data = await response.json();
-          if (response.ok) {
-            set(state => ({
-              favoriteBuses: [...state.favoriteBuses, data.newUser.favoriteBuses],
-              loading: false,
-            }));
-          } else {
-            throw new Error(data.msg || 'Failed to add favorite');
-          }
+          const { data } = await axios.put(
+            '/api/users/buses/add-favorite-bus',
+            { bus: busId },
+            {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            }
+          );
+          set(state => ({
+            favoriteBuses: [...state.favoriteBuses, data.newUser.favoriteBuses],
+            loading: false,
+          }));
         } catch (err) {
-          set({ error: err.message, loading: false });
+          set({ 
+            error: err.response?.data?.msg || 'Failed to add favorite',
+            loading: false 
+          });
         }
       },
 
       removeFavoriteBus: async (busId) => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch(`/api/users/buses/delete-favorite-bus/${busId}`, {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            },
-          });
-          const data = await response.json();
-          if (response.ok) {
-            set(state => ({
-              favoriteBuses: state.favoriteBuses.filter(bus => bus._id !== busId),
-              loading: false,
-            }));
-          } else {
-            throw new Error(data.msg || 'Failed to remove favorite');
-          }
+          const { data } = await axios.put(
+            `/api/users/buses/delete-favorite-bus/${busId}`,
+            {},
+            {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            }
+          );
+          set(state => ({
+            favoriteBuses: state.favoriteBuses.filter(bus => bus._id !== busId),
+            loading: false,
+          }));
         } catch (err) {
-          set({ error: err.message, loading: false });
+          set({ 
+            error: err.response?.data?.msg || 'Failed to remove favorite',
+            loading: false 
+          });
         }
       },
 
       bookTicket: async (ticketData) => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch('/api/users/buses/book-bus', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            },
-            body: JSON.stringify(ticketData),
-          });
-          const data = await response.json();
-          if (response.ok) {
-            set(state => ({
-              tickets: [...state.tickets, data.ticket],
-              loading: false,
-            }));
-          } else {
-            throw new Error(data.msg || 'Failed to book ticket');
-          }
+          const { data } = await axios.post(
+            '/api/users/buses/book-bus',
+            ticketData,
+            {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            }
+          );
+          set(state => ({
+            tickets: [...state.tickets, data.ticket],
+            loading: false,
+          }));
         } catch (err) {
-          set({ error: err.message, loading: false });
+          set({ 
+            error: err.response?.data?.msg || 'Failed to book ticket',
+            loading: false 
+          });
         }
       },
 
       fetchTickets: async () => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch('/api/users/buses/tickets', {
+          const { data } = await axios.get('/api/users/buses/tickets', {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            },
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
           });
-          const data = await response.json();
-          if (response.ok) {
-            set({ tickets: data.tickets, loading: false });
-          } else {
-            throw new Error(data.msg || 'Failed to fetch tickets');
-          }
+          set({ tickets: data.tickets, loading: false });
         } catch (err) {
-          set({ error: err.message, loading: false });
+          set({ 
+            error: err.response?.data?.msg || 'Failed to fetch tickets',
+            loading: false 
+          });
         }
       },
 
       fetchTicketById: async (id) => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch(`/api/users/buses/tickets/${id}`, {
+          const { data } = await axios.get(`/api/users/buses/tickets/${id}`, {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            },
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
           });
-          const data = await response.json();
-          if (response.ok) {
-            set({ currentTicket: data.ticket, loading: false });
-          } else {
-            throw new Error(data.msg || 'Ticket not found');
-          }
+          set({ currentTicket: data.ticket, loading: false });
         } catch (err) {
-          set({ error: err.message, loading: false });
+          set({ 
+            error: err.response?.data?.msg || 'Ticket not found',
+            loading: false 
+          });
         }
       },
 
       confirmTicket: async (ticketId) => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch(`/api/users/buses/tickets/${ticketId}/confirm`, {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            },
-          });
-          const data = await response.json();
-          if (response.ok) {
-            set(state => ({
-              tickets: state.tickets.map(ticket => 
-                ticket._id === ticketId ? data.busTicket : ticket
-              ),
-              currentTicket: data.busTicket,
-              loading: false,
-            }));
-          } else {
-            throw new Error(data.msg || 'Failed to confirm ticket');
-          }
+          const { data } = await axios.put(
+            `/api/users/buses/tickets/${ticketId}/confirm`,
+            {},
+            {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            }
+          );
+          set(state => ({
+            tickets: state.tickets.map(ticket => 
+              ticket._id === ticketId ? data.busTicket : ticket
+            ),
+            currentTicket: data.busTicket,
+            loading: false,
+          }));
         } catch (err) {
-          set({ error: err.message, loading: false });
+          set({ 
+            error: err.response?.data?.msg || 'Failed to confirm ticket',
+            loading: false 
+          });
         }
       },
 
       cancelTicket: async (ticketId) => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch(`/api/users/buses/tickets/${ticketId}/cancel`, {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            },
-          });
-          const data = await response.json();
-          if (response.ok) {
-            set(state => ({
-              tickets: state.tickets.map(ticket => 
-                ticket._id === ticketId ? data.busTicket : ticket
-              ),
-              currentTicket: data.busTicket,
-              loading: false,
-            }));
-          } else {
-            throw new Error(data.msg || 'Failed to cancel ticket');
-          }
+          const { data } = await axios.put(
+            `/api/users/buses/tickets/${ticketId}/cancel`,
+            {},
+            {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            }
+          );
+          set(state => ({
+            tickets: state.tickets.map(ticket => 
+              ticket._id === ticketId ? data.busTicket : ticket
+            ),
+            currentTicket: data.busTicket,
+            loading: false,
+          }));
         } catch (err) {
-          set({ error: err.message, loading: false });
+          set({ 
+            error: err.response?.data?.msg || 'Failed to cancel ticket',
+            loading: false 
+          });
         }
       },
 
@@ -277,9 +254,7 @@ export const useBusStore = create(
   )
 );
 
-// Additional stores you might need:
-
-// 1. User Store
+// Updated User Store with axios
 export const useUserStore = create(
   persist(
     (set) => ({
@@ -292,27 +267,19 @@ export const useUserStore = create(
       login: async (credentials) => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(credentials),
+          const { data } = await axios.post('/api/auth/login', credentials);
+          localStorage.setItem('token', data.token);
+          set({ 
+            user: data.user,
+            token: data.token,
+            isAuthenticated: true,
+            loading: false,
           });
-          const data = await response.json();
-          if (response.ok) {
-            localStorage.setItem('token', data.token);
-            set({ 
-              user: data.user,
-              token: data.token,
-              isAuthenticated: true,
-              loading: false,
-            });
-          } else {
-            throw new Error(data.msg || 'Login failed');
-          }
         } catch (err) {
-          set({ error: err.message, loading: false });
+          set({ 
+            error: err.response?.data?.msg || 'Login failed',
+            loading: false 
+          });
         }
       },
 
@@ -328,27 +295,19 @@ export const useUserStore = create(
       register: async (userData) => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch('/api/auth/register', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userData),
+          const { data } = await axios.post('/api/auth/register', userData);
+          localStorage.setItem('token', data.token);
+          set({ 
+            user: data.user,
+            token: data.token,
+            isAuthenticated: true,
+            loading: false,
           });
-          const data = await response.json();
-          if (response.ok) {
-            localStorage.setItem('token', data.token);
-            set({ 
-              user: data.user,
-              token: data.token,
-              isAuthenticated: true,
-              loading: false,
-            });
-          } else {
-            throw new Error(data.msg || 'Registration failed');
-          }
         } catch (err) {
-          set({ error: err.message, loading: false });
+          set({ 
+            error: err.response?.data?.msg || 'Registration failed',
+            loading: false 
+          });
         }
       },
     }),
@@ -358,7 +317,7 @@ export const useUserStore = create(
   )
 );
 
-// 2. UI Store for global UI state
+// UI Store remains the same as it doesn't make API calls
 export const useUIStore = create((set) => ({
   theme: 'light',
   language: 'en',
@@ -384,7 +343,7 @@ export const useUIStore = create((set) => ({
   })),
 }));
 
-// 3. Booking Store for temporary booking data
+// Booking Store remains the same as it doesn't make API calls
 export const useBookingStore = create((set) => ({
   selectedBus: null,
   selectedSeats: [],

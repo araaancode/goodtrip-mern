@@ -15,6 +15,28 @@ const { calculateDistance } = require("../../utils/geoUtils");
 const moment = require("moment-jalaali");
 const crypto = require("crypto");
 
+// convert date
+function convertDate(dateString) {
+  const persianNumerals = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
+  const arabicNumerals = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+
+  // Convert Persian/Arabic numerals to English numerals
+  const normalizedDate = dateString
+    .split("")
+    .map((char) => {
+      const persianIndex = persianNumerals.indexOf(char);
+      if (persianIndex !== -1) return persianIndex.toString();
+
+      const arabicIndex = arabicNumerals.indexOf(char);
+      if (arabicIndex !== -1) return arabicIndex.toString();
+
+      return char;
+    })
+    .join("");
+
+  return normalizedDate.replace(/-/g, "/");
+}
+
 // Helper function to get search suggestions
 async function getSearchSuggestions(partialName) {
   return Food.find({
@@ -1075,8 +1097,6 @@ exports.updateOrderStatus = async (req, res) => {
       { new: true }
     );
 
-
-
     if (!order) {
       return res
         .status(404)
@@ -1263,7 +1283,7 @@ exports.searchOneSideBusTickes = async (req, res) => {
     let userFirstCity = req.body.firstCity;
     let userLastCity = req.body.lastCity;
     let userCount = req.body.count;
-    let userMovingDate = req.body.movingDate;
+    let userMovingDate = convertDate(req.body.movingDate);
 
     let results = [];
 
@@ -1287,43 +1307,40 @@ exports.searchOneSideBusTickes = async (req, res) => {
 
     // test api
 
-    // const [month, day, year] = buses[3].driver.movingDate
+    // const [month, day, year] = buses[0].driver.movingDate
     //   .toLocaleDateString()
     //   .split("/");
 
-    // const attachedDateMovingDate = `${year}/${addZero(month)}/${addZero(day)}`;
+    // const attachedDateMovingDate = `${year}/${addZero(month)}/${addZero(day-1)}`;
 
     // console.log("userFirstCity: ", userFirstCity);
     // console.log("userLastCity: ", userLastCity);
     // console.log("userCount: ", userCount);
     // console.log("userMovingDate: ", userMovingDate);
     // console.log("=========================================");
-    // console.log("driverFirstCity: ", buses[3].driver.firstCity);
-    // console.log("driverLastCity: ", buses[3].driver.firstCity);
-    // console.log("driverCount: ", buses[3].seats);
+    // console.log("driverFirstCity: ", buses[0].driver.firstCity);
+    // console.log("driverLastCity: ", buses[0].driver.lastCity);
+    // console.log("driverCount: ", buses[0].seats);
     // console.log("driverMovingDate: ", attachedDateMovingDate);
 
-    buses.forEach((bus) => {
-      // console.log(
-      //   "driver Moving Date: ",
-      //   moment(bus.driver.movingDate.toLocaleDateString(),"jDD-jMM-jYYYY").format(
-      //     "jYYYY-jMM-jDD"
-      //   )
-      // );
+    // test api
 
+
+
+    buses.forEach((bus) => {
       // change driver date in a new format
       const [month, day, year] = bus.driver.movingDate
         .toLocaleDateString()
         .split("/");
 
-      const attachedDate = `${year}/${addZero(month)}/${addZero(day)}`; // YYYY/MM/DD
+      const attachedDate = `${year}/${addZero(month)}/${addZero(day-1)}`; // YYYY/MM/DD
 
       if (
         bus.driver.firstCity === userFirstCity &&
         bus.driver.lastCity === userLastCity
       ) {
         if (bus.seats >= userCount) {
-          if (attachedDate == userMovingDate) {
+          if (attachedDate == convertDate(userMovingDate)) {
             results.push(bus);
           }
         }
