@@ -31,6 +31,7 @@ import OrderFood from "./landing/pages/OrderFood";
 import CreateOrderFood from "./landing/pages/CreateOrderFood";
 import CartPage from "./landing/pages/CartPage";
 import SingleFoodPage from "./landing/pages/SingleFoodPage";
+import ConfirmBookingBus from "./landing/pages/ConfirmBookingBus";
 
 import PublicRoutes from "./landing/routing/publicRoutes";
 import PrivateRoutes from "./landing/routing/privateRoutes";
@@ -226,6 +227,7 @@ function App() {
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/support" element={<SupportPage />} />
             <Route path="/booking-bus" element={<BookingBus />} />
+            <Route path="/confirm-booking-bus/:id" element={<ConfirmBookingBus />} />
 
             {/* foods */}
             <Route

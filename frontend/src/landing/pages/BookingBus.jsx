@@ -160,7 +160,7 @@ const BookingBus = () => {
       return;
     }
 
-    navigate(`/booking/${busId}`, {
+    navigate(`/confirm-booking-bus/${busId}`, {
       state: {
         ...filters,
         firstCityName: provincesCities.find(p => p.id === filters.firstCity)?.name,
