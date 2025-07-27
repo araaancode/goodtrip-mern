@@ -1,3 +1,41 @@
-.custom-datepicker .selected {
-  border-radius: 5px !important;
+/* Custom Gold Theme for Date Picker */
+.rmdp-container .rmdp-ghost .rmdp-day.rmdp-selected span:not(.highlight) {
+  background-color: #d4af37 !important;
+  color: white !important;
+}
+
+.rmdp-container .rmdp-ghost .rmdp-day.rmdp-range {
+  background-color: #f8e5b9 !important;
+  color: #333 !important;
+}
+
+.rmdp-container .rmdp-ghost .rmdp-header {
+  color: #d4af37 !important;
+  font-weight: bold;
+}
+
+.rmdp-container .rmdp-ghost .rmdp-week-day {
+  color: #d4af37 !important;
+}
+
+.rmdp-container .rmdp-ghost .rmdp-arrow {
+  border-color: #d4af37 !important;
+}
+
+.rmdp-container .rmdp-ghost .rmdp-arrow-container:hover {
+  background-color: #f8e5b9 !important;
+}
+
+.rmdp-container .rmdp-ghost .rmdp-day:not(.rmdp-disabled):not(.rmdp-day-hidden) span:hover {
+  background-color: #f8e5b9 !important;
+}
+
+/* Button styles */
+.rmdp-container .rmdp-ghost .rmdp-button {
+  color: #d4af37 !important;
+  border-radius: 0.25rem !important;
+}
+
+.rmdp-container .rmdp-ghost .rmdp-button:hover {
+  background-color: #f8e5b9 !important;
 }
