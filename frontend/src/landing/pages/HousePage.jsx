@@ -67,24 +67,29 @@ export default function HousePage() {
             {/* Tabs Navigation */}
             <div dir="rtl" className="border-b border-gray-200 mb-6">
               <nav className="-mb-px flex space-x-8">
-                <button
-                  onClick={() => setActiveTab('description')}
-                  className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'description' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-                >
-                  توضیحات
-                </button>
-                <button
-                  onClick={() => setActiveTab('amenities')}
-                  className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'amenities' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-                >
-                  امکانات
-                </button>
-                <button
-                  onClick={() => setActiveTab('rules')}
-                  className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'rules' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-                >
-                  قوانین
-                </button>
+                {[
+                  { id: 'description', label: 'توضیحات' },
+                  { id: 'amenities', label: 'امکانات' },
+                  { id: 'rules', label: 'قوانین' },
+                ].map((tab, index) => (
+                  <div key={tab.id} className="flex items-center">
+                    <button
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`
+            whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
+            ${activeTab === tab.id
+                          ? 'border-primary-500 text-primary-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }
+          `}
+                    >
+                      {tab.label}
+                    </button>
+                    {index < 2 && (
+                      <span className="mx-2 text-gray-300">|</span>
+                    )}
+                  </div>
+                ))}
               </nav>
             </div>
 
