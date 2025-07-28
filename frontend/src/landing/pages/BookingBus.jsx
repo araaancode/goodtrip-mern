@@ -161,23 +161,23 @@ const BookingBus = () => {
     }
 
 
-    await bookTicket({
+    let newTicket = await bookTicket({
       firstCity: filters.firstCity,
       lastCity: filters.lastCity,
-      ticketType: filters.ticketType, 
-      movingDate: filters.movingDate, 
-      returningDate: filters.returningDate, 
+      ticketType: filters.ticketType,
+      movingDate: filters.movingDate,
+      returningDate: filters.returningDate,
       bus: busId,
       count: filters.count
     })
 
-    // navigate(`/confirm-booking-bus/${busId}`, {
-    //   state: {
-    //     ...filters,
-    //     firstCityName: provincesCities.find(p => p.id === filters.firstCity)?.name,
-    //     lastCityName: provincesCities.find(p => p.id === filters.lastCity)?.name
-    //   }
-    // });
+    navigate(`/confirm-bus-ticket/${newTicket._id}`, {
+      state: {
+        ...filters,
+        firstCityName: provincesCities.find(p => p.id === filters.firstCity)?.name,
+        lastCityName: provincesCities.find(p => p.id === filters.lastCity)?.name
+      }
+    });
   };
 
   // Custom Range Date Picker component
@@ -484,7 +484,7 @@ const BookingBus = () => {
                   </div>
                   <button
                     onClick={() => handleBookNow(bus._id)}
-                    className="w-full px-3 py-3 bg-green-600 text-white rounded-md border-none cursor-pointer font-bold transition-colors"
+                    className="w-full px-3 py-3 bg-white text-green-600 border border-green-600 border-dashed rounded-md cursor-pointer font-bold transition-colors"
                   >
                     رزرو بلیط
                   </button>

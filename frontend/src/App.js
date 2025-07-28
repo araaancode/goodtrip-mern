@@ -227,7 +227,7 @@ function App() {
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/support" element={<SupportPage />} />
             <Route path="/booking-bus" element={<BookingBus />} />
-            <Route path="/confirm-booking-bus/:id" element={<ConfirmBookingBus />} />
+            <Route path="/confirm-bus-ticket/:id" element={<ConfirmBookingBus />} />
 
             {/* foods */}
             <Route

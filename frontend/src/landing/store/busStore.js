@@ -8,6 +8,7 @@ export const useBusStore = create(
       // Initial state
       buses: [],
       tickets: [],
+      bookedTicket: null,
       favoriteBuses: [],
       currentBus: null,
       currentTicket: null,
@@ -129,20 +130,22 @@ export const useBusStore = create(
       bookTicket: async (ticketData) => {
         set({ loading: true, error: null });
 
-
         try {
           const { data } = await axios.post(
             "/api/users/buses/book-bus",
             ticketData,
             {
-              withCredentials: true, 
+              withCredentials: true,
             }
           );
 
           set((state) => ({
             tickets: [...state.tickets, data.ticket],
             loading: false,
+            bookedTicket: data.ticket,
           }));
+
+          return data.ticket;
         } catch (err) {
           set({
             error: err.response?.data?.msg || "Failed to book ticket",
