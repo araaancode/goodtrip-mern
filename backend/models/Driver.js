@@ -128,11 +128,12 @@ const driverSchema = new mongoose.Schema(
     },
 
     startHour: {
-      type: String,
+      type: Date,
+      default: Date.now(),
     },
-
     endHour: {
-      type: String,
+      type: Date,
+      default: Date.now(),
     },
 
     address: {

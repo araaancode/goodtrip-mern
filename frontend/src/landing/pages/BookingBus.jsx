@@ -8,7 +8,7 @@ import Toolbar from 'react-multi-date-picker/plugins/toolbar';
 import provincesCities from '../../provinces_cities.json';
 
 const BookingBus = () => {
-  const { searchResults, searchTickets, loading, error } = useBusStore();
+  const { searchResults, searchTickets, loading, error, bookTicket } = useBusStore();
   const navigate = useNavigate();
 
   // Filter states
@@ -56,7 +56,7 @@ const BookingBus = () => {
     try {
       if (dates.length > 0) {
         const movingDate = dates[0]?.format('YYYY-MM-DD');
-        
+
         if (!isValidDate(movingDate)) {
           setDateError('تاریخ رفت نامعتبر است');
           return;
@@ -68,7 +68,7 @@ const BookingBus = () => {
             setDateError('لطفاً تاریخ برگشت را انتخاب کنید');
             return;
           }
-          
+
           returningDate = dates[1]?.format('YYYY-MM-DD');
           if (!isValidDate(returningDate)) {
             setDateError('تاریخ برگشت نامعتبر است');
@@ -113,7 +113,7 @@ const BookingBus = () => {
   // Handle filter changes
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    
+
     if (name === 'ticketType') {
       setSelectedDates([]);
       setFilters(prev => ({
@@ -153,20 +153,31 @@ const BookingBus = () => {
   };
 
   // Handle book now button click
-  const handleBookNow = (busId) => {
-    if (!isValidDate(filters.movingDate) || 
-        (filters.ticketType === 'twoSide' && !isValidDate(filters.returningDate))) {
+  const handleBookNow = async (busId) => {
+    if (!isValidDate(filters.movingDate) ||
+      (filters.ticketType === 'twoSide' && !isValidDate(filters.returningDate))) {
       setDateError('لطفاً تاریخ‌های معتبر انتخاب کنید');
       return;
     }
 
-    navigate(`/confirm-booking-bus/${busId}`, {
-      state: {
-        ...filters,
-        firstCityName: provincesCities.find(p => p.id === filters.firstCity)?.name,
-        lastCityName: provincesCities.find(p => p.id === filters.lastCity)?.name
-      }
-    });
+
+    await bookTicket({
+      firstCity: filters.firstCity,
+      lastCity: filters.lastCity,
+      ticketType: filters.ticketType, 
+      movingDate: filters.movingDate, 
+      returningDate: filters.returningDate, 
+      bus: busId,
+      count: filters.count
+    })
+
+    // navigate(`/confirm-booking-bus/${busId}`, {
+    //   state: {
+    //     ...filters,
+    //     firstCityName: provincesCities.find(p => p.id === filters.firstCity)?.name,
+    //     lastCityName: provincesCities.find(p => p.id === filters.lastCity)?.name
+    //   }
+    // });
   };
 
   // Custom Range Date Picker component
@@ -186,7 +197,7 @@ const BookingBus = () => {
         range={filters.ticketType === 'twoSide'}
         numberOfMonths={filters.ticketType === 'twoSide' ? 2 : 1}
         plugins={[
-          <Toolbar 
+          <Toolbar
             position="bottom"
             className="flex justify-between pt-4 mt-4 border-t border-gray-200"
           />
@@ -213,7 +224,7 @@ const BookingBus = () => {
           )}
         </div>
         <div className="flex gap-3">
-          <button 
+          <button
             onClick={() => {
               setSelectedDates([]);
               setFilters(prev => ({
@@ -227,7 +238,7 @@ const BookingBus = () => {
           >
             پاک کردن
           </button>
-          <button 
+          <button
             onClick={() => {
               if (selectedDates.length === 0) {
                 setDateError('لطفاً تاریخ رفت را انتخاب کنید');
@@ -295,7 +306,7 @@ const BookingBus = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {filters.ticketType === 'twoSide' ? 'بازه زمانی سفر' : 'تاریخ رفت'}
               </label>
-              <div 
+              <div
                 className={`flex items-center px-3 py-3 border ${dateError ? 'border-red-500' : 'border-gray-300'} rounded-md cursor-pointer bg-white`}
                 onClick={() => setShowDatePicker(!showDatePicker)}
               >
@@ -314,7 +325,7 @@ const BookingBus = () => {
                   </>
                 )}
               </div>
-              
+
               {showDatePicker && <RangeDatePicker />}
               {dateError && !showDatePicker && (
                 <p className="text-red-500 text-xs mt-1">{dateError}</p>
@@ -430,7 +441,7 @@ const BookingBus = () => {
                     <span className="text-gray-500 ml-1">مبدا:</span>
                     <span className="font-medium mr-1">
                       {provincesCities
-                        .find(p => p.cities.some(c => c.id === bus.driver.firstCity))?.name || 
+                        .find(p => p.cities.some(c => c.id === bus.driver.firstCity))?.name ||
                         bus.driver.firstCity}
                     </span>
                   </div>
@@ -441,7 +452,7 @@ const BookingBus = () => {
                     <span className="text-gray-500 ml-1">مقصد:</span>
                     <span className="font-medium mr-1">
                       {provincesCities
-                        .find(p => p.cities.some(c => c.id === bus.driver.lastCity))?.name || 
+                        .find(p => p.cities.some(c => c.id === bus.driver.lastCity))?.name ||
                         bus.driver.lastCity}
                     </span>
                   </div>

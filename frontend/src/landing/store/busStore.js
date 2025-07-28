@@ -1,6 +1,6 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import axios from 'axios';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import axios from "axios";
 
 export const useBusStore = create(
   persist(
@@ -19,12 +19,12 @@ export const useBusStore = create(
       fetchBuses: async () => {
         set({ loading: true, error: null });
         try {
-          const { data } = await axios.get('/api/users/buses');
+          const { data } = await axios.get("/api/users/buses");
           set({ buses: data.buses, loading: false });
         } catch (err) {
-          set({ 
-            error: err.response?.data?.msg || 'Failed to fetch buses',
-            loading: false 
+          set({
+            error: err.response?.data?.msg || "Failed to fetch buses",
+            loading: false,
           });
         }
       },
@@ -35,9 +35,9 @@ export const useBusStore = create(
           const { data } = await axios.get(`/api/users/buses/${id}`);
           set({ currentBus: data.bus, loading: false });
         } catch (err) {
-          set({ 
-            error: err.response?.data?.msg || 'Bus not found',
-            loading: false 
+          set({
+            error: err.response?.data?.msg || "Bus not found",
+            loading: false,
           });
         }
       },
@@ -45,12 +45,15 @@ export const useBusStore = create(
       searchBuses: async (query) => {
         set({ loading: true, error: null });
         try {
-          const { data } = await axios.post('/api/users/buses/search-buses', query);
+          const { data } = await axios.post(
+            "/api/users/buses/search-buses",
+            query
+          );
           set({ searchResults: data.buses, loading: false });
         } catch (err) {
-          set({ 
-            error: err.response?.data?.msg || 'Search failed',
-            loading: false 
+          set({
+            error: err.response?.data?.msg || "Search failed",
+            loading: false,
           });
         }
       },
@@ -58,16 +61,17 @@ export const useBusStore = create(
       searchTickets: async (params) => {
         set({ loading: true, error: null });
         try {
-          const endpoint = params.ticketType === 'twoSide' 
-            ? '/api/users/buses/search-two-side-bus-tickets' 
-            : '/api/users/buses/search-one-side-bus-tickets';
-          
+          const endpoint =
+            params.ticketType === "twoSide"
+              ? "/api/users/buses/search-two-side-bus-tickets"
+              : "/api/users/buses/search-one-side-bus-tickets";
+
           const { data } = await axios.post(endpoint, params);
           set({ searchResults: data.buses, loading: false });
         } catch (err) {
-          set({ 
-            error: err.response?.data?.msg || 'Ticket search failed',
-            loading: false 
+          set({
+            error: err.response?.data?.msg || "Ticket search failed",
+            loading: false,
           });
         }
       },
@@ -76,22 +80,22 @@ export const useBusStore = create(
         set({ loading: true, error: null });
         try {
           const { data } = await axios.put(
-            '/api/users/buses/add-favorite-bus',
+            "/api/users/buses/add-favorite-bus",
             { bus: busId },
             {
               headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-              }
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
             }
           );
-          set(state => ({
+          set((state) => ({
             favoriteBuses: [...state.favoriteBuses, data.newUser.favoriteBuses],
             loading: false,
           }));
         } catch (err) {
-          set({ 
-            error: err.response?.data?.msg || 'Failed to add favorite',
-            loading: false 
+          set({
+            error: err.response?.data?.msg || "Failed to add favorite",
+            loading: false,
           });
         }
       },
@@ -104,42 +108,45 @@ export const useBusStore = create(
             {},
             {
               headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-              }
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
             }
           );
-          set(state => ({
-            favoriteBuses: state.favoriteBuses.filter(bus => bus._id !== busId),
+          set((state) => ({
+            favoriteBuses: state.favoriteBuses.filter(
+              (bus) => bus._id !== busId
+            ),
             loading: false,
           }));
         } catch (err) {
-          set({ 
-            error: err.response?.data?.msg || 'Failed to remove favorite',
-            loading: false 
+          set({
+            error: err.response?.data?.msg || "Failed to remove favorite",
+            loading: false,
           });
         }
       },
 
       bookTicket: async (ticketData) => {
         set({ loading: true, error: null });
+
+
         try {
           const { data } = await axios.post(
-            '/api/users/buses/book-bus',
+            "/api/users/buses/book-bus",
             ticketData,
             {
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-              }
+              withCredentials: true, 
             }
           );
-          set(state => ({
+
+          set((state) => ({
             tickets: [...state.tickets, data.ticket],
             loading: false,
           }));
         } catch (err) {
-          set({ 
-            error: err.response?.data?.msg || 'Failed to book ticket',
-            loading: false 
+          set({
+            error: err.response?.data?.msg || "Failed to book ticket",
+            loading: false,
           });
         }
       },
@@ -147,16 +154,16 @@ export const useBusStore = create(
       fetchTickets: async () => {
         set({ loading: true, error: null });
         try {
-          const { data } = await axios.get('/api/users/buses/tickets', {
+          const { data } = await axios.get("/api/users/buses/tickets", {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
           });
           set({ tickets: data.tickets, loading: false });
         } catch (err) {
-          set({ 
-            error: err.response?.data?.msg || 'Failed to fetch tickets',
-            loading: false 
+          set({
+            error: err.response?.data?.msg || "Failed to fetch tickets",
+            loading: false,
           });
         }
       },
@@ -166,14 +173,14 @@ export const useBusStore = create(
         try {
           const { data } = await axios.get(`/api/users/buses/tickets/${id}`, {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
           });
           set({ currentTicket: data.ticket, loading: false });
         } catch (err) {
-          set({ 
-            error: err.response?.data?.msg || 'Ticket not found',
-            loading: false 
+          set({
+            error: err.response?.data?.msg || "Ticket not found",
+            loading: false,
           });
         }
       },
@@ -186,21 +193,21 @@ export const useBusStore = create(
             {},
             {
               headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-              }
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
             }
           );
-          set(state => ({
-            tickets: state.tickets.map(ticket => 
+          set((state) => ({
+            tickets: state.tickets.map((ticket) =>
               ticket._id === ticketId ? data.busTicket : ticket
             ),
             currentTicket: data.busTicket,
             loading: false,
           }));
         } catch (err) {
-          set({ 
-            error: err.response?.data?.msg || 'Failed to confirm ticket',
-            loading: false 
+          set({
+            error: err.response?.data?.msg || "Failed to confirm ticket",
+            loading: false,
           });
         }
       },
@@ -213,21 +220,21 @@ export const useBusStore = create(
             {},
             {
               headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-              }
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
             }
           );
-          set(state => ({
-            tickets: state.tickets.map(ticket => 
+          set((state) => ({
+            tickets: state.tickets.map((ticket) =>
               ticket._id === ticketId ? data.busTicket : ticket
             ),
             currentTicket: data.busTicket,
             loading: false,
           }));
         } catch (err) {
-          set({ 
-            error: err.response?.data?.msg || 'Failed to cancel ticket',
-            loading: false 
+          set({
+            error: err.response?.data?.msg || "Failed to cancel ticket",
+            loading: false,
           });
         }
       },
@@ -246,8 +253,8 @@ export const useBusStore = create(
       },
     }),
     {
-      name: 'bus-storage',
-      partialize: (state) => ({ 
+      name: "bus-storage",
+      partialize: (state) => ({
         favoriteBuses: state.favoriteBuses,
       }),
     }
@@ -267,25 +274,25 @@ export const useUserStore = create(
       login: async (credentials) => {
         set({ loading: true, error: null });
         try {
-          const { data } = await axios.post('/api/auth/login', credentials);
-          localStorage.setItem('token', data.token);
-          set({ 
+          const { data } = await axios.post("/api/auth/login", credentials);
+          localStorage.setItem("token", data.token);
+          set({
             user: data.user,
             token: data.token,
             isAuthenticated: true,
             loading: false,
           });
         } catch (err) {
-          set({ 
-            error: err.response?.data?.msg || 'Login failed',
-            loading: false 
+          set({
+            error: err.response?.data?.msg || "Login failed",
+            loading: false,
           });
         }
       },
 
       logout: () => {
-        localStorage.removeItem('token');
-        set({ 
+        localStorage.removeItem("token");
+        set({
           user: null,
           token: null,
           isAuthenticated: false,
@@ -295,52 +302,56 @@ export const useUserStore = create(
       register: async (userData) => {
         set({ loading: true, error: null });
         try {
-          const { data } = await axios.post('/api/auth/register', userData);
-          localStorage.setItem('token', data.token);
-          set({ 
+          const { data } = await axios.post("/api/auth/register", userData);
+          localStorage.setItem("token", data.token);
+          set({
             user: data.user,
             token: data.token,
             isAuthenticated: true,
             loading: false,
           });
         } catch (err) {
-          set({ 
-            error: err.response?.data?.msg || 'Registration failed',
-            loading: false 
+          set({
+            error: err.response?.data?.msg || "Registration failed",
+            loading: false,
           });
         }
       },
     }),
     {
-      name: 'user-storage',
+      name: "user-storage",
     }
   )
 );
 
 // UI Store remains the same as it doesn't make API calls
 export const useUIStore = create((set) => ({
-  theme: 'light',
-  language: 'en',
+  theme: "light",
+  language: "en",
   sidebarOpen: false,
   notifications: [],
 
-  toggleTheme: () => set((state) => ({ 
-    theme: state.theme === 'light' ? 'dark' : 'light' 
-  })),
+  toggleTheme: () =>
+    set((state) => ({
+      theme: state.theme === "light" ? "dark" : "light",
+    })),
 
   setLanguage: (lang) => set({ language: lang }),
 
-  toggleSidebar: () => set((state) => ({ 
-    sidebarOpen: !state.sidebarOpen 
-  })),
+  toggleSidebar: () =>
+    set((state) => ({
+      sidebarOpen: !state.sidebarOpen,
+    })),
 
-  addNotification: (notification) => set((state) => ({
-    notifications: [...state.notifications, notification],
-  })),
+  addNotification: (notification) =>
+    set((state) => ({
+      notifications: [...state.notifications, notification],
+    })),
 
-  removeNotification: (id) => set((state) => ({
-    notifications: state.notifications.filter(n => n.id !== id),
-  })),
+  removeNotification: (id) =>
+    set((state) => ({
+      notifications: state.notifications.filter((n) => n.id !== id),
+    })),
 }));
 
 // Booking Store remains the same as it doesn't make API calls
@@ -356,11 +367,12 @@ export const useBookingStore = create((set) => ({
   setPassengerDetails: (details) => set({ passengerDetails: details }),
   setPaymentMethod: (method) => set({ paymentMethod: method }),
   setBookingStep: (step) => set({ bookingStep: step }),
-  resetBooking: () => set({
-    selectedBus: null,
-    selectedSeats: [],
-    passengerDetails: [],
-    paymentMethod: null,
-    bookingStep: 1,
-  }),
+  resetBooking: () =>
+    set({
+      selectedBus: null,
+      selectedSeats: [],
+      passengerDetails: [],
+      paymentMethod: null,
+      bookingStep: 1,
+    }),
 }));

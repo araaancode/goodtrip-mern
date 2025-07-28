@@ -85,7 +85,6 @@ const busTicketSchema = new mongoose.Schema({
         unique:true
     },
 
-    // passengers count
     count: {
         type: Number,
         default: 0,
