@@ -1516,7 +1516,6 @@ exports.bookBus = async (req, res) => {
       req.body.firstCity === bus.driver.firstCity &&
       req.body.lastCity === bus.driver.lastCity;
 
-
     if (!isRouteValid) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         msg: "شهرهای نامعتبر",
@@ -1611,7 +1610,7 @@ exports.confirmBusTicket = async (req, res) => {
   try {
     await BusTicket.findByIdAndUpdate(
       req.params.ticketId,
-      { isCanceled: false, isConfirmed: true },
+      { isCanceled: false, isConfirmed: true, passengers: req.body.passengers },
       { new: true }
     ).then((busTicket) => {
       if (busTicket) {

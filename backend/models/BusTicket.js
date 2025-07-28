@@ -1,110 +1,114 @@
-const crypto = require('crypto');
-const mongoose = require('mongoose');
-const validator = require('validator');
+const crypto = require("crypto");
+const mongoose = require("mongoose");
+const validator = require("validator");
 
-const busTicketSchema = new mongoose.Schema({
+const busTicketSchema = new mongoose.Schema(
+  {
     driver: {
-        type: mongoose.Schema.ObjectId,
-        ref: 'Driver',
-        required: true
+      type: mongoose.Schema.ObjectId,
+      ref: "Driver",
+      required: true,
     },
     passengers: [
-        {
-            name: { type: String, required: true },
-            nationalCode: { type: Number, required: true },
-            price: { type: Number, required: true },
-            ticketOwner: {
-                type: mongoose.Schema.Types.ObjectId,
-                required: true,
-                ref: 'User',
-            },
+      {
+        name: { type: String, required: true },
+        nationalCode: { type: Number, required: true },
+        price: { type: Number, required: true },
+        age: { type: Number, required: true },
+        gender: { type: String, required: true },
+        ticketOwner: {
+          type: mongoose.Schema.Types.ObjectId,
+          required: true,
+          ref: "User",
         },
+      },
     ],
-    bus:
-    {
-        type: mongoose.Schema.ObjectId,
-        ref: 'Bus',
-        required: true
+    bus: {
+      type: mongoose.Schema.ObjectId,
+      ref: "Bus",
+      required: true,
     },
-    user: // ticket owner
-    {
-        type: mongoose.Schema.ObjectId,
-        ref: 'User',
-        required: true
+    // ticket owner
+    user: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+      required: true,
     },
     movingDate: {
-        type: Date,
-        default: Date.now()
+      type: Date,
+      default: Date.now(),
     },
     returningDate: {
-        type: Date,
-        default: Date.now()
+      type: Date,
+      default: Date.now(),
     },
     startHour: {
-        type: Date,
-        default: Date.now()
+      type: Date,
+      default: Date.now(),
     },
     endHour: {
-        type: Date,
-        default: Date.now()
+      type: Date,
+      default: Date.now(),
     },
     firstCity: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     lastCity: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     ticketPrice: {
-        type: Number,
-        required: true
+      type: Number,
+      required: true,
     },
-    seatNumbers: [{
-        type: Number
-    }],
+    seatNumbers: [
+      {
+        type: Number,
+      },
+    ],
     isCanceled: {
-        type: Boolean,
-        default: false,
-        required: true
+      type: Boolean,
+      default: false,
+      required: true,
     },
     isConfirmed: {
-        type: Boolean,
-        default: false,
-        required: true
+      type: Boolean,
+      default: false,
+      required: true,
     },
     ticketType: {
-       type: String,
-        enum: ['oneSide', 'twoSide'],
-        default: false,
-    }, 
+      type: String,
+      enum: ["oneSide", "twoSide"],
+      default: false,
+    },
 
-    ticketNumber:{
-        type:String,
-        required:true,
-        unique:true
+    ticketNumber: {
+      type: String,
+      required: true,
+      unique: true,
     },
 
     count: {
-        type: Number,
-        default: 0,
-        required: true
+      type: Number,
+      default: 0,
+      required: true,
     },
 
-    isValid:{
-        type: Boolean,
-        default: true,
-        required: true
+    isValid: {
+      type: Boolean,
+      default: true,
+      required: true,
     },
-    isExpired:{
-        type: Boolean,
-        default: false,
-        required: true
-    }
+    isExpired: {
+      type: Boolean,
+      default: false,
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
 
-}, { timestamps: true });
-
-
-const BusTicket = mongoose.model('BusTicket', busTicketSchema);
+const BusTicket = mongoose.model("BusTicket", busTicketSchema);
 
 module.exports = BusTicket;

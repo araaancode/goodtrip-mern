@@ -175,11 +175,10 @@ export const useBusStore = create(
         set({ loading: true, error: null });
         try {
           const { data } = await axios.get(`/api/users/buses/tickets/${id}`, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
+            withCredentials: true,
           });
           set({ currentTicket: data.ticket, loading: false });
+          return data.tickets;
         } catch (err) {
           set({
             error: err.response?.data?.msg || "Ticket not found",
@@ -188,16 +187,14 @@ export const useBusStore = create(
         }
       },
 
-      confirmTicket: async (ticketId) => {
+      confirmTicket: async ({ ticketId, passengers }) => {
         set({ loading: true, error: null });
         try {
           const { data } = await axios.put(
             `/api/users/buses/tickets/${ticketId}/confirm`,
-            {},
+            { passengers },
             {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-              },
+              withCredentials: true,
             }
           );
           set((state) => ({
@@ -222,9 +219,7 @@ export const useBusStore = create(
             `/api/users/buses/tickets/${ticketId}/cancel`,
             {},
             {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-              },
+              withCredentials: true, // Sends cookies automatically
             }
           );
           set((state) => ({
