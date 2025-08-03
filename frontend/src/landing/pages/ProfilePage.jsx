@@ -1,35 +1,36 @@
 // src/ProfilePage.js
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+
+import useUserStore from "../store/userStore"
+import useUserAuthStore from "../store/authStore"
+
 // Icons (grouped by source)
-import { 
-  RiTentLine,
+import {
   RiUser3Fill,
-  RiSearchLine,
-  RiCalendar2Line,
   RiLogoutBoxRLine,
   RiHeart2Line,
   RiBankCard2Line,
   RiNotificationLine,
   RiCustomerService2Line,
-  RiCameraFill,
 } from '@remixicon/react';
-import { FaCamera } from 'react-icons/fa';
 import { IoIosCamera } from 'react-icons/io';
 import { BsHouses } from "react-icons/bs";
 import { IoFastFoodOutline } from "react-icons/io5";
 import { LiaBusSolid } from "react-icons/lia";
 
 const ProfilePage = () => {
-  const userToken = localStorage.getItem('userToken');
   const navigate = useNavigate();
-  
+
+  // store hooks
+  const { updateProfile } = useUserStore()
+  const { user } = useUserAuthStore()
+
   // User state
-  const [user, setUser] = useState({});
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -39,73 +40,77 @@ const ProfilePage = () => {
   const [city, setCity] = useState('');
   const [gender, setGender] = useState('');
 
-  // Fetch user data
-  useEffect(() => {
-    axios.get('/api/users/me', {
-      headers: {
-        authorization: `Bearer ${userToken}`,
-      },
-    })
-      .then((res) => {
-        const { user } = res.data;
-        setUser(user);
-        setName(user.name);
-        setUsername(user.username);
-        setPhone(user.phone);
-        setEmail(user.email);
-        setNationalCode(user.nationalCode);
-        setProvince(user.province);
-        setCity(user.city);
-        setGender(user.gender);
-      })
-      .catch((err) => console.error(err));
-  }, []);
 
-  // Update user profile
-  const updateUser = (e) => {
+  // fill the form
+  useEffect(() => {
+    setName(user.name)
+    setPhone(user.phone)
+    setEmail(user.email)
+    setUsername(user.username)
+    setNationalCode(user.nationalCode)
+    setProvince(user.province)
+    setCity(user.city)
+    setGender(user.gender)
+  }, [user])
+
+
+  // // Update user profile
+  const updateUser = async (e) => {
     e.preventDefault();
 
-    axios.put(
-      '/api/users/update-profile',
-      {
-        name,
-        username,
-        phone,
-        email,
-        nationalCode,
-        gender,
-        province,
-        city,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          authorization: `Bearer ${userToken}`,
-        },
-      }
-    )
-      .then((res) => {
-        toast.success(res.data.msg, {
-          position: 'top-right',
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-      })
-      .catch((err) => {
-        toast.error(err, {
-          position: 'top-right',
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-      });
+    const data = await updateProfile(name, phone, email, username, nationalCode, province, city, gender)
+
+    toast.success(data.msg, {
+      position: 'top-right',
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
+
+    // axios.put(
+    //   '/api/users/update-profile',
+    //   {
+    //     name,
+    //     username,
+    //     phone,
+    //     email,
+    //     nationalCode,
+    //     gender,
+    //     province,
+    //     city,
+    //   },
+    //   {
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //       authorization: `Bearer ${userToken}`,
+    //     },
+    //   }
+    // )
+    //   .then((res) => {
+    //     toast.success(res.data.msg, {
+    //       position: 'top-right',
+    //       autoClose: 5000,
+    //       hideProgressBar: false,
+    //       closeOnClick: true,
+    //       pauseOnHover: true,
+    //       draggable: true,
+    //       progress: undefined,
+    //     });
+    //   })
+    //   .catch((err) => {
+    //     toast.error(err, {
+    //       position: 'top-right',
+    //       autoClose: 5000,
+    //       hideProgressBar: false,
+    //       closeOnClick: true,
+    //       pauseOnHover: true,
+    //       draggable: true,
+    //       progress: undefined,
+    //     });
+    //   });
   };
 
   const logout = () => {
@@ -344,9 +349,9 @@ const ProfilePage = () => {
             <div className="mt-8 flex justify-end">
               <button
                 type="submit"
-                className="bg-blue-800 hover:bg-blue-900 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-md hover:shadow-lg"
+                className="bg-blue-900 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-md hover:shadow-lg"
               >
-                تغییر اطلاعات
+                تغییر اطلاعات شخصی
               </button>
             </div>
           </form>
