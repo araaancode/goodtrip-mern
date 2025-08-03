@@ -18,6 +18,8 @@ import HousesPage from "./landing/pages/HousesPage";
 import HousesFormPage from "./landing/pages/HousesFormPage";
 import HousePage from "./landing/pages/HousePage";
 import BookingsPage from "./landing/pages/BookingsPage";
+import OrderFoodsPage from "./landing/pages/OrderFoodsPage";
+import OrderFoodPage from "./landing/pages/OrderFoodPage";
 import BookingPage from "./landing/pages/BookingPage";
 import ProtectedRoute from "./landing/routing/ProtectedRoute";
 import SearchResultsPage from "./landing/pages/SearchResultsPage";
@@ -221,6 +223,8 @@ function App() {
             <Route path="/house/:id" element={<HousePage />} />
             <Route path="/bookings" element={<BookingsPage />} />
             <Route path="/bookings/:id" element={<BookingPage />} />
+            <Route path="/order-foods" element={<OrderFoodsPage />} />
+            <Route path="/order-foods/:orderId" element={<OrderFoodPage />} />
             <Route path="/search-houses" element={<SearchResultsPage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
             <Route path="/bank" element={<BankPage />} />
