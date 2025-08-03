@@ -1,28 +1,34 @@
 // src/ProfilePage.js
 import React, { useState, useEffect } from 'react';
-import { 
-  RiTentLine, 
-  RiUser3Fill, 
-  RiSearchLine, 
-  RiCalendar2Line, 
-  RiLogoutBoxRLine, 
-  RiHeart2Line, 
-  RiBankCard2Line, 
-  RiNotificationLine, 
-  RiCustomerService2Line, 
-  RiCameraFill 
-} from "@remixicon/react";
-import { FaCamera } from 'react-icons/fa';
-import { useDispatch, useSelector } from 'react-redux';
-import { Link, useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { IoIosCamera } from "react-icons/io";
-import { ToastContainer, toast } from 'react-toastify';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Icons (grouped by source)
+import { 
+  RiTentLine,
+  RiUser3Fill,
+  RiSearchLine,
+  RiCalendar2Line,
+  RiLogoutBoxRLine,
+  RiHeart2Line,
+  RiBankCard2Line,
+  RiNotificationLine,
+  RiCustomerService2Line,
+  RiCameraFill,
+} from '@remixicon/react';
+import { FaCamera } from 'react-icons/fa';
+import { IoIosCamera } from 'react-icons/io';
+import { BsHouses } from "react-icons/bs";
+import { IoFastFoodOutline } from "react-icons/io5";
+import { LiaBusSolid } from "react-icons/lia";
+
 const ProfilePage = () => {
-  const userToken = localStorage.getItem("userToken") ? localStorage.getItem("userToken") : null;
+  const userToken = localStorage.getItem('userToken');
   const navigate = useNavigate();
+  
+  // User state
   const [user, setUser] = useState({});
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -33,77 +39,83 @@ const ProfilePage = () => {
   const [city, setCity] = useState('');
   const [gender, setGender] = useState('');
 
+  // Fetch user data
   useEffect(() => {
     axios.get('/api/users/me', {
       headers: {
-        'authorization': 'Bearer ' + userToken
-      }
+        authorization: `Bearer ${userToken}`,
+      },
     })
-    .then((res) => {
-      setUser(res.data.user);
-      setName(res.data.user.name);
-      setUsername(res.data.user.username);
-      setPhone(res.data.user.phone);
-      setEmail(res.data.user.email);
-      setNationalCode(res.data.user.nationalCode);
-      setProvince(res.data.user.province);
-      setCity(res.data.user.city);
-      setGender(res.data.user.gender);
-    })
-    .catch((err) => console.error(err));
+      .then((res) => {
+        const { user } = res.data;
+        setUser(user);
+        setName(user.name);
+        setUsername(user.username);
+        setPhone(user.phone);
+        setEmail(user.email);
+        setNationalCode(user.nationalCode);
+        setProvince(user.province);
+        setCity(user.city);
+        setGender(user.gender);
+      })
+      .catch((err) => console.error(err));
   }, []);
 
+  // Update user profile
   const updateUser = (e) => {
     e.preventDefault();
 
-    axios.put('/api/users/update-profile', {
-      name,
-      username,
-      phone,
-      email,
-      nationalCode,
-      gender,
-      province,
-      city
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'authorization': 'Bearer ' + userToken
+    axios.put(
+      '/api/users/update-profile',
+      {
+        name,
+        username,
+        phone,
+        email,
+        nationalCode,
+        gender,
+        province,
+        city,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          authorization: `Bearer ${userToken}`,
+        },
       }
-    })
-    .then((res) => {
-      toast.success(res.data.msg, {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
+    )
+      .then((res) => {
+        toast.success(res.data.msg, {
+          position: 'top-right',
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
+      })
+      .catch((err) => {
+        toast.error(err, {
+          position: 'top-right',
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
       });
-    })
-    .catch((err) => {
-      toast.error(err, {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-    });
   };
 
-  function logout() {
-    localStorage.removeItem("userToken");
+  const logout = () => {
+    localStorage.removeItem('userToken');
     navigate('/');
     window.location.reload();
-  }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      
       <div className="flex flex-col md:flex-row p-4 rtl mt-4 container mx-auto flex-grow">
         {/* User Sidebar */}
         <div className="w-full md:w-1/4 bg-white rounded-lg shadow border border-gray-200 mb-4 md:mb-0">
@@ -128,59 +140,83 @@ const ProfilePage = () => {
           <nav className="p-4">
             <ul className="space-y-3">
               <li>
-                <Link to="/profile" className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors">
+                <Link
+                  to="/profile"
+                  className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors"
+                >
                   <RiUser3Fill className="text-blue-800 ml-2" />
                   <span className="text-lg">حساب کاربری</span>
                 </Link>
               </li>
               <li>
-                <Link to="/bookings" className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors">
-                  <RiCalendar2Line className="ml-2" />
+                <Link
+                  to="/bookings"
+                  className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors"
+                >
+                  <BsHouses className="ml-2 w-8 h-8" />
                   <span className="text-lg">رزروهای اقامتگاه</span>
                 </Link>
               </li>
               <li>
-                <Link to="/bookings" className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors">
-                  <RiCalendar2Line className="ml-2" />
+                <Link
+                  to="/bookings"
+                  className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors"
+                >
+                  <IoFastFoodOutline className="ml-2 w-8 h-8" />
                   <span className="text-lg">سفارش های غذا</span>
                 </Link>
               </li>
               <li>
-                <Link to="/bookings" className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors">
-                  <RiCalendar2Line className="ml-2" />
+                <Link
+                  to="/bookings"
+                  className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors"
+                >
+                  <LiaBusSolid className="ml-2 w-8 h-8" />
                   <span className="text-lg">بلیط های اتوبوس</span>
                 </Link>
               </li>
               <li>
-                <Link to="/favorites" className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors">
-                  <RiHeart2Line className="ml-2" />
+                <Link
+                  to="/favorites"
+                  className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors"
+                >
+                  <RiHeart2Line className="ml-2 w-8 h-8" />
                   <span className="text-lg">لیست علاقه مندی ها</span>
                 </Link>
               </li>
               <li>
-                <Link to="/bank" className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors">
-                  <RiBankCard2Line className="ml-2" />
+                <Link
+                  to="/bank"
+                  className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors"
+                >
+                  <RiBankCard2Line className="ml-2 w-8 h-8" />
                   <span className="text-lg">اطلاعات حساب بانکی</span>
                 </Link>
               </li>
               <li>
-                <Link to="/notifications" className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors">
-                  <RiNotificationLine className="ml-2" />
+                <Link
+                  to="/notifications"
+                  className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors"
+                >
+                  <RiNotificationLine className="ml-2 w-8 h-8" />
                   <span className="text-lg">لیست اعلان ها</span>
                 </Link>
               </li>
               <li>
-                <Link to="/support" className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors">
-                  <RiCustomerService2Line className="ml-2" />
+                <Link
+                  to="/support"
+                  className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors"
+                >
+                  <RiCustomerService2Line className="ml-2 w-8 h-8" />
                   <span className="text-lg">پشتیبانی</span>
                 </Link>
               </li>
               <li>
-                <button 
+                <button
                   onClick={logout}
                   className="w-full flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors"
                 >
-                  <RiLogoutBoxRLine className="ml-2" />
+                  <RiLogoutBoxRLine className="ml-2 w-8 h-8" />
                   <span className="text-lg">خروج</span>
                 </button>
               </li>
@@ -195,7 +231,9 @@ const ProfilePage = () => {
               {/* Column 1 */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-gray-700 text-lg mb-2 font-medium">نام و نام خانوادگی</label>
+                  <label className="block text-gray-700 text-lg mb-2 font-medium">
+                    نام و نام خانوادگی
+                  </label>
                   <input
                     type="text"
                     id="name"
@@ -206,7 +244,9 @@ const ProfilePage = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 text-lg mb-2 font-medium">نام کاربری</label>
+                  <label className="block text-gray-700 text-lg mb-2 font-medium">
+                    نام کاربری
+                  </label>
                   <input
                     type="text"
                     id="username"
@@ -217,7 +257,9 @@ const ProfilePage = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 text-lg mb-2 font-medium">ایمیل</label>
+                  <label className="block text-gray-700 text-lg mb-2 font-medium">
+                    ایمیل
+                  </label>
                   <input
                     type="email"
                     id="email"
@@ -228,7 +270,9 @@ const ProfilePage = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 text-lg mb-2 font-medium">شماره همراه</label>
+                  <label className="block text-gray-700 text-lg mb-2 font-medium">
+                    شماره همراه
+                  </label>
                   <input
                     type="text"
                     id="phone"
@@ -243,7 +287,9 @@ const ProfilePage = () => {
               {/* Column 2 */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-gray-700 text-lg mb-2 font-medium">کد ملی</label>
+                  <label className="block text-gray-700 text-lg mb-2 font-medium">
+                    کد ملی
+                  </label>
                   <input
                     type="text"
                     id="nationalCode"
@@ -254,7 +300,9 @@ const ProfilePage = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 text-lg mb-2 font-medium">استان</label>
+                  <label className="block text-gray-700 text-lg mb-2 font-medium">
+                    استان
+                  </label>
                   <input
                     type="text"
                     id="province"
@@ -265,7 +313,9 @@ const ProfilePage = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 text-lg mb-2 font-medium">شهر</label>
+                  <label className="block text-gray-700 text-lg mb-2 font-medium">
+                    شهر
+                  </label>
                   <input
                     type="text"
                     id="city"
@@ -276,7 +326,9 @@ const ProfilePage = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 text-lg mb-2 font-medium">جنسیت</label>
+                  <label className="block text-gray-700 text-lg mb-2 font-medium">
+                    جنسیت
+                  </label>
                   <input
                     type="text"
                     id="gender"
