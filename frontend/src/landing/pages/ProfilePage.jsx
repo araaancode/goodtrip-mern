@@ -122,7 +122,7 @@ const ProfilePage = () => {
               </li>
               <li>
                 <Link
-                  to="/bookings"
+                  to="/order-foods"
                   className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors"
                 >
                   <IoFastFoodOutline className="ml-2 w-8 h-8" />
@@ -131,7 +131,7 @@ const ProfilePage = () => {
               </li>
               <li>
                 <Link
-                  to="/bookings"
+                  to="/bus-tickets"
                   className="flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors"
                 >
                   <LiaBusSolid className="ml-2 w-8 h-8" />
