@@ -74,6 +74,19 @@ const useUserAuthStore = create((set) => ({
     }
   },
 
+  // logout
+  logout: async () => {
+    try {
+      let response = await axios.get("/api/auth/logout", {
+        withCredentials: true,
+      });
+      console.log(response);
+      set({ user: null, isAuthenticated: false });
+    } catch (error) {
+      console.log(error);
+    }
+  },
+
   // Get current user data
   checkAuth: async () => {
     try {
@@ -85,20 +98,6 @@ const useUserAuthStore = create((set) => ({
       console.log(error);
     }
   },
-
-  // logout: async () => {
-  //   try {
-  //     let response = await axios.post(
-  //       "/api/auth/logout",
-  //       {},
-  //       { withCredentials: true }
-  //     );
-  //     console.log(response);
-  //     set({ user: null, isAuthenticated: false });
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // },
 }));
 
 export default useUserAuthStore;

@@ -28,7 +28,7 @@ const ProfilePage = () => {
 
   // store hooks
   const { updateProfile } = useUserStore()
-  const { user } = useUserAuthStore()
+  const { user, logout } = useUserAuthStore()
 
   // User state
   const [name, setName] = useState('');
@@ -70,53 +70,11 @@ const ProfilePage = () => {
       progress: undefined,
     });
 
-    // axios.put(
-    //   '/api/users/update-profile',
-    //   {
-    //     name,
-    //     username,
-    //     phone,
-    //     email,
-    //     nationalCode,
-    //     gender,
-    //     province,
-    //     city,
-    //   },
-    //   {
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //       authorization: `Bearer ${userToken}`,
-    //     },
-    //   }
-    // )
-    //   .then((res) => {
-    //     toast.success(res.data.msg, {
-    //       position: 'top-right',
-    //       autoClose: 5000,
-    //       hideProgressBar: false,
-    //       closeOnClick: true,
-    //       pauseOnHover: true,
-    //       draggable: true,
-    //       progress: undefined,
-    //     });
-    //   })
-    //   .catch((err) => {
-    //     toast.error(err, {
-    //       position: 'top-right',
-    //       autoClose: 5000,
-    //       hideProgressBar: false,
-    //       closeOnClick: true,
-    //       pauseOnHover: true,
-    //       draggable: true,
-    //       progress: undefined,
-    //     });
-    //   });
   };
 
-  const logout = () => {
-    localStorage.removeItem('userToken');
+  const logoutUser = async () => {
+    await logout()
     navigate('/');
-    window.location.reload();
   };
 
   return (
@@ -218,7 +176,7 @@ const ProfilePage = () => {
               </li>
               <li>
                 <button
-                  onClick={logout}
+                  onClick={logoutUser}
                   className="w-full flex items-center p-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-800 transition-colors"
                 >
                   <RiLogoutBoxRLine className="ml-2 w-8 h-8" />
