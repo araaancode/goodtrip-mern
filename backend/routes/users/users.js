@@ -9,6 +9,11 @@ const protect = require("../../middlewares/authUser");
 const { userUpload } = require("../../utils/upload");
 
 // bus tickets
+
+
+// router.get('/test_cook',userCtrls.findTestCook)
+
+
 router.get("/buses/tickets", protect, userCtrls.getAllBusTickets);
 router.get("/buses/tickets/:ticketId", protect, userCtrls.getSingleBusTicket);
 router.put(

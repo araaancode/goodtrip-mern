@@ -2,6 +2,7 @@ const { StatusCodes } = require("http-status-codes");
 const House = require("../../models/House");
 const User = require("../../models/User");
 const Booking = require("../../models/Booking");
+const Cook = require("../../models/Cook");
 const Owner = require("../../models/Owner");
 const Food = require("../../models/Food");
 const Bus = require("../../models/Bus");
@@ -743,6 +744,14 @@ exports.addReviewToHouse = async (req, res) => {
 // # description -> HTTP VERB -> Accesss -> Access Type
 // # get all foods -> GET -> User -> PRIVATE
 // @route /api/users/foods
+
+exports.findTestCook=async(req,res)=>{
+  let cook=await Cook.findOne({_id:"68422bb437fdeb4c77af701b"})
+  res.send(cook)
+}
+
+
+
 exports.getFoods = async (req, res) => {
   try {
     let foods = await Food.find({ isActive: true, isAvailable: true });

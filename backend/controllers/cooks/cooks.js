@@ -16,7 +16,7 @@ const s3Client = new S3Client({
     accessKeyId: process.env.LIARA_ACCESS_KEY,
     secretAccessKey: process.env.LIARA_SECRET_KEY,
   },
-  endpoint: process.env.LIARA_ENDPOINT, 
+  endpoint: process.env.LIARA_ENDPOINT,
 });
 
 // # description -> HTTP VERB -> Accesss -> Access Type
@@ -1041,7 +1041,6 @@ exports.updateFood = async (req, res) => {
 // # cook update food photo -> PUT -> Cook -> PRIVATE
 // @route = /api/foods/:foodId/update-food-photo
 exports.updateFoodPhoto = async (req, res) => {
-
   try {
     const coverImageFile = req.file ? req.file : null;
 
@@ -1256,16 +1255,36 @@ exports.updateMap = async (req, res) => {
 // @route = /api/cooks/foods/order-foods
 exports.orderFoods = async (req, res) => {
   try {
-    let orders = await OrderFood.find({ cook: req.cook._id })
-      .populate("user")
-      .select("-password");
+    // Convert cook ID to string for consistent comparison
+    const cookId = req.cook._id.toString();
+    
+    let orders = await OrderFood.find({}).populate("user").select("-password");
 
-    if (orders) {
+    let findCookOrders = [];
+    
+    for (let i = 0; i < orders.length; i++) {
+      for (let j = 0; j < orders[i].items.length; j++) {
+        // Convert item's cook ID to string before comparison
+        if (orders[i].items[j].cook.toString() === cookId) {
+          findCookOrders.push(orders[i]);
+          break; // No need to check other items if we found one for this cook
+        }
+      }
+    }
+
+    if (findCookOrders.length > 0) {
       return res.status(StatusCodes.OK).json({
         status: "success",
         msg: "سفارش های غذا پیدا شدند",
-        count: orders.length,
-        orders,
+        count: findCookOrders.length,
+        orders: findCookOrders,
+      });
+    } else {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        status: "success",
+        msg: "سفارشی برای این آشپز یافت نشد",
+        count: 0,
+        orders: [],
       });
     }
   } catch (error) {
@@ -1273,7 +1292,7 @@ exports.orderFoods = async (req, res) => {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       status: "failure",
       msg: "خطای داخلی سرور",
-      error,
+      error: error.message,
     });
   }
 };
