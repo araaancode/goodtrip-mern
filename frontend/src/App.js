@@ -46,8 +46,8 @@ import PrivateRoutes from "./landing/routing/privateRoutes";
 // import AdminResetPassword from "./admin/features/user/ResetPassword"
 
 // // cook private routes
-// import CookPublicRoutes from "./cooks/routing/publicRoutes"
-// import CookPrivateRoutes from "./cooks/routing/privateRoutes"
+import CookPublicRoutes from "./cooks/routing/publicRoutes";
+import CookPrivateRoutes from "./cooks/routing/privateRoutes";
 
 // // driver private routes
 // import DriverPublicRoutes from "./drivers/routing/publicRoutes"
@@ -78,11 +78,11 @@ import PrivateRoutes from "./landing/routing/privateRoutes";
 // import OwnersResetPassword from "./owners/pages/ResetPassword"
 
 // // cooks pages
-// import CooksLayout from "./cooks/containers/Layout"
-// import CooksLogin from "./cooks/pages/Login"
-// import CooksRegister from "./cooks/pages/Register"
-// import CooksForgotPassword from "./cooks/pages/ForgotPassword"
-// import CookResetPassword from "./cooks/pages/ResetPassword"
+import CooksLayout from "./cooks/containers/Layout";
+import CooksLogin from "./cooks/pages/Login";
+import CooksRegister from "./cooks/pages/Register";
+import CooksForgotPassword from "./cooks/pages/ForgotPassword";
+import CookResetPassword from "./cooks/pages/ResetPassword";
 
 // not found page
 import NotFound from "./NotFound";
@@ -177,15 +177,18 @@ function App() {
 
       {/* cooks pages */}
       {/* <Route element={<CookPublicRoutes />}>
-            <Route path="/cooks/login" element={<CooksLogin />} />
-            <Route path="/cooks/forgot-password" element={<CooksForgotPassword />} />
-            <Route path="/cooks/reset-password" element={<CookResetPassword />} />
-            <Route path="/cooks/register" element={<CooksRegister />} />
-          </Route>
+        <Route path="/cooks/login" element={<CooksLogin />} />
+        <Route
+          path="/cooks/forgot-password"
+          element={<CooksForgotPassword />}
+        />
+        <Route path="/cooks/reset-password" element={<CookResetPassword />} />
+        <Route path="/cooks/register" element={<CooksRegister />} />
+      </Route> */}
 
-          <Route element={<CookPrivateRoutes />}>
-            <Route path="/cooks/*" element={<CooksLayout />} />
-          </Route> */}
+      {/* <Route element={<CookPrivateRoutes />}>
+        <Route path="/cooks/*" element={<CooksLayout />} />
+      </Route> */}
 
       {/* not found Page */}
       {/* <Route path="*" element={<NotFound />} /> */}
@@ -194,7 +197,25 @@ function App() {
 
       <Router>
         <Routes>
-          {/* Public Routes (No Layout) */}
+          {/* **************************************** cooks routes **************************************** */}
+          <Route element={<CookPublicRoutes />}>
+            <Route path="/cooks/login" element={<CooksLogin />} />
+            <Route
+              path="/cooks/forgot-password"
+              element={<CooksForgotPassword />}
+            />
+            <Route
+              path="/cooks/reset-password"
+              element={<CookResetPassword />}
+            />
+            <Route path="/cooks/register" element={<CooksRegister />} />
+          </Route>
+
+          <Route element={<CookPrivateRoutes />}>
+            <Route path="/cooks/*" element={<CooksLayout />} />
+          </Route>
+
+          {/* **************************************** users routes **************************************** */}
           <Route
             path="/login"
             element={
@@ -210,7 +231,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
           {/* Main App Routes (With Layout) */}
-          <Route element={<IndexLayout />}>
+           <Route element={<IndexLayout />}>
             <Route index element={<IndexPage />} />
             <Route
               path="/profile"
@@ -232,10 +253,12 @@ function App() {
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/support" element={<SupportPage />} />
             <Route path="/booking-bus" element={<BookingBus />} />
-            <Route path="/confirm-bus-ticket/:id" element={<ConfirmBookingBus />} />
+            <Route
+              path="/confirm-bus-ticket/:id"
+              element={<ConfirmBookingBus />}
+            />
             <Route path="/bus-tickets" element={<BusTicketsPage />} />
 
-            {/* foods */}
             <Route
               path="/cart"
               element={
@@ -246,10 +269,9 @@ function App() {
             <Route path="/order-food" element={<OrderFood />} />
             <Route path="/create-order" element={<CreateOrderFood />} />
             <Route path="/foods/:foodId" element={<SingleFoodPage />} />
-          </Route>
+          </Route> 
 
-          {/* 404 Page */}
-          <Route path="*" element={<NotFound />} />
+           <Route path="*" element={<NotFound />} /> 
         </Routes>
       </Router>
     </>

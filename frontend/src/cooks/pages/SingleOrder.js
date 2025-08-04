@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import ClipLoader from "react-spinners/ClipLoader";
+// import ClipLoader from "react-spinner/ClipLoader";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
@@ -84,13 +84,15 @@ const SingleOrder = () => {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">
         {loading ? (
-          <ClipLoader
-            color="#1b3a54"
-            loading={loading}
-            size={60}
-            aria-label="Loading Spinner"
-            data-testid="loader"
-          />
+          // <ClipLoader
+          //   color="#1b3a54"
+          //   loading={loading}
+          //   size={60}
+          //   aria-label="Loading Spinner"
+          //   data-testid="loader"
+          // />
+
+          <h1>Loading...</h1>
         ) : (
           <h1 className="text-2xl font-bold text-[#1b3a54]">Content Loaded!</h1>
         )}

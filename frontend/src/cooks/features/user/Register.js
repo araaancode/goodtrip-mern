@@ -131,6 +131,7 @@ function Register() {
 
 
             } catch (error) {
+                console.log(error)
                 setBtnSpinner(false)
                 console.log('error', error)
                 toast.error('خطایی وجود دارد. دوباره امتحان کنید !', {
