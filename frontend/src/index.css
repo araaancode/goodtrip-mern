@@ -62,15 +62,11 @@ textarea {
   border: 0;
   border-radius: 5px;
   padding: 10px;
-  background-color: rgb(30 64 175);
+  background-color: rgb(30 58 138);
   color: #fff;
   width: 180px;
   font-weight: bold;
   font-size: 15px;
-}
-
-.app-btn-blue:hover {
-  background-color: rgb(30 58 138);
 }
 
 .app-btn-gray {

@@ -8,6 +8,8 @@ import {
 
 import useUserAuthStore from "./landing/store/authStore";
 
+import axios from "axios"
+
 // landing pages
 import IndexLayout from "./landing/components/Layout";
 import IndexPage from "./landing/pages/IndexPage";
@@ -86,6 +88,10 @@ import CookResetPassword from "./cooks/pages/ResetPassword";
 
 // not found page
 import NotFound from "./NotFound";
+
+
+axios.defaults.baseURL = 'http://localhost:5000';
+axios.defaults.withCredentials = true; 
 
 function App() {
   const { isAuthenticated, checkAuth } = useUserAuthStore();

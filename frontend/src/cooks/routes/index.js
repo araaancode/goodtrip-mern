@@ -1,130 +1,108 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react';
 
-import AddFood from "../pages/AddFood";
-import Dashboard from "../pages/protected/Dashboard";
-import Welcome from "../pages/protected/Welcome";
-import Page404 from "../pages/protected/404";
-import Blank from "../pages/protected/Blank";
-import Bookings from "../pages/Bookings";
-import Cooks from "../pages/Cooks";
-import Comments from "../pages/Comments";
-import Financials from "../pages/Financials";
-import Advertisments from "../pages/Advertisments";
-import Prices from "../pages/Prices";
-import SupportTickets from "../pages/SupportTickets";
-import CreateSupportTicket from "../pages/CreateSupportTicket";
-import Bank from "../pages/Bank";
-import Owners from "../pages/Owners";
-import Profile from "../pages/Profile";
-import CookInfo from "../pages/CookInfo";
-import Orders from "../pages/Orders";
-import SingleOrder from "../pages/SingleOrder";
-import CreateAds from "../pages/CreateAds";
-import UpdateAds from "../pages/UpdateAds";
-import Foods from "../pages/Foods";
-import UpdateFood from "../pages/UpdateFood";
-import SingleSupportTicket from "../pages/SingleSupportTicket";
+// Lazy load all components
+const AddFood = lazy(() => import("../pages/AddFood"));
+const Dashboard = lazy(() => import("../pages/protected/Dashboard"));
+const Welcome = lazy(() => import("../pages/protected/Welcome"));
+const Cooks = lazy(() => import("../pages/Cooks"));
+const Comments = lazy(() => import("../pages/Comments"));
+const Financials = lazy(() => import("../pages/Financials"));
+const Advertisments = lazy(() => import("../pages/Advertisments"));
+const SupportTickets = lazy(() => import("../pages/SupportTickets"));
+const CreateSupportTicket = lazy(() => import("../pages/CreateSupportTicket"));
+const Bank = lazy(() => import("../pages/Bank"));
+const Profile = lazy(() => import("../pages/Profile"));
+const Orders = lazy(() => import("../pages/Orders"));
+const SingleOrder = lazy(() => import("../pages/SingleOrder"));
+const CreateAds = lazy(() => import("../pages/CreateAds"));
+const UpdateAds = lazy(() => import("../pages/UpdateAds"));
+const Foods = lazy(() => import("../pages/Foods"));
+const UpdateFood = lazy(() => import("../pages/UpdateFood"));
+const SingleSupportTicket = lazy(() => import("../pages/SingleSupportTicket"));
+
+// Create a loading component
+const Loading = () => <div>Loading...</div>; // Replace with your custom loading component
+
+// Wrap each component with Suspense
+const withSuspense = (Component) => (props) => (
+  <Suspense fallback={<Loading />}>
+    <Component {...props} />
+  </Suspense>
+);
 
 const routes = [
   {
     path: '/orders',
-    component: Orders,
+    component: withSuspense(Orders),
   },
   {
     path: '/orders/:orderId/show-details',
-    component: SingleOrder,
+    component: withSuspense(SingleOrder),
   },
   {
     path: '/financials',
-    component: Financials,
+    component: withSuspense(Financials),
   },
   {
     path: '/cooks',
-    component: Cooks,
+    component: withSuspense(Cooks),
   },
-
   {
     path: '/dashboard',
-    component: Dashboard,
+    component: withSuspense(Dashboard),
   },
   {
     path: '/welcome',
-    component: Welcome,
-  },
-  {
-    path: '/blank',
-    component: Blank,
+    component: withSuspense(Welcome),
   },
   {
     path: '/comments',
-    component: Comments,
+    component: withSuspense(Comments),
   },
-  // {
-  //   path: '/rates',
-  //   component: Rates,
-  // },
-
   {
     path: '/advertisments',
-    component: Advertisments,
-  },
-  {
-    path: '/price',
-    component: Prices,
+    component: withSuspense(Advertisments),
   },
   {
     path: '/support-tickets',
-    component: SupportTickets,
+    component: withSuspense(SupportTickets),
   },
   {
     path: '/create-support-ticket',
-    component: CreateSupportTicket,
+    component: withSuspense(CreateSupportTicket),
   },
-
   {
     path: '/support-tickets/:stId',
-    component: SingleSupportTicket,
+    component: withSuspense(SingleSupportTicket),
   },
   {
     path: '/bank',
-    component: Bank,
+    component: withSuspense(Bank),
   },
   {
     path: '/profile',
-    component: Profile,
+    component: withSuspense(Profile),
   },
-  // {
-  //   path: '/cook-info',
-  //   component: CookInfo,
-  // },
-
   {
     path: '/create-advertisment',
-    component: CreateAds,
+    component: withSuspense(CreateAds),
   },
-
   {
     path: '/advertisments/:adsId/update',
-    component: UpdateAds,
+    component: withSuspense(UpdateAds),
   },
-
   {
     path: '/add-food',
-    component: AddFood,
+    component: withSuspense(AddFood),
   },
-
   {
     path: '/foods',
-    component: Foods,
+    component: withSuspense(Foods),
   },
-
   {
     path: '/foods/:foodId/update',
-    component: UpdateFood,
+    component: withSuspense(UpdateFood),
   },
+];
 
-
-
-]
-
-export default routes
+export default routes;

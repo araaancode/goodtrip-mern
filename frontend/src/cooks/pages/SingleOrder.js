@@ -1,9 +1,38 @@
 import React, { useState, useEffect } from "react";
-// import ClipLoader from "react-spinner/ClipLoader";
+import { useParams } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import TitleCard from "../components/Cards/TitleCard";
+import {
+  Box,
+  Typography,
+  Paper,
+  Divider,
+  Chip,
+  CircularProgress,
+  Button,
+  Select,
+  MenuItem,
+  Modal,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Avatar,
+  LinearProgress
+} from "@mui/material";
+import {
+  CheckCircleOutline,
+  CancelOutlined,
+  HourglassEmpty,
+  LocationOn,
+  CalendarToday,
+  Receipt,
+  LocalShipping
+} from "@mui/icons-material";
 
 const SingleOrder = () => {
   const [order, setOrder] = useState(null);
@@ -11,28 +40,38 @@ const SingleOrder = () => {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("");
+  const { orderId } = useParams();
 
-  // Get token and orderId with validation
-  const token = localStorage.getItem("userToken");
-  const orderId = window.location.href
-    .split("/orders/")[1]
-    ?.split("/show-details")[0];
+  const statusIcons = {
+    Completed: <CheckCircleOutline color="success" />,
+    Cancelled: <CancelOutlined color="error" />,
+    Pending: <HourglassEmpty color="warning" />
+  };
+
+  const statusColors = {
+    Completed: "success",
+    Cancelled: "error",
+    Pending: "warning"
+  };
+
+  const statusToPersian = {
+    Completed: "تحویل داده شده",
+    Cancelled: "لغو شده",
+    Pending: "در حال آماده سازی"
+  };
 
   const getStatusProgress = (status) => {
     switch (status) {
-      case "Cancelled":
-        return 0;
-      case "Pending":
-        return 50;
-      case "Completed":
-        return 100;
-      default:
-        console.warn(`Unexpected status: ${status}`);
-        return 0;
+      case "Cancelled": return 0;
+      case "Pending": return 50;
+      case "Completed": return 100;
+      default: return 0;
     }
   };
 
   useEffect(() => {
+    const token = localStorage.getItem("userToken");
+    
     if (!token || !orderId) {
       setError("Missing token or order ID");
       setLoading(false);
@@ -40,277 +79,239 @@ const SingleOrder = () => {
       return;
     }
 
-    setLoading(true);
-    axios
-      .get(`/api/cooks/foods/order-foods/${orderId}`, {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      })
-      .then((res) => {
-        setOrder(res.data.order[0]);
-        setSelectedStatus(res.data.order[0].orderStatus);
-        setLoading(false);
-      })
-      .catch((error) => {
+    const fetchOrder = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(
+          `/api/cooks/foods/order-foods/${orderId}`,
+          {
+            headers: { authorization: `Bearer ${token}` }
+          }
+        );
+        
+        setOrder(response.data.order);
+        setSelectedStatus(response.data.order.orderStatus);
+      } catch (error) {
         console.error("API Error:", error);
-        setError("Failed to load order");
+        setError(error.response?.data?.msg || "خطا در بارگذاری سفارش");
+        toast.error(error.response?.data?.msg || "خطا در بارگذاری سفارش");
+      } finally {
         setLoading(false);
-        toast.error("خطا در بارگذاری سفارش");
-      });
-  }, [orderId, token]);
+      }
+    };
+
+    fetchOrder();
+  }, [orderId]);
 
   const handleStatusChange = async () => {
     try {
+      const token = localStorage.getItem("userToken");
       await axios.put(
         `/api/cooks/foods/order-foods/${orderId}/change-status`,
         { orderStatus: selectedStatus },
-        {
-          headers: {
-            authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { authorization: `Bearer ${token}` } }
       );
-      setOrder({ ...order, orderStatus: selectedStatus });
+      
+      setOrder(prev => ({ ...prev, orderStatus: selectedStatus }));
       setIsModalOpen(false);
       toast.success("وضعیت سفارش با موفقیت تغییر کرد");
     } catch (error) {
       console.error("Error updating status:", error);
-      toast.error("خطا در تغییر وضعیت سفارش");
+      toast.error(error.response?.data?.msg || "خطا در تغییر وضعیت سفارش");
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
-        {loading ? (
-          // <ClipLoader
-          //   color="#1b3a54"
-          //   loading={loading}
-          //   size={60}
-          //   aria-label="Loading Spinner"
-          //   data-testid="loader"
-          // />
-
-          <h1>Loading...</h1>
-        ) : (
-          <h1 className="text-2xl font-bold text-[#1b3a54]">Content Loaded!</h1>
-        )}
-      </div>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (error || !order) {
     return (
-      <div className="text-center py-8 text-red-600">
-        خطا: {error || "سفارش یافت نشد"}
-      </div>
+      <Box textAlign="center" py={4} color="error.main">
+        <Typography variant="h6">{error || "سفارش یافت نشد"}</Typography>
+      </Box>
     );
   }
 
-  const statusToPersian = (s) => {
-    if (s === "Completed") {
-      return "تحویل داده شده";
-    } else if (s === "Cancelled") {
-      return "لغو شده";
-    } else {
-      return "در حال آماده سازی";
-    }
-  };
-
   return (
-    <>
-      <TitleCard title="جزئیات سفارش" topMargin="mt-2" dir="rtl">
-        <div className="min-h-screen py-8 px-4 font-vazir">
-          <div className="max-w-5xl mx-auto bg-white rounded-2xl p-8 transition-all duration-300">
-            {/* Order Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-gray-700 mb-2">
-                  <span className="font-semibold">شماره سفارش:</span>{" "}
-                  {order._id}
-                </p>
-                <p className="text-gray-700 mb-2">
-                  <span className="font-semibold">تاریخ:</span>{" "}
-                  {new Date(order.createdAt).toLocaleDateString("fa-IR")}
-                </p>
-                <p className="text-gray-700 mb-2">
-                  <span className="font-semibold ml-2">وضعیت:</span>
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      order.orderStatus === "Completed"
-                        ? "bg-green-100 text-green-700"
-                        : order.orderStatus === "Pending"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-yellow-100 text-yellow-700"
-                    }`}
-                  >
-                    {statusToPersian(order.orderStatus)}
-                  </span>
-                </p>
-                <div className="mt-4">
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div
-                      className="bg-blue-900 h-2.5 rounded-full transition-all duration-500"
-                      style={{ width: `${getStatusProgress(order.orderStatus)}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-gray-700">
-                  <span className="font-semibold">آدرس تحویل:</span>{" "}
-                  {order.address}
-                </p>
-                <div className="mt-4">
-                  <iframe
-                    className="w-full h-32 rounded-lg"
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3239.841073143318!2d51.40999331520991!3d35.68919798019295!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3f8e00491d7f0b5b%3A0x4c2e4e6f5b4b1c7!2sTehran%2C%20Valiasr%20St!5e0!3m2!1sen!2s!4v1634024059877!5m2!1sen!2s"
-                    allowFullScreen=""
-                    loading="lazy"
-                  ></iframe>
-                </div>
-              </div>
-            </div>
-
-            {/* Order Items */}
-            <div className="mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                اقلام سفارش
-              </h2>
-              <div className="border rounded-xl overflow-hidden">
-                <table className="w-full text-right">
-                  <thead className="bg-blue-50">
-                    <tr>
-                      <th className="p-4 text-gray-700 font-semibold">تصویر</th>
-                      <th className="p-4 text-gray-700 font-semibold">مورد</th>
-                      <th className="p-4 text-gray-700 font-semibold">تعداد</th>
-                      <th className="p-4 text-gray-700 font-semibold">
-                        قیمت (ریال)
-                      </th>
-                      <th className="p-4 text-gray-700 font-semibold">جمع</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {order.foodItems?.length > 0 ? (
-                      order.foodItems.map((item, index) => (
-                        <tr
-                          key={index}
-                          className="border-t hover:bg-gray-50 transition-colors duration-200"
-                        >
-                          <td className="p-4">
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="w-16 h-16 object-cover rounded-lg shadow-sm"
-                              onError={(e) =>
-                                (e.target.src = "/fallback-image.jpg")
-                              }
-                            />
-                          </td>
-                          <td className="p-4 text-gray-800">{item.name}</td>
-                          <td className="p-4 text-gray-800">{item.count}</td>
-                          <td className="p-4 text-gray-800">{item.price}</td>
-                          <td className="p-4 text-gray-800 font-medium">
-                            {item.count * item.price}
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td
-                          colSpan="5"
-                          className="p-4 text-center text-gray-600"
-                        >
-                          هیچ آیتمی یافت نشد
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Total */}
-            <div className="flex justify-between items-center border-t pt-6 pb-4">
-              <p className="text-xl font-semibold text-gray-900">جمع کل:</p>
-              <p className="text-2xl font-bold text-blue-900">
-                {order.totalPrice} ریال
-              </p>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="mt-3 flex justify-end gap-4">
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="px-6 py-3 font-bold bg-blue-900 text-white rounded-lg hover:bg-blue-800 transition-colors duration-200"
-              >
-                تغییر وضعیت سفارش
-              </button>
+    <TitleCard title="جزئیات سفارش" topMargin="mt-2" dir="rtl">
+      <Box sx={{ p: 3 }}>
+        {/* Order Summary */}
+        <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3} mb={4}>
+          <Paper sx={{ p: 3, flex: 1 }} elevation={2}>
+            <Box display="flex" alignItems="center" gap={1} mb={2}>
+              <Receipt color="primary" />
+              <Typography variant="h6">اطلاعات سفارش</Typography>
+            </Box>
             
-            </div>
-          </div>
-        </div>
+            <Box mb={2}>
+              <Typography variant="body2" color="text.secondary">شماره سفارش:</Typography>
+              <Typography variant="body1">{order._id}</Typography>
+            </Box>
+            
+            <Box mb={2}>
+              <Typography variant="body2" color="text.secondary">تاریخ:</Typography>
+              <Typography variant="body1">
+                {new Date(order.createdAt).toLocaleDateString('fa-IR')}
+              </Typography>
+            </Box>
+            
+            <Box>
+              <Typography variant="body2" color="text.secondary">وضعیت:</Typography>
+              <Chip
+                icon={statusIcons[order.orderStatus]}
+                label={statusToPersian[order.orderStatus]}
+                color={statusColors[order.orderStatus]}
+                sx={{ mt: 1 }}
+              />
+            </Box>
+            
+            <Box mt={3}>
+              <LinearProgress 
+                variant="determinate" 
+                value={getStatusProgress(order.orderStatus)} 
+                color="primary"
+                sx={{ height: 8, borderRadius: 4 }}
+              />
+            </Box>
+          </Paper>
 
-        {/* Modal */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 text-right">
-                تغییر وضعیت سفارش
-              </h2>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium mb-2 text-right">
-                  انتخاب وضعیت
-                </label>
-                <div className="relative">
-                  <select
-                    value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="appearance-none w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-800 text-right focus:ring-2 focus:ring-blue-900 focus:border-blue-900 hover:border-blue-900 transition-colors duration-200 pr-10"
-                  >
-                    <option value="Pending">در حال آماده سازی</option>
-                    <option value="Completed">تحویل داده شده</option>
-                    <option value="Cancelled">لغو شده</option>
-                  </select>
-                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <svg
-                      className="w-5 h-5 text-gray-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M19 9l-7 7-7-7"
-                      ></path>
-                    </svg>
-                  </span>
-                </div>
-              </div>
-              <div className="flex justify-end gap-4">
-                <button
-                  onClick={handleStatusChange}
-                  className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800"
-                >
-                  ذخیره
-                </button>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
-                >
-                  انصراف
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        <ToastContainer />
-      </TitleCard>
-    </>
+          <Paper sx={{ p: 3, flex: 1 }} elevation={2}>
+            <Box display="flex" alignItems="center" gap={1} mb={2}>
+              <LocationOn color="primary" />
+              <Typography variant="h6">اطلاعات تحویل</Typography>
+            </Box>
+            
+            <Box mb={2}>
+              <Typography variant="body2" color="text.secondary">آدرس:</Typography>
+              <Typography variant="body1">{order.deliveryAddress}</Typography>
+            </Box>
+            
+            <Box mb={2}>
+              <Typography variant="body2" color="text.secondary">شماره تماس:</Typography>
+              <Typography variant="body1">{order.contactNumber}</Typography>
+            </Box>
+            
+            <Box>
+              <Typography variant="body2" color="text.secondary">توضیحات:</Typography>
+              <Typography variant="body1">
+                {order.description || "بدون توضیحات"}
+              </Typography>
+            </Box>
+          </Paper>
+        </Box>
+
+        {/* Order Items */}
+        <Paper sx={{ p: 3, mb: 4 }} elevation={2}>
+          <Box display="flex" alignItems="center" gap={1} mb={3}>
+            <LocalShipping color="primary" />
+            <Typography variant="h6">اقلام سفارش</Typography>
+          </Box>
+          
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: 'action.hover' }}>
+                  <TableCell>تصویر</TableCell>
+                  <TableCell>نام غذا</TableCell>
+                  <TableCell align="center">تعداد</TableCell>
+                  <TableCell align="center">قیمت واحد (ریال)</TableCell>
+                  <TableCell align="center">جمع (ریال)</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {order.items?.map((item, index) => (
+                  <TableRow key={index} hover>
+                    <TableCell>
+                      <Avatar 
+                        src={item.food?.image} 
+                        alt={item.food?.name}
+                        sx={{ width: 56, height: 56 }}
+                      />
+                    </TableCell>
+                    <TableCell>{item.food?.name || item.name}</TableCell>
+                    <TableCell align="center">{item.quantity}</TableCell>
+                    <TableCell align="center">{item.price.toLocaleString()}</TableCell>
+                    <TableCell align="center">{(item.price * item.quantity).toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+
+        {/* Order Total */}
+        <Box display="flex" justifyContent="space-between" alignItems="center" p={2} bgcolor="grey.100" borderRadius={2}>
+          <Typography variant="h6">جمع کل سفارش:</Typography>
+          <Typography variant="h5" fontWeight="bold" color="primary">
+            {order.totalAmount.toLocaleString()} ریال
+          </Typography>
+        </Box>
+
+        {/* Action Buttons */}
+        <Box display="flex" justifyContent="flex-end" mt={4}>
+          <Button 
+            variant="contained" 
+            color="primary"
+            onClick={() => setIsModalOpen(true)}
+            sx={{ px: 4, py: 1.5 }}
+          >
+            تغییر وضعیت سفارش
+          </Button>
+        </Box>
+
+        {/* Status Change Modal */}
+        <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
+          <Box sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 400,
+            bgcolor: 'background.paper',
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2
+          }}>
+            <Typography variant="h6" mb={3} textAlign="center">
+              تغییر وضعیت سفارش
+            </Typography>
+            
+            <Select
+              fullWidth
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              sx={{ mb: 3 }}
+            >
+              <MenuItem value="Pending">در حال آماده سازی</MenuItem>
+              <MenuItem value="Completed">تحویل داده شده</MenuItem>
+              <MenuItem value="Cancelled">لغو شده</MenuItem>
+            </Select>
+            
+            <Box display="flex" justifyContent="flex-end" gap={2}>
+              <Button 
+                variant="outlined" 
+                onClick={() => setIsModalOpen(false)}
+              >
+                انصراف
+              </Button>
+              <Button 
+                variant="contained" 
+                onClick={handleStatusChange}
+              >
+                تأیید تغییر
+              </Button>
+            </Box>
+          </Box>
+        </Modal>
+      </Box>
+      
+      <ToastContainer rtl position="top-center" />
+    </TitleCard>
   );
 };
 

@@ -13,7 +13,6 @@ import {
   LineChart,
   Line,
 } from "recharts";
- 
 import { useDispatch } from "react-redux";
 import { setPageTitle } from "../../features/common/headerSlice";
 import TitleCard from "../../components/Cards/TitleCard";
@@ -22,6 +21,7 @@ import { MdOutlineSupportAgent } from "react-icons/md";
 import { LuNewspaper } from "react-icons/lu";
 import { PiBowlFood } from "react-icons/pi";
 import { VscListUnordered } from "react-icons/vsc";
+import { useAuthStore } from "../../stores/authStore";
 
 // Constants
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
@@ -31,6 +31,19 @@ const METRICS_CONFIG = [
   { label: "سفارش ها", icon: VscListUnordered, key: "orders" },
   { label: "تیکت‌های پشتیبانی", icon: MdOutlineSupportAgent, key: "tickets" },
 ];
+
+// Custom Tooltip Component
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-4 shadow-lg rounded-lg border border-gray-200">
+        <p className="font-bold">{label}</p>
+        <p className="text-gray-600">تعداد: {payload[0].value}</p>
+      </div>
+    );
+  }
+  return null;
+};
 
 // Metric Card Component
 const MetricCard = ({ label, value, Icon }) => (
@@ -52,13 +65,9 @@ const ChartCard = ({ title, children }) => (
 );
 
 const Dashboard = () => {
-  const token = localStorage.getItem("userToken");
+  const { user } = useAuthStore();
   const dispatch = useDispatch();
 
-  const [foodCount, setFoodCount] = useState(0);
-  const [adsCount, setAdsCount] = useState(0);
-  const [supportTicketCount, setSupportTicketCount] = useState(0);
-  const [orderCount, setOrderCount] = useState(0);
   const [data, setData] = useState({
     ads: 0,
     foods: 0,
@@ -66,53 +75,38 @@ const Dashboard = () => {
     tickets: 0,
   });
 
-  // Set page title
   useEffect(() => {
     dispatch(setPageTitle({ title: "پنل کاربری" }));
   }, [dispatch]);
 
-  // Fetch all data
   useEffect(() => {
+    if (!user) return;
+
     const fetchData = async () => {
       try {
-        const foodResponse = await axios.get("/api/cooks/foods", {
-          headers: { authorization: `Bearer ${token}` },
-        });
-        setFoodCount(foodResponse.data.count);
+        const config = { withCredentials: true };
 
-        const adsResponse = await axios.get("/api/cooks/ads", {
-          headers: { authorization: `Bearer ${token}` },
-        });
-        setAdsCount(adsResponse.data.count);
+        const [foodRes, adsRes, ticketsRes, ordersRes] = await Promise.all([
+          axios.get("/api/cooks/foods", config),
+          axios.get("/api/cooks/ads", config),
+          axios.get("/api/cooks/support-tickets", config),
+          axios.get("/api/cooks/foods/order-foods", config),
+        ]);
 
-        const ticketsResponse = await axios.get("/api/cooks/support-tickets", {
-          headers: { authorization: `Bearer ${token}` },
+        setData({
+          ads: adsRes.data.count,
+          foods: foodRes.data.count,
+          orders: ordersRes.data.count,
+          tickets: ticketsRes.data.count,
         });
-        setSupportTicketCount(ticketsResponse.data.count);
-
-        const ordersResponse = await axios.get("/api/cooks/foods/order-foods", {
-          headers: { authorization: `Bearer ${token}` },
-        });
-        setOrderCount(ordersResponse.data.count);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching dashboard data:", error);
       }
     };
 
     fetchData();
-  }, [token]);
+  }, [user]);
 
-  // Update data state when counts change
-  useEffect(() => {
-    setData({
-      ads: adsCount,
-      foods: foodCount,
-      orders: orderCount,
-      tickets: supportTicketCount,
-    });
-  }, [adsCount, foodCount, orderCount, supportTicketCount]);
-
-  // Data transformation for charts
   const chartData = METRICS_CONFIG.map(({ label, key }) => ({
     name: label,
     value: data[key],
@@ -149,7 +143,7 @@ const Dashboard = () => {
                   />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip content={<CustomTooltip />} />
             </PieChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -159,14 +153,9 @@ const Dashboard = () => {
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="name"
-                tickMargin={15} // Increased space between X-axis labels and axis line
-              />
-              <YAxis
-                tickMargin={15} // Increased space between Y-axis labels and axis line
-              />
-              <Tooltip />
+              <XAxis dataKey="name" tickMargin={15} />
+              <YAxis tickMargin={15} />
+              <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="count" fill="#00C49F" radius={[10, 10, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -178,14 +167,9 @@ const Dashboard = () => {
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-              dataKey="name"
-              tickMargin={15} // Increased space between X-axis labels and axis line
-            />
-            <YAxis
-              tickMargin={15} // Increased space between Y-axis labels and axis line
-            />
-            <Tooltip />
+            <XAxis dataKey="name" tickMargin={15} />
+            <YAxis tickMargin={15} />
+            <Tooltip content={<CustomTooltip />} />
             <Line
               type="monotone"
               dataKey="count"

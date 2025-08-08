@@ -1257,11 +1257,11 @@ exports.orderFoods = async (req, res) => {
   try {
     // Convert cook ID to string for consistent comparison
     const cookId = req.cook._id.toString();
-    
+
     let orders = await OrderFood.find({}).populate("user").select("-password");
 
     let findCookOrders = [];
-    
+
     for (let i = 0; i < orders.length; i++) {
       for (let j = 0; j < orders[i].items.length; j++) {
         // Convert item's cook ID to string before comparison
@@ -1297,39 +1297,62 @@ exports.orderFoods = async (req, res) => {
   }
 };
 
-// # description -> HTTP VERB -> Accesss -> Access Type
-// # cook update house map -> GET -> Cook -> PRIVATE
-// @route = /api/cooks/foods/order-foods/:orderId
+// @desc    Get single order
+// @route   GET /api/cooks/foods/order-foods/:orderId
+// @access  Private (Cook)
 exports.orderFood = async (req, res) => {
   try {
-    let order = await OrderFood.find({
-      cook: req.cook._id,
+    const order = await OrderFood.findOne({
       _id: req.params.orderId,
+      'items.cook': req.cook._id // Ensure the cook owns at least one item in the order
     })
-      .populate("user")
-      .select("-password");
+    .populate('user', 'name email phone')
+    .populate('items.food', 'name image');
 
-    if (order) {
-      return res.status(StatusCodes.OK).json({
-        status: "success",
-        msg: "سفارش غذا پیدا شد",
-        order,
-      });
-    } else {
-      return res.status(StatusCodes.NOT_FOUND).json({
+    if (!order) {
+       return res.status(StatusCodes.NOT_FOUND).json({
         status: "failure",
         msg: "سفارش غذا پیدا نشد",
       });
     }
+
+    const transformedOrder = {
+      _id: order._id,
+      user: order.user,
+      items: order.items.map(item => ({
+        _id: item._id,
+        name: item.name || item.food?.name,
+        quantity: item.quantity,
+        price: item.price,
+        food: item.food,
+        cook: item.cook
+      })),
+      totalAmount: order.totalAmount,
+      deliveryAddress: order.deliveryAddress,
+      contactNumber: order.contactNumber,
+      paymentStatus: order.paymentStatus,
+      orderStatus: order.orderStatus,
+      description: order.description,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt
+    };
+
+
+
+    res.status(StatusCodes.OK).json({
+      status: 'success',
+      msg: 'سفارش با موفقیت یافت شد',
+      order: transformedOrder
+    });
   } catch (error) {
-    console.error(error.message);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      status: "failure",
-      msg: "خطای داخلی سرور",
-      error,
+    console.error('Error fetching order:', error);
+    res.status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: 'failure',
+      msg: error.message || 'خطای سرور در دریافت سفارش'
     });
   }
 };
+
 
 // # description -> HTTP VERB -> Accesss -> Access Type
 // # change order status -> PUT -> Cook -> PRIVATE

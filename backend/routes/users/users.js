@@ -11,7 +11,7 @@ const { userUpload } = require("../../utils/upload");
 // bus tickets
 
 
-// router.get('/test_cook',userCtrls.findTestCook)
+router.get('/test_cook',userCtrls.findTestCook)
 
 
 router.get("/buses/tickets", protect, userCtrls.getAllBusTickets);
