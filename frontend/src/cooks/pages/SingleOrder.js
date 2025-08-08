@@ -4,11 +4,11 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import TitleCard from "../components/Cards/TitleCard";
+import { useCookAuthStore } from "../stores/authStore";
 import {
   Box,
   Typography,
   Paper,
-  Divider,
   Chip,
   CircularProgress,
   Button,
@@ -29,7 +29,6 @@ import {
   CancelOutlined,
   HourglassEmpty,
   LocationOn,
-  CalendarToday,
   Receipt,
   LocalShipping
 } from "@mui/icons-material";
@@ -41,41 +40,44 @@ const SingleOrder = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("");
   const { orderId } = useParams();
+  const { isCookAuthenticated } = useCookAuthStore();
 
   const statusIcons = {
     Completed: <CheckCircleOutline color="success" />,
     Cancelled: <CancelOutlined color="error" />,
-    Pending: <HourglassEmpty color="warning" />
+    Pending: <HourglassEmpty color="warning" />,
+    Confirmed: <CheckCircleOutline color="info" />
   };
 
   const statusColors = {
     Completed: "success",
     Cancelled: "error",
-    Pending: "warning"
+    Pending: "warning",
+    Confirmed: "info"
   };
 
   const statusToPersian = {
     Completed: "تحویل داده شده",
     Cancelled: "لغو شده",
-    Pending: "در حال آماده سازی"
+    Pending: "در حال آماده سازی",
+    Confirmed: "تایید شده"
   };
 
   const getStatusProgress = (status) => {
     switch (status) {
       case "Cancelled": return 0;
-      case "Pending": return 50;
+      case "Pending": return 30;
+      case "Confirmed": return 60;
       case "Completed": return 100;
       default: return 0;
     }
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("userToken");
-    
-    if (!token || !orderId) {
-      setError("Missing token or order ID");
+    if (!isCookAuthenticated || !orderId) {
+      setError("دسترسی غیرمجاز یا شناسه سفارش نامعتبر");
       setLoading(false);
-      toast.error("خطا در بارگذاری سفارش: اطلاعات ناقص است");
+      toast.error("خطا در بارگذاری سفارش: لطفا ابتدا وارد شوید");
       return;
     }
 
@@ -84,9 +86,7 @@ const SingleOrder = () => {
         setLoading(true);
         const response = await axios.get(
           `/api/cooks/foods/order-foods/${orderId}`,
-          {
-            headers: { authorization: `Bearer ${token}` }
-          }
+          { withCredentials: true }
         );
         
         setOrder(response.data.order);
@@ -101,15 +101,14 @@ const SingleOrder = () => {
     };
 
     fetchOrder();
-  }, [orderId]);
+  }, [orderId, isCookAuthenticated]);
 
   const handleStatusChange = async () => {
     try {
-      const token = localStorage.getItem("userToken");
       await axios.put(
         `/api/cooks/foods/order-foods/${orderId}/change-status`,
         { orderStatus: selectedStatus },
-        { headers: { authorization: `Bearer ${token}` } }
+        { withCredentials: true }
       );
       
       setOrder(prev => ({ ...prev, orderStatus: selectedStatus }));
@@ -136,6 +135,11 @@ const SingleOrder = () => {
       </Box>
     );
   }
+
+  // Safely extract address text whether it's an object or string
+  const deliveryAddressText = typeof order.deliveryAddress === 'object' 
+    ? order.deliveryAddress.text 
+    : order.deliveryAddress;
 
   return (
     <TitleCard title="جزئیات سفارش" topMargin="mt-2" dir="rtl">
@@ -188,7 +192,9 @@ const SingleOrder = () => {
             
             <Box mb={2}>
               <Typography variant="body2" color="text.secondary">آدرس:</Typography>
-              <Typography variant="body1">{order.deliveryAddress}</Typography>
+              <Typography variant="body1">
+                {deliveryAddressText || "آدرس مشخص نشده"}
+              </Typography>
             </Box>
             
             <Box mb={2}>
@@ -288,6 +294,7 @@ const SingleOrder = () => {
               sx={{ mb: 3 }}
             >
               <MenuItem value="Pending">در حال آماده سازی</MenuItem>
+              <MenuItem value="Confirmed">تایید شده</MenuItem>
               <MenuItem value="Completed">تحویل داده شده</MenuItem>
               <MenuItem value="Cancelled">لغو شده</MenuItem>
             </Select>
@@ -302,6 +309,7 @@ const SingleOrder = () => {
               <Button 
                 variant="contained" 
                 onClick={handleStatusChange}
+                disabled={selectedStatus === order.orderStatus}
               >
                 تأیید تغییر
               </Button>

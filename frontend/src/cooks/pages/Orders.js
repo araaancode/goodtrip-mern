@@ -8,6 +8,7 @@ import { PiNewspaperClipping } from "react-icons/pi";
 import { IoEyeOutline } from "react-icons/io5";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useCookAuthStore } from "../stores/authStore";
 
 import { DataGrid } from "@mui/x-data-grid";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -28,35 +29,36 @@ const TopSideButtons = () => (
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(8);
   const dispatch = useDispatch();
+  const { isCookAuthenticated } = useCookAuthStore(); // Check authentication status
 
   useEffect(() => {
     dispatch(setPageTitle({ title: "لیست سفارش‌ها" }));
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("userToken");
-    const AuthStr = "Bearer ".concat(token);
+    if (!isCookAuthenticated) return; // Only fetch if authenticated
 
-    setLoading(true); // Set loading to true before fetching
+    setLoading(true);
     axios
       .get("/api/cooks/foods/order-foods", {
-        headers: { authorization: AuthStr },
+        withCredentials: true // Using cookies instead of Bearer token
       })
       .then((response) => {
         setOrders(response.data.orders);
-        setLoading(false); // Set loading to false after data is fetched
+        setLoading(false);
       })
       .catch((error) => {
         console.log("error " + error);
-        setLoading(false); // Set loading to false on error
+        setLoading(false);
       });
-  }, []);
+  }, [isCookAuthenticated]); // Add isCookAuthenticated as dependency
 
+  // ... rest of the component remains the same ...
   const columns = [
     {
       field: "_id",
@@ -92,8 +94,7 @@ const Orders = () => {
               لغو شده
             </span>
           );
-
-            if (status === "Confirmed")
+        if (status === "Confirmed")
           return (
             <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-green-900 dark:text-green-300">
               تایید شده
@@ -210,7 +211,7 @@ const Orders = () => {
               pageSizeOptions={[5, 8, 10, 20]}
               disableRowSelectionOnClick
               disableColumnMenu
-              loading={loading} // Enable MUI DataGrid's built-in loading state
+              loading={loading}
               slots={{
                 loadingOverlay: () => (
                   <Box
@@ -286,14 +287,6 @@ const Orders = () => {
                 "& .MuiTablePagination-actions": {
                   direction: "rtl",
                 },
-                "& .MuiTablePagination-actions button svg": {
-                  // transform: "rotate(180deg)", // Flip left/right arrows
-                },
-                "& .MuiTablePagination-root .css-1hr2sou-MuiTablePagination-root":
-                  {
-                    display: "none",
-                    hidden: true,
-                  },
               }}
             />
           </Box>
