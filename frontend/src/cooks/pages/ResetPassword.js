@@ -3,10 +3,10 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { RiLockPasswordLine } from "@remixicon/react";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useAuthStore } from '../stores/authStore';
+import { useCookAuthStore } from '../stores/authStore';
 
 function ResetPassword() {
-  const { resetPassword, isLoading } = useAuthStore();
+  const { resetPassword, isLoading } = useCookAuthStore();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const cookId = searchParams.get('cookId');

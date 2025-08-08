@@ -3,10 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { RiEye2Line, RiEyeCloseLine, RiPhoneLine, RiUser2Line, RiMailLine, RiUser5Line } from "@remixicon/react";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useAuthStore } from '../stores/authStore';
+import { useCookAuthStore } from '../stores/authStore';
 
 function Register() {
-  const { register, isLoading } = useAuthStore();
+  const { register, isLoading } = useCookAuthStore();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({

@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { RiMailLine } from "@remixicon/react";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useAuthStore } from '../stores/authStore';
+import { useCookAuthStore } from '../stores/authStore';
 
 function ForgotPassword() {
-  const { forgotPassword, isLoading } = useAuthStore();
+  const { forgotPassword, isLoading } = useCookAuthStore();
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [linkSent, setLinkSent] = useState(false);

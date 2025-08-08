@@ -13,6 +13,7 @@ import {
   LineChart,
   Line,
 } from "recharts";
+import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setPageTitle } from "../../features/common/headerSlice";
 import TitleCard from "../../components/Cards/TitleCard";
@@ -21,7 +22,7 @@ import { MdOutlineSupportAgent } from "react-icons/md";
 import { LuNewspaper } from "react-icons/lu";
 import { PiBowlFood } from "react-icons/pi";
 import { VscListUnordered } from "react-icons/vsc";
-import { useAuthStore } from "../../stores/authStore";
+import { useCookAuthStore } from "../../stores/authStore";
 
 // Constants
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
@@ -65,9 +66,10 @@ const ChartCard = ({ title, children }) => (
 );
 
 const Dashboard = () => {
-  const { user } = useAuthStore();
+  const { cook, isCookAuthenticated } = useCookAuthStore();
   const dispatch = useDispatch();
 
+  const navigate = useNavigate();
   const [data, setData] = useState({
     ads: 0,
     foods: 0,
@@ -80,7 +82,7 @@ const Dashboard = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!isCookAuthenticated) navigate("/cooks/login");
 
     const fetchData = async () => {
       try {
@@ -105,7 +107,7 @@ const Dashboard = () => {
     };
 
     fetchData();
-  }, [user]);
+  }, [cook, isCookAuthenticated]);
 
   const chartData = METRICS_CONFIG.map(({ label, key }) => ({
     name: label,

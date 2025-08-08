@@ -5,23 +5,20 @@ import {
   Routes,
   Navigate,
 } from "react-router-dom";
-import axios from "axios";
 
 // hooks
 import useUserAuthStore from "./landing/store/authStore";
 import { useCookAuthStore } from "./cooks/stores/authStore"; // Changed from default to named import
 
-// routing
-import PublicRoutes from "./landing/routing/publicRoutes";
-import PrivateRoutes from "./landing/routing/privateRoutes";
-import CookPublicRoutes from "./cooks/routing/publicRoutes";
-import CookPrivateRoutes from "./cooks/routing/privateRoutes";
+import axios from "axios";
 
 // landing pages (Kept non-lazy for frequently used components)
 import IndexLayout from "./landing/components/Layout";
 import IndexPage from "./landing/pages/IndexPage";
 import LoginPage from "./landing/pages/LoginPage";
 import RegisterPage from "./landing/pages/RegisterPage";
+import ForgotPasswordPage from "./landing/pages/ForgotPasswordPage";
+import NotFound from "./NotFound";
 
 // Lazy-loaded landing pages (Optimized for rarely used routes)
 const ProfilePage = lazy(() => import("./landing/pages/ProfilePage"));
@@ -44,49 +41,55 @@ const CartPage = lazy(() => import("./landing/pages/CartPage"));
 const SingleFoodPage = lazy(() => import("./landing/pages/SingleFoodPage"));
 const ConfirmBookingBus = lazy(() => import("./landing/pages/ConfirmBookingBus"));
 const BusTicketsPage = lazy(() => import("./landing/pages/BusTicketsPage"));
-const ForgotPasswordPage = lazy(() => import("./landing/pages/ForgotPasswordPage"));
-const NotFound = lazy(() => import("./NotFound"));
 
-// Lazy-loaded cook routes
-const CooksLayout = lazy(() => import("./cooks/containers/Layout"));
-const CooksLogin = lazy(() => import("./cooks/pages/Login"));
-const CooksRegister = lazy(() => import("./cooks/pages/Register"));
-const CooksForgotPassword = lazy(() => import("./cooks/pages/ForgotPassword"));
-const CookResetPassword = lazy(() => import("./cooks/pages/ResetPassword"));
-const CookWelcome = lazy(() => import("./cooks/pages/protected/Welcome"));
+import PublicRoutes from "./landing/routing/publicRoutes";
+import PrivateRoutes from "./landing/routing/privateRoutes";
 
-// // admin private routes (commented out)
+// // admin private routes
 // import AdminPublicRoutes from "./admin/routing/publicRoutes"
 // import AdminPrivateRoutes from "./admin/routing/privateRoutes"
+
 // import AdminResetPassword from "./admin/features/user/ResetPassword"
 
-// // driver private routes (commented out)
+// // cook private routes
+import CookPublicRoutes from "./cooks/routing/publicRoutes";
+import CookPrivateRoutes from "./cooks/routing/privateRoutes";
+
+// // driver private routes
 // import DriverPublicRoutes from "./drivers/routing/publicRoutes"
 // import DriverPrivateRoutes from "./drivers/routing/privateRoutes"
 
-// // owner private routes (commented out)
+// // owner private routes
 // import OwnerPublicRoutes from "./owners/routing/publicRoutes"
 // import OwnerPrivateRoutes from "./owners/routing/privateRoutes"
 
-// // admin pages (commented out)
+// // Importing pages
 // import Layout from "./admin/containers/Layout"
 // import Login from "./admin/pages/Login"
 // import ForgotPassword from "./admin/pages/ForgotPassword"
 // import Register from "./admin/pages/Register"
 
-// // drivers pages (commented out)
+// // drivers pages
 // import DriversLayout from "./drivers/containers/Layout"
 // import DriversLogin from "./drivers/pages/Login"
 // import DriversRegister from "./drivers/pages/Register"
 // import DriversForgotPassword from "./drivers/pages/ForgotPassword"
 // import DriversResetPassword from "./drivers/pages/ResetPassword"
 
-// // owners pages (commented out)
+// // owners pages
 // import OwnersLayout from "./owners/containers/Layout"
 // import OwnersLogin from "./owners/pages/Login"
 // import OwnersRegister from "./owners/pages/Register"
 // import OwnersForgotPassword from "./owners/pages/ForgotPassword"
 // import OwnersResetPassword from "./owners/pages/ResetPassword"
+
+// // cooks pages (Lazy-loaded cook routes)
+const CooksLayout = lazy(() => import("./cooks/containers/Layout"));
+const CooksLogin = lazy(() => import("./cooks/pages/Login"));
+const CooksRegister = lazy(() => import("./cooks/pages/Register"));
+const CooksForgotPassword = lazy(() => import("./cooks/pages/ForgotPassword"));
+const CookResetPassword = lazy(() => import("./cooks/pages/ResetPassword"));
+const CookWelcome = lazy(() => import("./cooks/pages/protected/Welcome"));
 
 axios.defaults.baseURL = "http://localhost:5000";
 axios.defaults.withCredentials = true;

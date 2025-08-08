@@ -4,10 +4,10 @@ import { RiEye2Line, RiEyeCloseLine, RiPhoneLine } from "@remixicon/react";
 import { MdOutlineSms } from "react-icons/md";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useAuthStore } from '../stores/authStore';
+import { useCookAuthStore } from '../stores/authStore';
 
 function Login() {
-  const { login, sendOtp, verifyOtp, isLoading } = useAuthStore();
+  const { login, sendOtp, verifyOtp, isLoading } = useCookAuthStore();
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
