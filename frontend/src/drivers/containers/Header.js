@@ -65,8 +65,8 @@ function Header() {
                 <div className="flex items-center flex-end">
                     {/* <label className="swap ">
                         <input type="checkbox" />
-                        <GoSun data-set-theme="light" data-act-class="ACTIVECLASS" className={"fill-current w-6 h-6 " + (currentTheme === "dark" ? "swap-on" : "swap-off")} />
-                        <MoonIcon data-set-theme="dark" data-act-class="ACTIVECLASS" className={"fill-current w-6 h-6 " + (currentTheme === "light" ? "swap-on" : "swap-off")} />
+                        <GoSun data-set-theme="light" data-act-className="ACTIVECLASS" className={"fill-current w-6 h-6 " + (currentTheme === "dark" ? "swap-on" : "swap-off")} />
+                        <MoonIcon data-set-theme="dark" data-act-className="ACTIVECLASS" className={"fill-current w-6 h-6 " + (currentTheme === "light" ? "swap-on" : "swap-off")} />
                     </label> */}
 
 

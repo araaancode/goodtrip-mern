@@ -1,12 +1,12 @@
 import { useState, useRef } from "react";
 import TitleCard from "../components/Cards/TitleCard";
-
 import Select from "react-tailwindcss-select";
 import "react-tailwindcss-select/dist/index.css";
-
-import Swal from "sweetalert2";
+import { toast,ToastContainer } from "react-toastify";
+import { useCookAuthStore } from "../stores/authStore";
 import axios from "axios";
 
+// Icons
 import { IoFastFoodOutline } from "react-icons/io5";
 import { GoNumber } from "react-icons/go";
 import { SlCalender } from "react-icons/sl";
@@ -15,36 +15,6 @@ import { PiChefHatLight } from "react-icons/pi";
 import { PiBowlFood } from "react-icons/pi";
 import { IoPricetagOutline } from "react-icons/io5";
 import { IoIosInformationCircleOutline } from "react-icons/io";
-
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
-const options = [
-  {
-    label: "غذاهای ایرانی",
-    options: [
-      { value: "kebab", label: "کباب" },
-      { value: "ghormeh_sabzi", label: "قرمه سبزی" },
-      { value: "fesenjan", label: "فسنجان" },
-      { value: "tahchin", label: "ته چین" },
-      { value: "ash_reshteh", label: "آش رشته" },
-      { value: "zereshk_polo", label: "زرشک پلو" },
-      { value: "bademjan", label: "بادمجان" },
-      { value: "gheymeh", label: "قیمه" },
-      { value: "kashke_bademjan", label: "کشک بادمجان" },
-      { value: "dizi", label: "دیزی" },
-      { value: "baghali_polo", label: "باقالی پلو" },
-      { value: "sabzi_polo", label: "سبزی پلو" },
-      { value: "shirin_polo", label: "شیرین پلو" },
-      { value: "khoreshte_bamieh", label: "خورشت بامیه" },
-      { value: "adas_polo", label: "عدس پلو" },
-      { value: "abgoosht", label: "آبگوشت" },
-      { value: "tahdig", label: "ته دیگ" },
-      { value: "loobia_polo", label: "لوبیا پلو" },
-      { value: "other", label: "سایر" },
-    ],
-  },
-];
 
 const weekDays = [
   {
@@ -69,37 +39,71 @@ const hourOptions = [
 ];
 
 const categoryOptions = [
-  { value: "Appetizer", label: "پیش غذا و سوپ و سالاد" },
-  { value: "Main Course", label: "غذای اصلی" },
-  { value: "Dessert", label: "دسر و نوشیدنی" },
+  { value: "پیش غذا", label: "پیش غذا" },
+  { value: "غذای اصلی", label: "غذای اصلی" },
+  { value: "دسر و نوشیدنی", label: "دسر و نوشیدنی" },
+  { value: "ایتالیایی", label: "ایتالیایی" },
+  { value: "ایرانی", label: "ایرانی" },
+  { value: "ساندویچ", label: "ساندویچ" },
+  { value: "فست فود", label: "فست فود" },
+  { value: "سوپ", label: "سوپ" },
+  { value: "آش", label: "آش" },
 ];
 
 function AddFood() {
-  const [name, setName] = useState("");
-  const [count, setCount] = useState("");
-  const [cookDate, setCookDate] = useState(null);
-  const [cookHour, setCookHour] = useState(null);
-  const [price, setPrice] = useState(null);
-  const [description, setDescription] = useState(null);
-  const [category, setCategory] = useState(null);
-  const [cookName, setCookName] = useState("");
-  const [photo, setPhoto] = useState(null);
-  const [photos, setPhotos] = useState([]);
-
+  const { token } = useCookAuthStore();
   const [btnSpinner, setBtnSpinner] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  let token = localStorage.getItem("userToken");
+  // Form state
+  const [formData, setFormData] = useState({
+    name: "",
+    count: "",
+    cookDate: null,
+    cookHour: null,
+    price: null,
+    description: "",
+    category: null,
+    cookName: "",
+  });
 
-  // photo vars
+  // File upload state
   const [selectedFiles, setSelectedFiles] = useState([]);
-
+  const [selectedFiles2, setSelectedFiles2] = useState([]);
   const fileInputRef = useRef(null);
+  const fileInputRef2 = useRef(null);
   const acceptedFileExtensions = ["jpg", "png", "jpeg"];
 
-  const acceptedFileTypesString = acceptedFileExtensions
-    .map((ext) => `.${ext}`)
-    .join(",");
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.name.trim()) newErrors.name = "نام غذا الزامی است";
+    if (!formData.count) newErrors.count = "تعداد غذا الزامی است";
+    if (!formData.price) newErrors.price = "قیمت غذا الزامی است";
+    if (!formData.cookDate) newErrors.cookDate = "تاریخ پخت الزامی است";
+    if (!formData.cookHour) newErrors.cookHour = "ساعت پخت الزامی است";
+    if (!formData.category) newErrors.category = "دسته بندی غذا الزامی است";
+    if (!formData.cookName.trim()) newErrors.cookName = "نام سرآشپز الزامی است";
+    if (!formData.description.trim()) newErrors.description = "توضیحات الزامی است";
+    if (selectedFiles.length === 0) newErrors.photo = "تصویر اصلی الزامی است";
+    if (selectedFiles2.length === 0) newErrors.photos = "تصاویر غذا الزامی است";
 
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
+  };
+
+  const handleSelectChange = (name, value) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
+  };
+
+  // File handling functions (same as before)
   const handleFileChange = (event) => {
     const newFilesArray = Array.from(event.target.files);
     processFiles(newFilesArray);
@@ -109,17 +113,13 @@ function AddFood() {
     const newSelectedFiles = [...selectedFiles];
     let hasError = false;
     const fileTypeRegex = new RegExp(acceptedFileExtensions.join("|"), "i");
+    
     filesArray.forEach((file) => {
-      console.log(file);
-
       if (newSelectedFiles.some((f) => f.name === file.name)) {
-        alert("File names must be unique", "error");
+        toast.error("نام فایل ها باید منحصر به فرد باشد");
         hasError = true;
       } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
-        alert(
-          `Only ${acceptedFileExtensions.join(", ")} files are allowed`,
-          "error"
-        );
+        toast.error(`فقط فایل های ${acceptedFileExtensions.join(", ")} مجاز هستند`);
         hasError = true;
       } else {
         newSelectedFiles.push(file);
@@ -128,29 +128,11 @@ function AddFood() {
 
     if (!hasError) {
       setSelectedFiles(newSelectedFiles);
+      if (errors.photo) setErrors(prev => ({ ...prev, photo: "" }));
     }
   };
 
-  const handleCustomButtonClick = () => {
-    fileInputRef.current.click();
-  };
-
-  const handleFileDelete = (index) => {
-    const updatedFiles = [...selectedFiles];
-    updatedFiles.splice(index, 1);
-    setSelectedFiles(updatedFiles);
-  };
-
-  // photos vars
-  const [selectedFiles2, setSelectedFiles2] = useState([]);
-
-  const fileInputRef2 = useRef(null);
-  const acceptedFileExtensions2 = ["jpg", "png", "jpeg"];
-
-  const acceptedFileTypesString2 = acceptedFileExtensions2
-    .map((ext) => `.${ext}`)
-    .join(",");
-
+  // Similar functions for photos (selectedFiles2)
   const handleFileChange2 = (event) => {
     const newFilesArray = Array.from(event.target.files);
     processFiles2(newFilesArray);
@@ -159,16 +141,14 @@ function AddFood() {
   const processFiles2 = (filesArray) => {
     const newSelectedFiles2 = [...selectedFiles2];
     let hasError = false;
-    const fileTypeRegex = new RegExp(acceptedFileExtensions2.join("|"), "i");
+    const fileTypeRegex = new RegExp(acceptedFileExtensions.join("|"), "i");
+    
     filesArray.forEach((file) => {
       if (newSelectedFiles2.some((f) => f.name === file.name)) {
-        alert("File names must be unique", "error");
+        toast.error("نام فایل ها باید منحصر به فرد باشد");
         hasError = true;
       } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
-        alert(
-          `Only ${acceptedFileExtensions2.join(", ")} files are allowed`,
-          "error"
-        );
+        toast.error(`فقط فایل های ${acceptedFileExtensions.join(", ")} مجاز هستند`);
         hasError = true;
       } else {
         newSelectedFiles2.push(file);
@@ -177,11 +157,14 @@ function AddFood() {
 
     if (!hasError) {
       setSelectedFiles2(newSelectedFiles2);
+      if (errors.photos) setErrors(prev => ({ ...prev, photos: "" }));
     }
   };
 
-  const handleCustomButtonClick2 = () => {
-    fileInputRef2.current.click();
+  const handleFileDelete = (index) => {
+    const updatedFiles = [...selectedFiles];
+    updatedFiles.splice(index, 1);
+    setSelectedFiles(updatedFiles);
   };
 
   const handleFileDelete2 = (index) => {
@@ -190,203 +173,55 @@ function AddFood() {
     setSelectedFiles2(updatedFiles);
   };
 
-  // error variables
-  const [nameError, setNameError] = useState(false);
-  const [nameErrorMsg, setNameErrorMsg] = useState("");
-
-  const [countError, setCountError] = useState(false);
-  const [countErrorMsg, setCountErrorMsg] = useState("");
-
-  const [cookDateError, setCookDateError] = useState(false);
-  const [cookDateErrorMsg, setCookDateErrorMsg] = useState("");
-
-  const [cookHourError, setCookHourError] = useState(false);
-  const [cookHourErrorMsg, setCookHourErrorMsg] = useState("");
-
-  const [priceError, setPriceError] = useState(false);
-  const [priceErrorMsg, setPriceErrorMsg] = useState("");
-
-  const [descriptionError, setDescriptionError] = useState(false);
-  const [descriptionErrorMsg, setDescriptionErrorMsg] = useState("");
-
-  const [categoryError, setCategoryError] = useState(false);
-  const [categoryErrorMsg, setCategoryErrorMsg] = useState("");
-
-  const [cookNameError, setCookNameError] = useState(false);
-  const [cookNameErrorMsg, setCookNameErrorMsg] = useState("");
-
-  const [photoError, setPhotoError] = useState(false);
-  const [photoErrorMsg, setPhotoErrorMsg] = useState("");
-
-  const [photosError, setPhotosError] = useState(false);
-  const [photosErrorMsg, setPhotosErrorMsg] = useState("");
-
-  const addFoodHandle = (e) => {
+  const addFoodHandle = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) return;
 
-    // name error
-    if (!name || name === "" || name === undefined || name === null) {
-      setNameError(true);
-      setNameErrorMsg("* نام غذا باید وارد شود");
-    }
+    setBtnSpinner(true);
 
-    if (!count || count === "" || count === undefined || count === null) {
-      setCountError(true);
-      setCountErrorMsg("*  تعداد غذا باید وارد شود");
-    }
+    try {
+      const cookDatesArr = formData.cookDate.map(date => date.label);
 
-    if (!price || price === "" || price === undefined || price === null) {
-      setPriceError(true);
-      setPriceErrorMsg("*  قیمت غذا باید وارد شود");
-    }
+      const formDataToSend = new FormData();
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("count", formData.count);
+      formDataToSend.append("price", formData.price);
+      formDataToSend.append("cookDate", cookDatesArr);
+      formDataToSend.append("cookHour", formData.cookHour.label);
+      formDataToSend.append("photo", selectedFiles[0]);
+      selectedFiles2.forEach(image => formDataToSend.append("photos", image));
+      formDataToSend.append("description", formData.description);
+      formDataToSend.append("category", formData.category.value);
+      formDataToSend.append("cookName", formData.cookName);
 
-    if (
-      !cookDate ||
-      cookDate === "" ||
-      cookDate === undefined ||
-      cookDate === null
-    ) {
-      setCookDateError(true);
-      setCookDateErrorMsg("*  تاریخ پخت غذا باید وارد شود");
-    }
+      await axios.post(`/api/cooks/foods`, formDataToSend, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (
-      !cookHour ||
-      cookHour === "" ||
-      cookHour === undefined ||
-      cookHour === null
-    ) {
-      setCookHourError(true);
-      setCookHourErrorMsg("* ساعت پخت غذا باید وارد شود");
-    }
-    if (
-      !selectedFiles ||
-      selectedFiles === "" ||
-      selectedFiles === undefined ||
-      selectedFiles === null ||
-      selectedFiles.length === 0
-    ) {
-      setPhotoError(true);
-      setPhotoErrorMsg("* تصویر اصلی غذا باید وارد شود");
-    }
-    if (
-      !selectedFiles2 ||
-      selectedFiles2 === "" ||
-      selectedFiles2 === undefined ||
-      selectedFiles2 === null ||
-      selectedFiles2.length === 0
-    ) {
-      setPhotosError(true);
-      setPhotosErrorMsg("* تصاویر غذا باید وارد شوند");
-    }
-    if (
-      !description ||
-      description === "" ||
-      description === undefined ||
-      description === null
-    ) {
-      setDescriptionError(true);
-      setDescriptionErrorMsg("* توضیحات غذا باید وارد شود");
-    }
+      // Reset form on success
+      setFormData({
+        name: "",
+        count: "",
+        cookDate: null,
+        cookHour: null,
+        price: null,
+        description: "",
+        category: null,
+        cookName: "",
+      });
+      setSelectedFiles([]);
+      setSelectedFiles2([]);
 
-    if (
-      !category ||
-      category === "" ||
-      category === undefined ||
-      category === null
-    ) {
-      setCategoryError(true);
-      setCategoryErrorMsg("* دسته بندی غذا باید وارد شود");
-    }
-
-    if (
-      !cookName ||
-      cookName === "" ||
-      cookName === undefined ||
-      cookName === null
-    ) {
-      setCookNameError(true);
-      setCookNameErrorMsg("* نام سرآشپز باید وارد شود");
-    } else {
-      setBtnSpinner(true);
-
-      let cookDatesArr = [];
-
-      for (const element of cookDate) {
-        cookDatesArr.push(element.label);
-      }
-
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("count", count);
-      formData.append("price", price);
-      formData.append("cookDate", cookDatesArr);
-      formData.append("cookHour", cookHour.label);
-      formData.append("photo", selectedFiles[0]);
-      selectedFiles2.forEach((image) => formData.append("photos", image));
-      formData.append("description", description);
-      formData.append("category", category.value);
-      formData.append("cookName", cookName);
-
-      axios
-        .post(`/api/cooks/foods`, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            authorization: "Bearer " + token,
-          },
-        })
-        .then((response) => {
-          setBtnSpinner(false);
-
-          setName("");
-          setCount("");
-          setPrice("");
-          setCookDate(null);
-          setCookHour(null);
-          setPhoto([]);
-          setPhotos([]);
-          setSelectedFiles([]);
-          setSelectedFiles2([]);
-          setDescription("");
-          setCategory(null);
-          setCookName("");
-
-          // Swal.fire({
-          //     title: "<small>آیا از  ایجاد غذا اطمینان دارید؟</small>",
-          //     showDenyButton: true,
-          //     confirmButtonText: "بله",
-          //     denyButtonText: `خیر`
-          // }).then((result) => {
-          //     if (result.isConfirmed) {
-          //         Swal.fire("<small>غذا ایجاد شد!</small>", "", "success");
-          //     } else if (result.isDenied) {
-          //         Swal.fire("<small>تغییرات ذخیره نشد</small>", "", "info");
-          //     }
-          // });
-
-          toast.success("غذا اضافه شد", {
-            position: "top-left",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-          });
-        })
-        .catch((error) => {
-          setBtnSpinner(false);
-          console.log("error", error);
-          toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-            position: "top-left",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-          });
-        });
+      toast.success("غذا با موفقیت اضافه شد");
+    } catch (error) {
+      const errorMessage = error.response?.data?.msg || "خطایی در اضافه کردن غذا رخ داد";
+      toast.error(errorMessage);
+    } finally {
+      setBtnSpinner(false);
     }
   };
 
@@ -394,12 +229,9 @@ function AddFood() {
     <>
       <TitleCard title="افزودن غذا" topMargin="mt-2">
         <div className="grid grid-cols-1 gap-6 items-center">
-          {/*  food name  */}
+          {/* Food Name */}
           <div className="flex flex-col mb-6">
-            <label
-              htmlFor="title"
-              className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-            >
+            <label className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">
               نام غذا
             </label>
             <div className="relative">
@@ -407,140 +239,100 @@ function AddFood() {
                 <IoFastFoodOutline className="w-6 h-6 text-gray-400" />
               </div>
               <input
-                style={{ borderRadius: "5px" }}
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
                 className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
                 placeholder="نام غذا"
               />
             </div>
-            <span className="text-red-500 relative text-sm">
-              {nameError ? nameErrorMsg : ""}
-            </span>
+            {errors.name && <span className="text-red-500 text-sm">{errors.name}</span>}
           </div>
 
-          {/*  food count  */}
+          {/* Other form fields with similar structure */}
+          {/* Food Count */}
           <div className="flex flex-col mb-6">
-            <label
-              htmlFor="count"
-              className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-            >
-              تعداد غذاها{" "}
+            <label className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">
+              تعداد غذاها
             </label>
             <div className="relative">
               <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
                 <GoNumber className="w-6 h-6 text-gray-400" />
               </div>
               <input
-                style={{ borderRadius: "5px" }}
+                name="count"
                 type="number"
                 min={1}
-                value={count}
-                onChange={(e) => setCount(e.target.value)}
+                value={formData.count}
+                onChange={handleInputChange}
                 className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                placeholder="تعداد غذاها "
+                placeholder="تعداد غذاها"
               />
             </div>
-            <span className="text-red-500 relative text-sm">
-              {countError ? countErrorMsg : ""}
-            </span>
+            {errors.count && <span className="text-red-500 text-sm">{errors.count}</span>}
           </div>
 
-          {/*  food date  */}
+          {/* Cook Date */}
           <div className="flex flex-col mb-6">
-            <label
-              htmlFor="cookDate"
-              className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-            >
-              {" "}
-              تاریخ پخت{" "}
+            <label className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">
+              تاریخ پخت
             </label>
             <div className="relative">
               <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
                 <SlCalender className="w-6 h-6 text-gray-400" />
               </div>
               <Select
-                value={cookDate}
-                onChange={(e) => setCookDate(e)}
+                value={formData.cookDate}
+                onChange={(value) => handleSelectChange("cookDate", value)}
                 options={weekDays}
                 isMultiple={true}
                 placeholder="انتخاب"
-                formatGroupLabel={(data) => (
-                  <div
-                    className={`py-2 text-xs flex items-center justify-between`}
-                  >
-                    <span className="font-bold">{data.label}</span>
-                    <span className="bg-gray-200 h-5 h-5 p-1.5 flex items-center justify-center rounded-full">
-                      {data.options.length}
-                    </span>
-                  </div>
-                )}
               />
             </div>
-            <span className="text-red-500 relative text-sm">
-              {cookDateError ? cookDateErrorMsg : ""}
-            </span>
+            {errors.cookDate && <span className="text-red-500 text-sm">{errors.cookDate}</span>}
           </div>
 
-          {/*  food hour  */}
+          {/* Cook Hour */}
           <div className="flex flex-col mb-6">
-            <label
-              htmlFor="cookHour"
-              className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-            >
-              {" "}
-              ساعت پخت{" "}
+            <label className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">
+              ساعت پخت
             </label>
             <div className="relative">
               <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
                 <TbClockHour12 className="w-6 h-6 text-gray-400" />
               </div>
               <Select
-                value={cookHour}
-                onChange={(e) => setCookHour(e)}
+                value={formData.cookHour}
+                onChange={(value) => handleSelectChange("cookHour", value)}
                 options={hourOptions}
                 placeholder="انتخاب"
-                classNames={`placholder-gray-400`}
               />
             </div>
-            <span className="text-red-500 relative text-sm">
-              {cookHourError ? cookHourErrorMsg : ""}
-            </span>
+            {errors.cookHour && <span className="text-red-500 text-sm">{errors.cookHour}</span>}
           </div>
 
-          {/*  food type  */}
+          {/* Food Category */}
           <div className="flex flex-col mb-6">
-            <label
-              htmlFor="cookHour"
-              className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-            >
-              {" "}
-              نوع غذا{" "}
+            <label className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">
+              دسته بندی غذا
             </label>
             <div className="relative">
               <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                <TbClockHour12 className="w-6 h-6 text-gray-400" />
+                <PiBowlFood className="w-6 h-6 text-gray-400" />
               </div>
               <Select
-                value={category}
-                onChange={(e) => setCategory(e)}
+                value={formData.category}
+                onChange={(value) => handleSelectChange("category", value)}
                 options={categoryOptions}
-                placeholder="انتخاب"
-                classNames={`placholder-gray-400`}
+                placeholder="انتخاب دسته بندی"
               />
             </div>
-            <span className="text-red-500 relative text-sm">
-              {categoryError ? categoryErrorMsg : ""}
-            </span>
+            {errors.category && <span className="text-red-500 text-sm">{errors.category}</span>}
           </div>
 
-          {/*  price  */}
+          {/* Price */}
           <div className="flex flex-col mb-6">
-            <label
-              htmlFor="title"
-              className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-            >
+            <label className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">
               قیمت غذا به ازای هر نفر
             </label>
             <div className="relative">
@@ -548,104 +340,69 @@ function AddFood() {
                 <IoPricetagOutline className="w-6 h-6 text-gray-400" />
               </div>
               <input
-                style={{ borderRadius: "5px" }}
+                name="price"
                 type="number"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                value={formData.price}
+                onChange={handleInputChange}
                 className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                placeholder="قیمت غذا "
+                placeholder="قیمت غذا"
               />
             </div>
-            {/* <span className='text-red-500 relative text-sm'>{errorPhoneMessage ? errorPhoneMessage : ""}</span> */}
-            <span className="text-red-500 relative text-sm">
-              {priceError ? priceErrorMsg : ""}
-            </span>
+            {errors.price && <span className="text-red-500 text-sm">{errors.price}</span>}
           </div>
 
-          {/*  cook name  */}
+          {/* Cook Name */}
           <div className="flex flex-col mb-6">
-            <label
-              htmlFor="cookName"
-              className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-            >
-              {" "}
-              نام سرآشپز{" "}
+            <label className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">
+              نام سرآشپز
             </label>
             <div className="relative">
               <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
                 <PiChefHatLight className="w-6 h-6 text-gray-400" />
               </div>
               <input
-                style={{ borderRadius: "5px" }}
-                type="text"
-                value={cookName}
-                onChange={(e) => setCookName(e.target.value)}
+                name="cookName"
+                value={formData.cookName}
+                onChange={handleInputChange}
                 className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                placeholder=" نام سرآشپز  "
+                placeholder="نام سرآشپز"
               />
             </div>
-            <span className="text-red-500 relative text-sm">
-              {cookNameError ? cookNameErrorMsg : ""}
-            </span>
+            {errors.cookName && <span className="text-red-500 text-sm">{errors.cookName}</span>}
           </div>
 
-          {/*  food photo  */}
+          {/* Main Photo */}
           <div className="flex flex-col mb-6">
-            <label
-              htmlFor="photo"
-              className="mb-2 text-xs sm:text-sm tracking-wide text-gray-600"
-            >
-              تصویر اصلی غذا{" "}
+            <label className="mb-2 text-xs sm:text-sm tracking-wide text-gray-600">
+              تصویر اصلی غذا
             </label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
               <div className="flex items-center">
                 <button
                   className="app-btn-gray"
-                  onClick={handleCustomButtonClick}
+                  onClick={() => fileInputRef.current.click()}
                 >
                   انتخاب تصویر اصلی
                 </button>
-
                 <input
                   type="file"
-                  id="photo"
-                  name="photo"
-                  accept={acceptedFileTypesString}
                   ref={fileInputRef}
                   className="hidden"
                   onChange={handleFileChange}
-                  onClick={(event) => {
-                    event.target.value = null;
-                  }}
+                  onClick={(e) => e.target.value = null}
                 />
               </div>
-
               <div className="rounded-xl max-h-96 overflow-auto bg-white p-4 shadow-sm">
                 {selectedFiles.length > 0 ? (
                   <ul>
                     {selectedFiles.map((file, index) => (
-                      <li
-                        key={file.name}
-                        className="flex justify-between items-center py-2 border-b"
-                      >
-                        <span className="text-sm text-gray-700">
-                          {file.name}
-                        </span>
+                      <li key={file.name} className="flex justify-between items-center py-2 border-b">
+                        <span className="text-sm text-gray-700">{file.name}</span>
                         <button
                           onClick={() => handleFileDelete(index)}
                           className="text-red-500 hover:text-red-700"
                         >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              d="M6 4l8 8M14 4l-8 8"
-                            />
-                          </svg>
+                          حذف
                         </button>
                       </li>
                     ))}
@@ -657,70 +414,42 @@ function AddFood() {
                 )}
               </div>
             </div>
-
-            <span className="text-red-500 relative text-sm">
-              {photoError ? photoErrorMsg : ""}
-            </span>
+            {errors.photo && <span className="text-red-500 text-sm">{errors.photo}</span>}
           </div>
 
-          {/* food photos */}
+          {/* Additional Photos */}
           <div className="flex flex-col mb-6">
-            <label
-              htmlFor="photos"
-              className="mb-2 text-xs sm:text-sm tracking-wide text-gray-600"
-            >
-              تصاویر اصلی غذا{" "}
+            <label className="mb-2 text-xs sm:text-sm tracking-wide text-gray-600">
+              تصاویر غذا
             </label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
               <div className="flex items-center">
                 <button
                   className="app-btn-gray"
-                  onClick={handleCustomButtonClick2}
+                  onClick={() => fileInputRef2.current.click()}
                 >
-                  انتخاب تصاویر اصلی
+                  انتخاب تصاویر
                 </button>
-
                 <input
                   type="file"
-                  id="photos"
-                  name="photos"
-                  multiple
-                  accept={acceptedFileTypesString2}
                   ref={fileInputRef2}
+                  multiple
                   className="hidden"
                   onChange={handleFileChange2}
-                  onClick={(event) => {
-                    event.target.value = null;
-                  }}
+                  onClick={(e) => e.target.value = null}
                 />
               </div>
-
               <div className="rounded-xl max-h-96 overflow-auto bg-white p-4 shadow-sm">
                 {selectedFiles2.length > 0 ? (
                   <ul>
                     {selectedFiles2.map((file, index) => (
-                      <li
-                        key={file.name}
-                        className="flex justify-between items-center py-2 border-b"
-                      >
-                        <span className="text-sm text-gray-700">
-                          {file.name}
-                        </span>
+                      <li key={file.name} className="flex justify-between items-center py-2 border-b">
+                        <span className="text-sm text-gray-700">{file.name}</span>
                         <button
                           onClick={() => handleFileDelete2(index)}
                           className="text-red-500 hover:text-red-700"
                         >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              d="M6 4l8 8M14 4l-8 8"
-                            />
-                          </svg>
+                          حذف
                         </button>
                       </li>
                     ))}
@@ -732,44 +461,33 @@ function AddFood() {
                 )}
               </div>
             </div>
-
-            <span className="text-red-500 relative text-sm">
-              {photosError ? photosErrorMsg : ""}
-            </span>
+            {errors.photos && <span className="text-red-500 text-sm">{errors.photos}</span>}
           </div>
 
-          {/*  description */}
+          {/* Description */}
           <div className="flex flex-col mb-2">
-            <label
-              htmlFor="description"
-              className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-            >
-              توضیحات{" "}
+            <label className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">
+              توضیحات
             </label>
             <div className="relative">
-              <div
-                className="inline-flex items-center justify-center absolute left-0 h-full w-10 text-gray-400"
-                style={{ bottom: "52px" }}
-              >
+              <div className="inline-flex items-center justify-center absolute left-0 h-full w-10 text-gray-400" style={{ bottom: "52px" }}>
                 <IoIosInformationCircleOutline className="w-6 h-6 text-gray-400" />
               </div>
               <textarea
-                style={{ borderRadius: "5px", resize: "none" }}
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
                 className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                placeholder="توضیحات "
-              ></textarea>
+                placeholder="توضیحات"
+                rows={4}
+              />
             </div>
-            <span className="text-red-500 relative text-sm">
-              {descriptionError ? descriptionErrorMsg : ""}
-            </span>
+            {errors.description && <span className="text-red-500 text-sm">{errors.description}</span>}
           </div>
 
-          {/* add food button */}
+          {/* Submit Button */}
           <div className="mt-4">
-            <button className="app-btn-blue" onClick={addFoodHandle}>
+            <button className="app-btn-blue" onClick={addFoodHandle} disabled={btnSpinner}>
               {btnSpinner ? (
                 <div className="px-10 py-1 flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
@@ -780,9 +498,8 @@ function AddFood() {
             </button>
           </div>
         </div>
-
-        <ToastContainer />
       </TitleCard>
+      <ToastContainer />
     </>
   );
 }

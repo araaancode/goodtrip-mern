@@ -116,6 +116,7 @@ const foodSchema = new mongoose.Schema(
       required: true,
       min: 1,
       max: 5,
+      default:1
     },
 
     numReviews: {

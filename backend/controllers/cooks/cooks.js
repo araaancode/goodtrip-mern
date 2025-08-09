@@ -8,6 +8,12 @@ const OrderFood = require("../../models/OrderFood");
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { Upload } = require("@aws-sdk/lib-storage");
 
+function generateRandom12DigitNumber() {
+  const min = 100000000000;
+  const max = 999999999999;
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 // S3 Client for Liara
 const s3Client = new S3Client({
   region: "default", // Liara doesn't require a specific region
@@ -967,6 +973,7 @@ exports.createFood = async (req, res) => {
       count,
       cookDate,
       cookHour,
+      foodCode: generateRandom12DigitNumber(),
       photo: `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${coverImageKey}`,
       photos: imageUrls,
     });
@@ -1304,13 +1311,13 @@ exports.orderFood = async (req, res) => {
   try {
     const order = await OrderFood.findOne({
       _id: req.params.orderId,
-      'items.cook': req.cook._id // Ensure the cook owns at least one item in the order
+      "items.cook": req.cook._id, // Ensure the cook owns at least one item in the order
     })
-    .populate('user', 'name email phone')
-    .populate('items.food', 'name image');
+      .populate("user", "name email phone")
+      .populate("items.food", "name image");
 
     if (!order) {
-       return res.status(StatusCodes.NOT_FOUND).json({
+      return res.status(StatusCodes.NOT_FOUND).json({
         status: "failure",
         msg: "سفارش غذا پیدا نشد",
       });
@@ -1319,13 +1326,13 @@ exports.orderFood = async (req, res) => {
     const transformedOrder = {
       _id: order._id,
       user: order.user,
-      items: order.items.map(item => ({
+      items: order.items.map((item) => ({
         _id: item._id,
         name: item.name || item.food?.name,
         quantity: item.quantity,
         price: item.price,
         food: item.food,
-        cook: item.cook
+        cook: item.cook,
       })),
       totalAmount: order.totalAmount,
       deliveryAddress: order.deliveryAddress,
@@ -1334,25 +1341,22 @@ exports.orderFood = async (req, res) => {
       orderStatus: order.orderStatus,
       description: order.description,
       createdAt: order.createdAt,
-      updatedAt: order.updatedAt
+      updatedAt: order.updatedAt,
     };
 
-
-
     res.status(StatusCodes.OK).json({
-      status: 'success',
-      msg: 'سفارش با موفقیت یافت شد',
-      order: transformedOrder
+      status: "success",
+      msg: "سفارش با موفقیت یافت شد",
+      order: transformedOrder,
     });
   } catch (error) {
-    console.error('Error fetching order:', error);
+    console.error("Error fetching order:", error);
     res.status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR).json({
-      status: 'failure',
-      msg: error.message || 'خطای سرور در دریافت سفارش'
+      status: "failure",
+      msg: error.message || "خطای سرور در دریافت سفارش",
     });
   }
 };
-
 
 // # description -> HTTP VERB -> Accesss -> Access Type
 // # change order status -> PUT -> Cook -> PRIVATE
