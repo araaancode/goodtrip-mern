@@ -1,12 +1,8 @@
-import { useState, useRef, useEffect } from "react";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
-
-import Swal from "sweetalert2";
+import { useState, useEffect } from "react";
+import { useCookAuthStore } from '../stores/authStore';
 import axios from "axios";
 import { GoLaw } from "react-icons/go";
 import { IoIosInformationCircleOutline } from "react-icons/io";
-
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -21,128 +17,84 @@ const showPersianStatus = (c) => {
 };
 
 function SingleSupportTicket() {
+  const { isCookAuthenticated, cook: authCook } = useCookAuthStore();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
   const [comments, setComments] = useState([]);
-  const [cook, setCook] = useState({});
   const [ticket, setTicket] = useState({});
   const [btnSpinner, setBtnSpinner] = useState(false);
   const [comment, setComment] = useState("");
-
-  // url
-  let token = localStorage.getItem("userToken");
-  let stId = window.location.href
-    .split("/support-tickets/")[1]
-    .split("/update")[0];
-
-  const modules = {
-    toolbar: [
-      [{ header: [1, 2, false] }],
-      ["bold", "italic", "underline", "strike"],
-      [{ align: ["right"] }], // Align text
-      [{ direction: "rtl" }], // RTL button
-      [{ list: "ordered" }, { list: "bullet" }],
-      ["link", "image"],
-      ["clean"],
-    ],
-  };
-
-  // error variables
   const [commentError, setCommentError] = useState(false);
   const [commentErrorMsg, setCommentErrorMsg] = useState("");
 
-  // get single support tickets
+  const stId = window.location.href.split("/support-tickets/")[1].split("/update")[0];
+
   useEffect(() => {
+    if (!isCookAuthenticated) return;
+
     const fetchSupportTicket = async () => {
-      await axios
-        .get(`/api/cooks/support-tickets/${stId}`, {
-          headers: {
-            authorization: `Bearer ${token}`,
-          },
-        })
-        .then((response) => {
-          console.log(response);
-
-          setTicket(response.data.ticket);
-          setTitle(response.data.ticket.title);
-          setDescription(response.data.ticket.description);
-          setDate(response.data.ticket.createdAt);
-          setComments(response.data.ticket.comments);
-        })
-        .catch((error) => {
-          console.error(error);
+      try {
+        const response = await axios.get(`/api/cooks/support-tickets/${stId}`, {
+          withCredentials: true
         });
+        setTicket(response.data.ticket);
+        setTitle(response.data.ticket.title);
+        setDescription(response.data.ticket.description);
+        setDate(response.data.ticket.createdAt);
+        setComments(response.data.ticket.comments || []);
+      } catch (error) {
+        console.error(error);
+        toast.error("خطا در دریافت اطلاعات تیکت");
+      }
     };
+
     fetchSupportTicket();
+  }, [isCookAuthenticated, stId]);
 
-    axios
-      .get(`/api/cooks/me`, {
-        headers: {
-          "Content-Type": "application/json",
-          authorization: "Bearer " + token,
-        },
-      })
-      .then((res) => {
-        setCook(res.data.cook);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }, []);
-
-  const sendSupportTicket = (e) => {
+  const sendSupportTicket = async (e) => {
     e.preventDefault();
 
-    if (
-      !comment ||
-      comment === "" ||
-      comment === undefined ||
-      comment === null
-    ) {
+    if (!comment || comment === "" || comment === undefined || comment === null) {
       setCommentError(true);
       setCommentErrorMsg("*  پیام باید وارد شود");
-    } else {
-      setBtnSpinner(true);
+      return;
+    }
 
-      try {
-        axios
-          .put(
-            `/api/cooks/support-tickets/${stId}/add-comment`,
-            { comment },
-            {
-              headers: {
-                "Content-Type": "application/json",
-                authorization: "Bearer " + token,
-              },
-            }
-          )
-          .then((res) => {
-            setBtnSpinner(false);
+    setBtnSpinner(true);
 
-            toast.success("پیام فرستاده شد", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-          });
-      } catch (error) {
-        setBtnSpinner(false);
-        console.log("error", error);
-        toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-          position: "top-left",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-      }
+    try {
+      const response = await axios.put(
+        `/api/cooks/support-tickets/${stId}/add-comment`,
+        { comment },
+        { withCredentials: true }
+      );
+
+      setComments(response.data.ticket.comments);
+      setComment("");
+      setBtnSpinner(false);
+      
+      toast.success("پیام فرستاده شد", {
+        position: "top-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+    } catch (error) {
+      setBtnSpinner(false);
+      console.log("error", error);
+      toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
+        position: "top-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
     }
   };
 
@@ -185,10 +137,10 @@ function SingleSupportTicket() {
               {/* comments & add comment */}
               {comments && comments.length > 0 ? (
                 comments.map((c) =>
-                  JSON.stringify(c).includes("cook") ? (
+                  c.cook ? (
                     <div className="bg-blue-50 p-6 rounded-md w-full my-4">
                       <div className="flex justify-between">
-                        <h2 className="text-lg font-bold">{cook.name}</h2>
+                        <h2 className="text-lg font-bold">{authCook?.name}</h2>
                         <span className="text-sm">
                           {new Date(c.createdAt).toLocaleDateString("fa")}
                         </span>
@@ -215,16 +167,6 @@ function SingleSupportTicket() {
 
               {/* text editor */}
               <p className="mt-6 mb-2">پیام: </p>
-              {/* <div style={{ direction: 'rtl', textAlign: 'right' }}>
-                            <ReactQuill
-                                value={comment}
-                                onChange={setComment}
-                                modules={modules}
-                                theme="snow"
-                                className="rtl-editor"
-                            />
-                        </div> */}
-
               <div className="flex flex-col mb-2">
                 <div className="relative">
                   <div
@@ -299,7 +241,7 @@ function SingleSupportTicket() {
           <div className="p-4">
             <p>حاضران:</p>
             <ul className="list-disc">
-              <li> {cook.name}</li>
+              <li> {authCook?.name}</li>
               <li>پشتیبانی سایت</li>
             </ul>
           </div>

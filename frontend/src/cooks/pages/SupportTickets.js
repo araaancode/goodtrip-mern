@@ -1,22 +1,15 @@
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useCookAuthStore } from '../stores/authStore'; 
 import TitleCard from "../components/Cards/TitleCard";
-import { setPageTitle } from "../features/common/headerSlice";
 import axios from "axios";
-import "../components/modal.css";
-import { IoEyeOutline } from "react-icons/io5";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import { IoEyeOutline } from "react-icons/io5";
 import { DataGrid } from "@mui/x-data-grid";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { faIR } from "@mui/x-data-grid/locales";
-import { Box, TextField } from "@mui/material";
-import { IconButton } from "@mui/material";
+import { Box, TextField, IconButton, CircularProgress } from "@mui/material";
 import { ArrowForwardIos, ArrowBackIos } from "@mui/icons-material";
-import CircularProgress from "@mui/material/CircularProgress";
-
-import "dayjs/locale/fa";
 
 const TopSideButtons = () => (
   <div className="inline-block">
@@ -25,35 +18,33 @@ const TopSideButtons = () => (
 );
 
 const SupportTickets = () => {
+  const { isCookAuthenticated, cook } = useCookAuthStore();
   const [supportTickets, setSupportTickets] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [pageSize, setPageSize] = useState(8);
-  const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(setPageTitle({ title: "لیست تیکت ها" }));
-  }, []);
-
-  useEffect(() => {
-    const token = localStorage.getItem("userToken");
-    const AuthStr = "Bearer ".concat(token);
-
-    setLoading(true);
-    axios
-      .get("/api/cooks/support-tickets", {
-        headers: { authorization: AuthStr },
-      })
-      .then((response) => {
+    const fetchSupportTickets = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get("/api/cooks/support-tickets", {
+          withCredentials: true
+        });
         setSupportTickets(response.data.supportTickets);
+      } catch (error) {
+        console.error("Error fetching support tickets:", error);
+        toast.error("خطا در دریافت لیست تیکت‌ها");
+      } finally {
         setLoading(false);
-      })
-      .catch((error) => {
-        console.log("error " + error);
-        setLoading(false);
-      });
-  }, []);
+      }
+    };
+
+    if (isCookAuthenticated) {
+      fetchSupportTickets();
+    }
+  }, [isCookAuthenticated]);
 
   const columns = [
     {
@@ -77,25 +68,28 @@ const SupportTickets = () => {
       flex: 1,
       renderCell: (params) => {
         const status = params.value;
-        if (status === "Open")
+        if (status === "Open") {
           return (
-            <span className="bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-blue-900 dark:text-blue-300">
+            <span className="bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm">
               باز
             </span>
           );
-        if (status === "In Progress")
+        }
+        if (status === "Closed") {
           return (
-            <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-green-900 dark:text-green-300">
+            <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm">
               بسته شده
             </span>
           );
-        if (status === "Closed")
+        }
+        if (status === "In Progress") {
           return (
-            <span className="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-yellow-900 dark:text-yellow-300">
+            <span className="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm">
               در حال بررسی
             </span>
           );
-        return <div className="badge">{status}</div>;
+        }
+        return <span>{status}</span>;
       },
     },
     {
@@ -103,53 +97,38 @@ const SupportTickets = () => {
       headerName: "اولویت تیکت",
       flex: 1,
       renderCell: (params) => {
-        const status = params.value;
-        if (status === "Low")
+        const priority = params.value;
+        if (priority === "Low") {
           return (
-            <span className="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-yellow-900 dark:text-yellow-300">
+            <span className="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm">
               کم
             </span>
           );
-        if (status === "Medium")
+        }
+        if (priority === "Medium") {
           return (
-            <span className="bg-purple-100 text-purple-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-purple-900 dark:text-purple-300">
+            <span className="bg-purple-100 text-purple-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm">
               متوسط
             </span>
           );
-        if (status === "High")
+        }
+        if (priority === "High") {
           return (
-            <span className="bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-red-900 dark:text-red-300">
+            <span className="bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm">
               بالا
             </span>
           );
-        return <div className="badge">{status}</div>;
+        }
+        return <span>{priority}</span>;
       },
     },
-    // {
-    //   field: "isRead",
-    //   headerName: "خوانده شده/نشده",
-    //   flex: 1,
-    //   renderCell: (params) => (
-    //     <div className="flex items-center gap-2">
-    //       {params.value.isRead ? (
-    //         <span className="mt-5 bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-green-900 dark:text-green-300">
-    //           خوانده شده
-    //         </span>
-    //       ) : (
-    //         <span className="mt-5 bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-red-900 dark:text-red-300">
-    //           خوانده نشده
-    //         </span>
-    //       )}
-    //     </div>
-    //   ),
-    // },
     {
       field: "createdAt",
       headerName: "تاریخ ایجاد",
       flex: 1,
       renderCell: (params) => (
         <div className="flex items-center gap-2">
-          <span>{new Date(params.value).toLocaleDateString("fa")}</span>
+          <span>{new Date(params.value).toLocaleDateString("fa-IR")}</span>
         </div>
       ),
     },
@@ -167,14 +146,9 @@ const SupportTickets = () => {
     },
   ];
 
-  const rows = supportTickets.map((spt) => ({
-    id: spt._id,
-    _id: spt._id,
-    title: spt.title || "—",
-    createdAt: spt.createdAt || null,
-    status: spt.status || null,
-    priority: spt.priority || "—",
-    isRead: spt.isRead || "—",
+  const rows = supportTickets.map((ticket) => ({
+    id: ticket._id,
+    ...ticket
   }));
 
   const filteredRows = rows.filter((row) =>
@@ -188,6 +162,9 @@ const SupportTickets = () => {
   const theme = createTheme(
     {
       direction: "rtl",
+      palette: {
+        mode: "light",
+      },
     },
     faIR
   );
@@ -195,151 +172,136 @@ const SupportTickets = () => {
   return (
     <>
       <TitleCard title="" topMargin="mt-2" TopSideButtons={<TopSideButtons />}>
-        {supportTickets.length > 0 ? (
-          <ThemeProvider theme={theme}>
-            <Box sx={{ height: 500, width: "100%" }}>
-              <Box
+        <ThemeProvider theme={theme}>
+          <Box sx={{ height: 500, width: "100%" }}>
+            <Box
+              sx={{
+                mb: 2,
+                display: "flex",
+                justifyContent: "flex-start",
+              }}
+            >
+              <TextField
+                placeholder="جستجو..."
+                variant="outlined"
+                size="small"
+                onChange={(e) => setSearchQuery(e.target.value)}
                 sx={{
-                  mb: 2,
-                  display: "flex",
-                  justifyContent: "flex-start",
-                }}
-              >
-                <TextField
-                  placeholder="جستجو..."
-                  variant="outlined"
-                  size="small"
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  sx={{
-                    width: 300,
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": {
-                        borderColor: "#ccc",
-                        border: "0",
-                      },
-                      "&.Mui-focused fieldset": {
-                        border: 0,
-                      },
+                  width: 300,
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": {
+                      borderColor: "#ccc",
+                      border: "0",
                     },
-                  }}
-                  inputProps={{
-                    style: {
-                      textAlign: "right",
-                      direction: "rtl",
-                      outline: "0",
-                      border: "1px solid	#ccc",
-                      borderRadius: "5px",
+                    "&.Mui-focused fieldset": {
+                      border: 0,
                     },
-                  }}
-                />
-              </Box>
-
-              <DataGrid
-                rows={filteredRows}
-                columns={columns}
-                pagination
-                paginationMode="client"
-                paginationModel={{ page, pageSize }}
-                onPaginationModelChange={(newModel) => {
-                  setPage(newModel.page);
-                  setPageSize(newModel.pageSize);
-                }}
-                pageSizeOptions={[5, 8, 10, 20]}
-                disableRowSelectionOnClick
-                disableColumnMenu
-                loading={loading} // Enable MUI DataGrid's built-in loading state
-                slots={{
-                  loadingOverlay: () => (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        height: "100%",
-                      }}
-                    >
-                      <CircularProgress />
-                    </Box>
-                  ),
-                  noRowsOverlay: () => (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        height: "100%",
-                      }}
-                    >
-                      <CircularProgress />
-                    </Box>
-                  ),
-                }}
-                slotProps={{
-                  pagination: {
-                    labelRowsPerPage: "تعداد ردیف در هر صفحه:",
-                    nextIconButton: (
-                      <IconButton>
-                        <ArrowForwardIos />
-                      </IconButton>
-                    ),
-                    previousIconButton: (
-                      <IconButton>
-                        <ArrowBackIos />
-                      </IconButton>
-                    ),
                   },
                 }}
-                localeText={{
-                  ...faIR.components.MuiDataGrid.defaultProps.localeText,
-                  footerPaginationDisplayedRows: (from, to, count) =>
-                    `${from}–${to} از ${count}`,
-                }}
-                sx={{
-                  direction: "rtl",
-                  fontFamily: "IRANSans, Tahoma, sans-serif",
-                  textAlign: "right",
-                  "& .MuiDataGrid-cell": {
+                inputProps={{
+                  style: {
                     textAlign: "right",
-                    justifyContent: "flex-end",
-                  },
-                  "& .MuiDataGrid-columnHeaderTitle": {
-                    textAlign: "right",
-                    justifyContent: "flex-end",
-                    width: "100%",
-                  },
-                  "& .MuiDataGrid-columnHeaders": {
-                    backgroundColor: "#fff",
-                    fontWeight: "bold",
-                  },
-                  "& .MuiDataGrid-row": {
-                    backgroundColor: "#fff",
-                  },
-                  "& .MuiDataGrid-row:hover": {
-                    backgroundColor: "#fff",
-                  },
-                  "& .MuiTablePagination-root": {
                     direction: "rtl",
+                    outline: "0",
+                    border: "1px solid #ccc",
+                    borderRadius: "5px",
                   },
-                  "& .MuiTablePagination-actions": {
-                    direction: "rtl",
-                  },
-                  "& .MuiTablePagination-actions button svg": {
-                    // transform: "rotate(180deg)", // Flip left/right arrows
-                  },
-                  "& .MuiTablePagination-root .css-1hr2sou-MuiTablePagination-root":
-                    {
-                      display: "none",
-                      hidden: true,
-                    },
                 }}
               />
             </Box>
-          </ThemeProvider>
-        ) : (
-          <h1>هنوز هیچ تیکت پشتیبانی اضافه نشده است.</h1>
-        )}
+
+            <DataGrid
+              rows={filteredRows}
+              columns={columns}
+              loading={loading}
+              pagination
+              paginationMode="client"
+              paginationModel={{ page, pageSize }}
+              onPaginationModelChange={(newModel) => {
+                setPage(newModel.page);
+                setPageSize(newModel.pageSize);
+              }}
+              pageSizeOptions={[5, 8, 10, 20]}
+              disableRowSelectionOnClick
+              disableColumnMenu
+              localeText={{
+                ...faIR.components.MuiDataGrid.defaultProps.localeText,
+                footerPaginationDisplayedRows: ({ from, to, count }) =>
+                  `${from}–${to} از ${count}`,
+              }}
+              sx={{
+                fontFamily: "IRANSans, Tahoma, sans-serif",
+                "& .MuiDataGrid-cell": {
+                  textAlign: "right",
+                  justifyContent: "flex-end",
+                },
+                "& .MuiDataGrid-columnHeaderTitle": {
+                  textAlign: "right",
+                  justifyContent: "flex-end",
+                  width: "100%",
+                },
+                "& .MuiDataGrid-columnHeaders": {
+                  backgroundColor: "#f8fafc",
+                  fontWeight: "bold",
+                },
+              }}
+              slots={{
+                pagination: () => (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      p: 1,
+                    }}
+                  >
+                    <IconButton
+                      onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
+                      disabled={page === 0}
+                    >
+                      <ArrowBackIos />
+                    </IconButton>
+                    <span>
+                      صفحه {page + 1} از {Math.ceil(filteredRows.length / pageSize)}
+                    </span>
+                    <IconButton
+                      onClick={() =>
+                        setPage((prev) =>
+                          (prev + 1) * pageSize < filteredRows.length
+                            ? prev + 1
+                            : prev
+                        )
+                      }
+                      disabled={(page + 1) * pageSize >= filteredRows.length}
+                    >
+                      <ArrowForwardIos />
+                    </IconButton>
+                  </Box>
+                ),
+                noRowsOverlay: () => (
+                  <Box
+                    sx={{
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {loading ? (
+                      <CircularProgress />
+                    ) : (
+                      "هیچ تیکتی یافت نشد"
+                    )}
+                  </Box>
+                ),
+                loadingOverlay: CircularProgress,
+              }}
+            />
+          </Box>
+        </ThemeProvider>
       </TitleCard>
-      <ToastContainer />
+      <ToastContainer rtl position="top-right" />
     </>
   );
 };
