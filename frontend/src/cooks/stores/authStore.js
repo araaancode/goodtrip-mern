@@ -150,7 +150,6 @@ export const useCookAuthStore = create((set, get) => ({
         withCredentials: true,
       });
       set({ cook: response.data.cook, isCookAuthenticated: true });
-      console.log(response.data.cook)
     } catch (error) {
       console.log(error);
     }

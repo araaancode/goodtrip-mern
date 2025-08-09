@@ -32,19 +32,27 @@ const BookingsPage = lazy(() => import("./landing/pages/BookingsPage"));
 const OrderFoodsPage = lazy(() => import("./landing/pages/OrderFoodsPage"));
 const OrderFoodPage = lazy(() => import("./landing/pages/OrderFoodPage"));
 const BookingPage = lazy(() => import("./landing/pages/BookingPage"));
-const SearchResultsPage = lazy(() => import("./landing/pages/SearchResultsPage"));
+const SearchResultsPage = lazy(() =>
+  import("./landing/pages/SearchResultsPage")
+);
 const FavoritesPage = lazy(() => import("./landing/pages/FavoritesPage"));
 const BankPage = lazy(() => import("./landing/pages/BankPage"));
-const NotificationsPage = lazy(() => import("./landing/pages/NotificationsPage"));
+const NotificationsPage = lazy(() =>
+  import("./landing/pages/NotificationsPage")
+);
 const SupportPage = lazy(() => import("./landing/pages/SupportPage"));
 const BookingBus = lazy(() => import("./landing/pages/BookingBus"));
 const OrderFood = lazy(() => import("./landing/pages/OrderFood"));
 const CreateOrderFood = lazy(() => import("./landing/pages/CreateOrderFood"));
 const CartPage = lazy(() => import("./landing/pages/CartPage"));
 const SingleFoodPage = lazy(() => import("./landing/pages/SingleFoodPage"));
-const ConfirmBookingBus = lazy(() => import("./landing/pages/ConfirmBookingBus"));
+const ConfirmBookingBus = lazy(() =>
+  import("./landing/pages/ConfirmBookingBus")
+);
 const BusTicketsPage = lazy(() => import("./landing/pages/BusTicketsPage"));
-const ForgotPasswordPage = lazy(() => import("./landing/pages/ForgotPasswordPage"));
+const ForgotPasswordPage = lazy(() =>
+  import("./landing/pages/ForgotPasswordPage")
+);
 const NotFound = lazy(() => import("./NotFound"));
 
 // Lazy-loaded cook routes
@@ -53,7 +61,7 @@ const CooksLogin = lazy(() => import("./cooks/pages/Login"));
 const CooksRegister = lazy(() => import("./cooks/pages/Register"));
 const CooksForgotPassword = lazy(() => import("./cooks/pages/ForgotPassword"));
 const CookResetPassword = lazy(() => import("./cooks/pages/ResetPassword"));
-const CookWelcome = lazy(() => import("./cooks/pages/protected/Welcome"));
+const CookUpdateAds = lazy(() => import("./cooks/pages/UpdateAds"));
 
 // // admin private routes (commented out)
 // import AdminPublicRoutes from "./admin/routing/publicRoutes"
@@ -100,6 +108,7 @@ function App() {
     checkAuthCook();
   }, [checkAuth, checkAuthCook]);
 
+
   return (
     <Router>
       <Suspense fallback={<div>Loading...</div>}>
@@ -145,9 +154,21 @@ function App() {
               )
             }
           />
-
+          {/* <Route
+            path="/cooks/advertisements/:adsId/update"
+            element={
+              isCookAuthenticated ? (
+                <CookUpdateAds />
+              ) : (
+                <Navigate to="/cooks/login" />
+              )
+            }
+          /> */}
+          <Route
+            path="/cooks/advertisements/:adsId/update"
+            element={<CookUpdateAds />}
+          />
           <Route path="/cooks/*" element={<CooksLayout />} />
-
           {/* **************************************** users routes **************************************** */}
           <Route
             path="/login"
@@ -162,7 +183,6 @@ function App() {
             }
           />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-
           {/* Main App Routes (With Layout) */}
           <Route element={<IndexLayout />}>
             <Route index element={<IndexPage />} />
@@ -203,7 +223,6 @@ function App() {
             <Route path="/create-order" element={<CreateOrderFood />} />
             <Route path="/foods/:foodId" element={<SingleFoodPage />} />
           </Route>
-
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

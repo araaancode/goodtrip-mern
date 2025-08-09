@@ -2,21 +2,16 @@ import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import TitleCard from "../components/Cards/TitleCard";
 import { setPageTitle } from "../features/common/headerSlice";
+import { useCookAuthStore } from "../stores/authStore";
 import axios from "axios";
-import "../components/modal.css";
-import { PiNewspaperClipping } from "react-icons/pi";
-import { IoEyeOutline } from "react-icons/io5";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
 import { DataGrid } from "@mui/x-data-grid";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { faIR } from "@mui/x-data-grid/locales";
-import { Box, TextField } from "@mui/material";
-import { IconButton } from "@mui/material";
+import { Box, TextField, IconButton, CircularProgress } from "@mui/material";
 import { ArrowForwardIos, ArrowBackIos } from "@mui/icons-material";
-import CircularProgress from "@mui/material/CircularProgress";
-
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { IoEyeOutline } from "react-icons/io5";
 import dayjs from "dayjs";
 import "dayjs/locale/fa";
 
@@ -26,35 +21,36 @@ const TopSideButtons = () => (
   </div>
 );
 
-const Advertisments = () => {
+const Advertisements = () => {
   const [ads, setAds] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(8);
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
+  const { isCookAuthenticated } = useCookAuthStore();
 
   useEffect(() => {
     dispatch(setPageTitle({ title: "لیست آگهی ها" }));
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("userToken");
-    const AuthStr = "Bearer ".concat(token);
-    setLoading(true); // Set loading to true before fetching
+    if (!isCookAuthenticated) return;
+
+    setLoading(true);
     axios
       .get("/api/cooks/ads", {
-        headers: { authorization: AuthStr },
+        withCredentials: true, // Using cookies instead of Bearer token
       })
       .then((response) => {
         setAds(response.data.ads);
-        setLoading(false); // Set loading to false after data is fetched
+        setLoading(false);
       })
       .catch((error) => {
-        console.log("error " + error);
-        setLoading(false); // Set loading to false after data is fetched
+        console.log("error ", error);
+        setLoading(false);
       });
-  }, []);
+  }, [isCookAuthenticated]); // Add isCookAuthenticated as dependency
 
   const columns = [
     {
@@ -76,6 +72,11 @@ const Advertisments = () => {
       field: "price",
       headerName: "قیمت",
       flex: 1,
+      renderCell: (params) => (
+        <div>
+          {params.value ? params.value.toLocaleString() + " ریال" : "—"}
+        </div>
+      ),
     },
     {
       field: "createdAt",
@@ -83,18 +84,18 @@ const Advertisments = () => {
       flex: 1,
       renderCell: (params) => (
         <div className="flex items-center gap-2">
-          <span>{new Date(params.value).toLocaleDateString("fa")}</span>
+          <span>{new Date(params.value).toLocaleDateString("fa-IR")}</span>
         </div>
       ),
     },
     {
       field: "details",
-      headerName: " جزئیات ",
+      headerName: "جزئیات",
       flex: 0.5,
       sortable: false,
       filterable: false,
       renderCell: (params) => (
-        <a href={`/cooks/advertisments/${params.row._id}/update`}>
+        <a href={`/cooks/advertisements/${params.row._id}/update`}>
           <IoEyeOutline className="w-6 h-6 mt-3" />
         </a>
       ),
@@ -106,8 +107,9 @@ const Advertisments = () => {
     _id: item._id,
     title: item.title || "—",
     createdAt: item.createdAt || null,
-    price: item.price || "—",
+    price: item.price || null,
   }));
+
 
   const filteredRows = rows.filter((row) =>
     Object.values(row).some(
@@ -159,7 +161,7 @@ const Advertisments = () => {
                       textAlign: "right",
                       direction: "rtl",
                       outline: "0",
-                      border: "1px solid	#ccc",
+                      border: "1px solid #ccc",
                       borderRadius: "5px",
                     },
                   }}
@@ -179,7 +181,7 @@ const Advertisments = () => {
                 pageSizeOptions={[5, 8, 10, 20]}
                 disableRowSelectionOnClick
                 disableColumnMenu
-                loading={loading} // Enable MUI DataGrid's built-in loading state
+                loading={loading}
                 slots={{
                   loadingOverlay: () => (
                     <Box
@@ -255,25 +257,21 @@ const Advertisments = () => {
                   "& .MuiTablePagination-actions": {
                     direction: "rtl",
                   },
-                  "& .MuiTablePagination-actions button svg": {
-                    // transform: "rotate(180deg)", // Flip left/right arrows
-                  },
-                  "& .MuiTablePagination-root .css-1hr2sou-MuiTablePagination-root":
-                    {
-                      display: "none",
-                      hidden: true,
-                    },
                 }}
               />
             </Box>
           </ThemeProvider>
         ) : (
-          <h1>هنوز هیچ آگهی اضافه نشده است.</h1>
+          <div className="text-center py-8">
+            <h1 className="text-lg text-gray-600">
+              {loading ? "در حال بارگذاری..." : "هنوز هیچ آگهی اضافه نشده است."}
+            </h1>
+          </div>
         )}
       </TitleCard>
-      <ToastContainer />
+      <ToastContainer rtl position="top-center" />
     </>
   );
 };
 
-export default Advertisments;
+export default Advertisements;
