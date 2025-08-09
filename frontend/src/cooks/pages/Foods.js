@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import TitleCard from "../components/Cards/TitleCard";
 import { setPageTitle } from "../features/common/headerSlice";
 import { useCookAuthStore } from "../stores/authStore";
-import { toast } from "react-toastify";
+import { toast,ToastContainer } from "react-toastify";
 import { PiNewspaperClipping } from "react-icons/pi";
 import { IoEyeOutline } from "react-icons/io5";
 
@@ -303,6 +303,7 @@ const Foods = () => {
           )
         )}
       </TitleCard>
+      <ToastContainer />
     </>
   );
 };

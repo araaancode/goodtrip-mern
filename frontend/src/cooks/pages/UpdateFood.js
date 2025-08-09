@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
+import { useCookAuthStore } from '../stores/authStore'; 
 import TitleCard from "../components/Cards/TitleCard";
 import Select from "react-tailwindcss-select";
 import "react-tailwindcss-select/dist/index.css";
-import Swal from "sweetalert2";
 import axios from "axios";
 import { IoIosInformationCircleOutline } from "react-icons/io";
 import { IoPricetagOutline } from "react-icons/io5";
@@ -13,7 +13,6 @@ import { TbClipboardText } from "react-icons/tb";
 import { HiOutlineMapPin } from "react-icons/hi2";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
 import { IoFastFoodOutline } from "react-icons/io5";
 import { GoNumber } from "react-icons/go";
 import { SlCalender } from "react-icons/sl";
@@ -21,34 +20,7 @@ import { TbClockHour12 } from "react-icons/tb";
 import { PiChefHatLight } from "react-icons/pi";
 import { PiBowlFood } from "react-icons/pi";
 import { CiCircleQuestion } from "react-icons/ci";
-
 import { Dialog } from "@headlessui/react";
-
-const options = [
-  {
-    label: "غذاهای ایرانی",
-    options: [
-      { value: "kebab", label: "کباب" },
-      { value: "ghormeh_sabzi", label: "قرمه سبزی" },
-      { value: "fesenjan", label: "فسنجان" },
-      { value: "tahchin", label: "ته چین" },
-      { value: "ash_reshteh", label: "آش رشته" },
-      { value: "zereshk_polo", label: "زرشک پلو" },
-      { value: "bademjan", label: "بادمجان" },
-      { value: "gheymeh", label: "قیمه" },
-      { value: "kashke_bademjan", label: "کشک بادمجان" },
-      { value: "dizi", label: "دیزی" },
-      { value: "baghali_polo", label: "باقالی پلو" },
-      { value: "sabzi_polo", label: "سبزی پلو" },
-      { value: "shirin_polo", label: "شیرین پلو" },
-      { value: "khoreshte_bamieh", label: "خورشت بامیه" },
-      { value: "adas_polo", label: "عدس پلو" },
-      { value: "abgoosht", label: "آبگوشت" },
-      { value: "tahdig", label: "ته دیگ" },
-      { value: "loobia_polo", label: "لوبیا پلو" },
-    ],
-  },
-];
 
 const weekDays = [
   {
@@ -79,6 +51,7 @@ const categoryOptions = [
 ];
 
 function UpdateFood() {
+  const { isCookAuthenticated, cook } = useCookAuthStore();
   const [name, setName] = useState("");
   const [count, setCount] = useState("");
   const [cookDate, setCookDate] = useState([]);
@@ -92,15 +65,12 @@ function UpdateFood() {
   const [cookName, setCookName] = useState("");
   const [photo, setPhoto] = useState(null);
   const [photos, setPhotos] = useState([]);
-
   const [isOpen, setIsOpen] = useState(false);
-
   const [btnSpinner, setBtnSpinner] = useState(false);
 
-  let token = localStorage.getItem("userToken");
   let foodId = window.location.href.split("/foods/")[1].split("/update")[0];
 
-  // Photo vars
+  // Photo handling variables
   const [selectedFiles, setSelectedFiles] = useState([]);
   const fileInputRef = useRef(null);
   const acceptedFileExtensions = ["jpg", "png", "jpeg"];
@@ -108,7 +78,7 @@ function UpdateFood() {
     .map((ext) => `.${ext}`)
     .join(",");
 
-  // Photos vars
+  // Photos handling variables
   const [selectedFiles2, setSelectedFiles2] = useState([]);
   const fileInputRef2 = useRef(null);
   const acceptedFileExtensions2 = ["jpg", "png", "jpeg"];
@@ -116,34 +86,25 @@ function UpdateFood() {
     .map((ext) => `.${ext}`)
     .join(",");
 
-  // Error variables
+  // Error states
   const [nameError, setNameError] = useState(false);
   const [nameErrorMsg, setNameErrorMsg] = useState("");
-
   const [countError, setCountError] = useState(false);
   const [countErrorMsg, setCountErrorMsg] = useState("");
-
   const [cookDateError, setCookDateError] = useState(false);
   const [cookDateErrorMsg, setCookDateErrorMsg] = useState("");
-
   const [cookHourError, setCookHourError] = useState(false);
   const [cookHourErrorMsg, setCookHourErrorMsg] = useState("");
-
   const [priceError, setPriceError] = useState(false);
   const [priceErrorMsg, setPriceErrorMsg] = useState("");
-
   const [descriptionError, setDescriptionError] = useState(false);
   const [descriptionErrorMsg, setDescriptionErrorMsg] = useState("");
-
   const [categoryError, setCategoryError] = useState(false);
   const [categoryErrorMsg, setCategoryErrorMsg] = useState("");
-
   const [cookNameError, setCookNameError] = useState(false);
   const [cookNameErrorMsg, setCookNameErrorMsg] = useState("");
-
   const [photoError, setPhotoError] = useState(false);
   const [photoErrorMsg, setPhotoErrorMsg] = useState("");
-
   const [photosError, setPhotosError] = useState(false);
   const [photosErrorMsg, setPhotosErrorMsg] = useState("");
 
@@ -213,351 +174,154 @@ function UpdateFood() {
     setSelectedFiles2(updatedFiles);
   };
 
-  // get single food
+  // Get single food
   useEffect(() => {
     const fetchFood = async () => {
-      await axios
-        .get(`/api/cooks/foods/${foodId}`, {
-          headers: {
-            authorization: `Bearer ${token}`,
-          },
-        })
-        .then((response) => {
-          setPhoto(response.data.food.photo);
-          setPhotos(response.data.food.photos);
-          setName(response.data.food.name);
-          setCount(response.data.food.count);
-          setPrice(response.data.food.price);
-          setDescription(response.data.food.description);
-          setCookName(response.data.food.cookName);
-          setFetchCookDate(response.data.food.cookDate);
-          setFetchCookHour(response.data.food.cookHour);
-          setFetchCategory(response.data.food.category);
-        })
-        .catch((error) => {
-          console.error(error);
+      try {
+        const response = await axios.get(`/api/cooks/foods/${foodId}`, {
+          withCredentials: true
         });
+        setPhoto(response.data.food.photo);
+        setPhotos(response.data.food.photos);
+        setName(response.data.food.name);
+        setCount(response.data.food.count);
+        setPrice(response.data.food.price);
+        setDescription(response.data.food.description);
+        setCookName(response.data.food.cookName);
+        setFetchCookDate(response.data.food.cookDate);
+        setFetchCookHour(response.data.food.cookHour);
+        setFetchCategory(response.data.food.category);
+      } catch (error) {
+        console.error(error);
+      }
     };
     fetchFood();
-  }, [foodId, token]);
+  }, [foodId]);
 
-  //   update food
+  // Update food
   const updateFoodHandle = (e) => {
     e.preventDefault();
 
-    // name error
-    if (!name || name === "" || name === undefined || name === null) {
+    // Validation
+    let isValid = true;
+    if (!name) {
       setNameError(true);
       setNameErrorMsg("* نام غذا باید وارد شود");
+      isValid = false;
     }
-
-    if (!count || count === "" || count === undefined || count === null) {
+    if (!count) {
       setCountError(true);
-      setCountErrorMsg("*  تعداد غذا باید وارد شود");
+      setCountErrorMsg("* تعداد غذا باید وارد شود");
+      isValid = false;
     }
-
-    if (!price || price === "" || price === undefined || price === null) {
+    if (!price) {
       setPriceError(true);
-      setPriceErrorMsg("*  قیمت غذا باید وارد شود");
+      setPriceErrorMsg("* قیمت غذا باید وارد شود");
+      isValid = false;
     }
-
-    if (
-      !cookDate ||
-      cookDate === "" ||
-      cookDate === undefined ||
-      cookDate === null ||
-      cookDate.length === 0
-    ) {
+    if (!cookDate || cookDate.length === 0) {
       setCookDateError(true);
-      setCookDateErrorMsg("*  تاریخ پخت غذا باید وارد شود");
+      setCookDateErrorMsg("* تاریخ پخت غذا باید وارد شود");
+      isValid = false;
     }
-
-    if (
-      !cookHour ||
-      cookHour === "" ||
-      cookHour === undefined ||
-      cookHour === null ||
-      cookHour.length === 0
-    ) {
+    if (!cookHour) {
       setCookHourError(true);
       setCookHourErrorMsg("* ساعت پخت غذا باید وارد شود");
+      isValid = false;
     }
-
-    if (
-      !description ||
-      description === "" ||
-      description === undefined ||
-      description === null
-    ) {
+    if (!description) {
       setDescriptionError(true);
       setDescriptionErrorMsg("* توضیحات غذا باید وارد شود");
+      isValid = false;
     }
-
-    if (
-      !category ||
-      category === "" ||
-      category === undefined ||
-      category === null
-    ) {
+    if (!category) {
       setCategoryError(true);
       setCategoryErrorMsg("* دسته بندی غذا باید وارد شود");
+      isValid = false;
     }
-
-    if (
-      !cookName ||
-      cookName === "" ||
-      cookName === undefined ||
-      cookName === null
-    ) {
+    if (!cookName) {
       setCookNameError(true);
       setCookNameErrorMsg("* نام سرآشپز باید وارد شود");
-    } else {
+      isValid = false;
+    }
+
+    if (isValid) {
       setBtnSpinner(true);
       setIsOpen(true);
-
-      // Swal.fire({
-      //   title: "<small>آیا از ویرایش غذا اطمینان دارید؟</small>",
-      //   showDenyButton: true,
-      //   confirmButtonText: "بله",
-      //   denyButtonText: `خیر`,
-      // }).then((result) => {
-      //   if (result.isConfirmed) {
-      //     try {
-      //       axios
-      //         .put(
-      //           `/api/cooks/foods/${foodId}/update-food`,
-      //           {
-      //             name,
-      //             count,
-      //             price,
-      //             cookDate,
-      //             cookHour,
-      //             description,
-      //             category,
-      //             cookName,
-      //           },
-      //           {
-      //             headers: {
-      //               "Content-Type": "application/json",
-      //               authorization: "Bearer " + token,
-      //             },
-      //           }
-      //         )
-      //         .then((res) => {
-      //           setBtnSpinner(false);
-
-      //           toast.success("غذا ویرایش شد", {
-      //             position: "top-left",
-      //             autoClose: 5000,
-      //             hideProgressBar: false,
-      //             closeOnClick: true,
-      //             pauseOnHover: true,
-      //             draggable: true,
-      //             progress: undefined,
-      //           });
-      //         });
-      //     } catch (error) {
-      //       setBtnSpinner(false);
-      //       console.log("error", error);
-      //       toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-      //         position: "top-left",
-      //         autoClose: 5000,
-      //         hideProgressBar: false,
-      //         closeOnClick: true,
-      //         pauseOnHover: true,
-      //         draggable: true,
-      //         progress: undefined,
-      //       });
-      //     }
-      //   } else if (result.isDenied) {
-      //     setBtnSpinner(false);
-      //     toast.info("تغییرات ذخیره نشد..!", {
-      //       position: "top-left",
-      //       autoClose: 5000,
-      //       hideProgressBar: false,
-      //       closeOnClick: true,
-      //       pauseOnHover: true,
-      //       draggable: true,
-      //       progress: undefined,
-      //     });
-      //   }
-      // });
     }
   };
 
-  //   update food main photo
+  // Update food main photo
   const updatePhotoFunction = async (e) => {
     e.preventDefault();
 
-    if (
-      !selectedFiles ||
-      selectedFiles === "" ||
-      selectedFiles === undefined ||
-      selectedFiles === null ||
-      selectedFiles.length === 0
-    ) {
+    if (!selectedFiles || selectedFiles.length === 0) {
       setPhotoError(true);
       setPhotoErrorMsg("* تصویر اصلی غذا باید وارد شود");
-    } else {
-      setBtnSpinner(true);
+      return;
+    }
 
-      const formData = new FormData();
-      formData.append("photo", selectedFiles[0]);
+    setBtnSpinner(true);
+    const formData = new FormData();
+    formData.append("photo", selectedFiles[0]);
 
-      try {
-        setBtnSpinner(true);
-
-        await axios
-          .put(`/api/cooks/foods/${foodId}/update-food-photo`, formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              authorization: `Bearer ${token}`,
-            },
-          })
-          .then((res) => {
-            setBtnSpinner(false);
-
-            toast.success("تصویر اصلی ویرایش شد", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-            console.log("Response:", res.data.data.photo);
-            setPhoto(res.data.data.photo);
-          })
-          .catch((error) => {
-            setBtnSpinner(false);
-            console.log("error", error);
-            toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-          });
-
-        // setPhoto(response.data.data.photo)
-      } catch (error) {
-        setBtnSpinner(false);
-        console.log("error", error);
-        toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-          position: "top-left",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-      } finally {
-        setBtnSpinner(false);
-      }
+    try {
+      const response = await axios.put(
+        `/api/cooks/foods/${foodId}/update-food-photo`,
+        formData,
+        { withCredentials: true }
+      );
+      setBtnSpinner(false);
+      toast.success("تصویر اصلی ویرایش شد");
+      setPhoto(response.data.data.photo);
+    } catch (error) {
+      setBtnSpinner(false);
+      toast.error("خطایی وجود دارد. دوباره امتحان کنید !");
     }
   };
 
-  //   update food main photos
+  // Update food photos
   const updatePhotosFunction = async (e) => {
     e.preventDefault();
 
-    if (
-      !selectedFiles2 ||
-      selectedFiles2 === "" ||
-      selectedFiles2 === undefined ||
-      selectedFiles2 === null ||
-      selectedFiles2.length === 0
-    ) {
+    if (!selectedFiles2 || selectedFiles2.length === 0) {
       setPhotosError(true);
       setPhotosErrorMsg("* تصاویر غذا باید وارد شوند");
-    } else {
-      setBtnSpinner(true);
+      return;
+    }
 
-      const formData = new FormData();
+    setBtnSpinner(true);
+    const formData = new FormData();
+    selectedFiles2.forEach((img) => {
+      formData.append("photos", img);
+    });
 
-      selectedFiles2.forEach((img) => {
-        formData.append("photos", img);
-      });
-
-      try {
-        setBtnSpinner(true);
-
-        await axios
-          .put(`/api/cooks/foods/${foodId}/update-food-photos`, formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              authorization: `Bearer ${token}`,
-            },
-          })
-          .then((res) => {
-            setBtnSpinner(false);
-
-            toast.success("تصاویر غذا ویرایش شدند", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-            console.log("Response:", res.data.food);
-            setPhoto(res.data.food.photos);
-          })
-          .catch((error) => {
-            setBtnSpinner(false);
-            console.log("error", error);
-            toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-          });
-      } catch (error) {
-        setBtnSpinner(false);
-        console.log("error", error);
-        toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-          position: "top-left",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-      } finally {
-        setBtnSpinner(false);
-      }
+    try {
+      const response = await axios.put(
+        `/api/cooks/foods/${foodId}/update-food-photos`,
+        formData,
+        { withCredentials: true }
+      );
+      setBtnSpinner(false);
+      toast.success("تصاویر غذا ویرایش شدند");
+      setPhotos(response.data.food.photos);
+    } catch (error) {
+      setBtnSpinner(false);
+      toast.error("خطایی وجود دارد. دوباره امتحان کنید !");
     }
   };
 
   const givePersianFoodType = (item) => {
-    if (item === "Main Course") {
-      return "غذا اصلی";
-    }
-    if (item === "Appetizer") {
-      return "پیش غذا و سوپ و سالاد";
-    }
-    if (item === "Dessert") {
-      return "دسر و نوشیدنی";
-    } else {
-      return "";
-    }
+    if (item === "Main Course") return "غذا اصلی";
+    if (item === "Appetizer") return "پیش غذا و سوپ و سالاد";
+    if (item === "Dessert") return "دسر و نوشیدنی";
+    return "";
   };
 
-  // update food
+  // Update food
   const sendUpdateRequest = () => {
     setIsOpen(false);
-    setBtnSpinner(false);
+    setBtnSpinner(true);
 
     axios
       .put(
@@ -572,26 +336,15 @@ function UpdateFood() {
           category,
           cookName,
         },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            authorization: `Bearer ${token}`,
-          },
-        }
+        { withCredentials: true }
       )
       .then(() => {
         setBtnSpinner(false);
-        toast.success("غذا ویرایش شد", {
-          position: "top-left",
-          autoClose: 5000,
-        });
+        toast.success("غذا ویرایش شد");
       })
       .catch((error) => {
         setBtnSpinner(false);
-        toast.error("خطایی وجود دارد. دوباره امتحان کنید!", {
-          position: "top-left",
-          autoClose: 5000,
-        });
+        toast.error("خطایی وجود دارد. دوباره امتحان کنید!");
       });
   };
 
@@ -970,12 +723,10 @@ function UpdateFood() {
                   {" "}
                   تاریخ پخت{" "}
                 </label>
-                {/* {fetchCookDate.map((opt) => ( */}
                 <small className="my-2 font-sm text-gray-500">
                   تاریخ پخت انتخاب شده: *{" "}
                   {String(fetchCookDate).replace(/,/g, "، ")}
                 </small>
-                {/* ))} */}
                 <div className="relative">
                   <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
                     <SlCalender className="w-6 h-6 text-gray-400" />
@@ -1032,7 +783,6 @@ function UpdateFood() {
                 </span>
               </div>
 
-            </div>
               {/*  food type  */}
               <div className="flex flex-col mb-6">
                 <label
@@ -1083,7 +833,6 @@ function UpdateFood() {
                     placeholder="قیمت غذا "
                   />
                 </div>
-                {/* <span className='text-red-500 relative text-sm'>{errorPhoneMessage ? errorPhoneMessage : ""}</span> */}
                 <span className="text-red-500 relative text-sm">
                   {priceError ? priceErrorMsg : ""}
                 </span>
@@ -1116,50 +865,51 @@ function UpdateFood() {
                 </span>
               </div>
 
-            {/*  description */}
-            <div className="flex flex-col mt-6">
-              <label
-                htmlFor="description"
-                className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-              >
-                توضیحات{" "}
-              </label>
-              <div className="relative">
-                <div
-                  className="inline-flex items-center justify-center absolute left-0 h-full w-10 text-gray-400"
-                  style={{ bottom: "52px" }}
+              {/*  description */}
+              <div className="flex flex-col mt-6">
+                <label
+                  htmlFor="description"
+                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
                 >
-                  <IoIosInformationCircleOutline className="w-6 h-6 text-gray-400" />
-                </div>
-                <textarea
-                  style={{ borderRadius: "5px", resize: "none" }}
-                  type="text"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                  placeholder="توضیحات "
-                ></textarea>
-              </div>
-              <span className="text-red-500 relative text-sm">
-                {descriptionError ? descriptionErrorMsg : ""}
-              </span>
-            </div>
-
-            {/* update food button */}
-            <div className="mt-4">
-              <button className="app-btn-blue" onClick={updateFoodHandle}>
-                {btnSpinner ? (
-                  <div className="px-10 py-1 flex items-center justify-center">
-                    <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+                  توضیحات{" "}
+                </label>
+                <div className="relative">
+                  <div
+                    className="inline-flex items-center justify-center absolute left-0 h-full w-10 text-gray-400"
+                    style={{ bottom: "52px" }}
+                  >
+                    <IoIosInformationCircleOutline className="w-6 h-6 text-gray-400" />
                   </div>
-                ) : (
-                  <span>ویرایش غذا</span>
-                )}
-              </button>
-            </div>
-          </div>
+                  <textarea
+                    style={{ borderRadius: "5px", resize: "none" }}
+                    type="text"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                    placeholder="توضیحات "
+                  ></textarea>
+                </div>
+                <span className="text-red-500 relative text-sm">
+                  {descriptionError ? descriptionErrorMsg : ""}
+                </span>
+              </div>
 
-          <ToastContainer />
+              {/* update food button */}
+              <div className="mt-4">
+                <button className="app-btn-blue" onClick={updateFoodHandle}>
+                  {btnSpinner ? (
+                    <div className="px-10 py-1 flex items-center justify-center">
+                      <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+                    </div>
+                  ) : (
+                    <span>ویرایش غذا</span>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <ToastContainer />
+          </div>
         </TitleCard>
       </div>
     </>

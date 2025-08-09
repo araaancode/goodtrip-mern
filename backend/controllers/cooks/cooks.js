@@ -1035,7 +1035,7 @@ exports.updateFood = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error(error.message);
+    console.error(error);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       status: "failure",
       msg: "خطای داخلی سرور",
