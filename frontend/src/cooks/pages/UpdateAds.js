@@ -56,11 +56,11 @@ function UpdateAds() {
 
   // Fetch ad data
   useEffect(() => {
-    // if (!isCookAuthenticated) {
-    //   toast.error("لطفاً ابتدا وارد حساب کاربری خود شوید");
-    //   navigate("/cooks/login");
-    //   return;
-    // }
+    if (!isCookAuthenticated) {
+      toast.error("لطفاً ابتدا وارد حساب کاربری خود شوید");
+      navigate("/cooks/login");
+      return;
+    }
 
     const fetchAd = async () => {
       try {
@@ -84,7 +84,7 @@ function UpdateAds() {
     };
 
     fetchAd();
-  }, [adsId, navigate]);
+  }, [adsId, isCookAuthenticated, navigate]);
 
   // File handling functions
   const handleFileChange = (event) => {
@@ -314,11 +314,7 @@ function UpdateAds() {
     }
   };
 
-
-  console.log(isCookAuthenticated)
-
   return (
-
     <>
       {/* Confirmation Dialog */}
       <Dialog

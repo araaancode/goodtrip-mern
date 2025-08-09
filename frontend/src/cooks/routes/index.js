@@ -88,7 +88,7 @@ const routes = [
     component: withSuspense(CreateAds),
   },
   {
-    path: '/advertisments/:adsId/update',
+    path: '/advertisements/:adsId/update',
     component: withSuspense(UpdateAds),
   },
   {

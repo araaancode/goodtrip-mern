@@ -164,10 +164,10 @@ function App() {
               )
             }
           /> */}
-          <Route
+          {/* <Route
             path="/cooks/advertisements/:adsId/update"
             element={<CookUpdateAds />}
-          />
+          /> */}
           <Route path="/cooks/*" element={<CooksLayout />} />
           {/* **************************************** users routes **************************************** */}
           <Route
