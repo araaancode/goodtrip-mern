@@ -745,12 +745,15 @@ exports.addReviewToHouse = async (req, res) => {
 // # get all foods -> GET -> User -> PRIVATE
 // @route /api/users/foods
 
-exports.findTestCook=async(req,res)=>{
-  let cook=await Cook.findOne({_id:"68422bb437fdeb4c77af701b"})
-  res.send(cook)
-}
+exports.findTestCook = async (req, res) => {
+  let cook = await Cook.findOne({ _id: "68422bb437fdeb4c77af701b" });
+  res.send(cook);
+};
 
-
+exports.findTestOwner = async (req, res) => {
+  let owner = await Owner.findOne({ _id: "68235a8418b6060caf16f31f" });
+  res.send(owner);
+};
 
 exports.getFoods = async (req, res) => {
   try {

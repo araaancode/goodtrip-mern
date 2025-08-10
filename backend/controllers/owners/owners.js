@@ -273,33 +273,48 @@ exports.markNotification = async (req, res) => {
   }
 };
 
-// # description -> HTTP VERB -> Accesss -> Access Type
-// # get all owners ads -> GET -> Owner -> PRIVATE
-// @route = /api/owners/ads
+// Route: GET /api/owners/ads
+// Access: Private (Owner only)
+// Description: Get all ads belonging to the authenticated owner
 exports.allAds = async (req, res) => {
   try {
-    let ads = await OwnerAds.find({ owner: req.owner._id })
-      .populate("owner")
-      .select("-password");
-    if (ads && ads.length > 0) {
-      return res.status(StatusCodes.OK).json({
-        status: "success",
-        msg: "آگهی ها پیدا شدند",
-        count: ads.length,
-        ads,
-      });
-    } else {
-      return res.status(StatusCodes.BAD_REQUEST).json({
+    // 1. Validate owner exists (auth middleware should handle this, but double-check)
+    if (!req.owner || !req.owner._id) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
         status: "failure",
-        msg: "آگهی ها پیدا نشدند",
+        msg: "Owner authentication failed",
       });
     }
+
+    // 2. Query database
+    const ads = await OwnerAds.find({ owner: req.owner._id })
+      .populate("owner", "name email phone") // Explicitly select only needed fields
+      .sort({ createdAt: -1 }) // Add sorting by newest first
+      .lean(); // Better performance
+
+    // 3. Handle response
+    if (!ads.length) {
+      return res.status(StatusCodes.OK).json({
+        status: "success",
+        msg: "No ads found for this owner",
+        count: 0,
+        ads: [],
+      });
+    }
+
+    return res.status(StatusCodes.OK).json({
+      status: "success",
+      msg: "Ads retrieved successfully",
+      count: ads.length,
+      ads,
+    });
+
   } catch (error) {
-    console.error(error.message);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      status: "failure",
-      msg: "خطای داخلی سرور",
-      error,
+    console.error("Error fetching owner ads:", error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: "error",
+      msg: "Internal server error",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };
@@ -587,31 +602,40 @@ exports.deleteAds = async (req, res) => {
   }
 };
 
-// # description -> HTTP VERB -> Accesss -> Access Type
+// # description -> HTTP VERB -> Access -> Access Type
 // # get all owners support tickets -> GET -> Owner -> PRIVATE
 // @route = /api/owners/support-tickets
 exports.supportTickets = async (req, res) => {
   try {
-    let tickets = await OwnerSupportTicket.find({ owner: req.owner._id });
-    if (tickets && tickets.length > 0) {
-      return res.status(StatusCodes.OK).json({
-        status: "success",
-        msg: "تیکت های پشتیبانی پیدا شد",
-        count: tickets.length,
-        tickets,
-      });
-    } else {
-      return res.status(StatusCodes.BAD_REQUEST).json({
+    // 1. Validate owner authentication
+    if (!req.owner?._id) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
         status: "failure",
-        msg: "تیکت های پشتیبانی پیدا نشد",
+        msg: "احراز هویت ناموفق بود",
       });
     }
+
+    // 2. Query tickets with additional useful fields and sorting
+    const tickets = await OwnerSupportTicket.find({ owner: req.owner._id })
+      .populate("owner", "name email") // Only include necessary owner info
+      .sort({ createdAt: -1 }) // Newest tickets first
+      .select("-__v") // Exclude version key
+      .lean(); // Better performance
+
+    // 3. Handle response (consistent structure whether empty or not)
+    return res.status(StatusCodes.OK).json({
+      status: "success",
+      msg: tickets.length ? "تیکت های پشتیبانی پیدا شد" : "هیچ تیکت پشتیبانی یافت نشد",
+      count: tickets.length,
+      tickets,
+    });
+
   } catch (error) {
-    console.error(error.message);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      status: "failure",
+    console.error("Error fetching support tickets:", error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: "error",
       msg: "خطای داخلی سرور",
-      error,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };
@@ -769,32 +793,49 @@ exports.addCommentsToSupportTicket = async (req, res) => {
   }
 };
 
-// # description -> HTTP VERB -> Accesss -> Access Type
-// # owner get house -> GET -> Owner -> PRIVATE
-// @route = /api/owners/houses
 exports.getHouses = async (req, res) => {
   try {
-    let houses = await House.find({ owner: req.owner._id });
-
-    if (houses && houses.length) {
-      return res.status(StatusCodes.OK).json({
-        status: "success",
-        msg: "خانه ها پیدا شدند",
-        count: houses.length,
-        houses,
-      });
-    } else {
-      return res.status(StatusCodes.NOT_FOUND).json({
+    // 1. Validate owner authentication
+    if (!req.owner?._id) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
         status: "failure",
-        msg: "خانه ها پیدا نشدند",
+        msg: "احراز هویت ناموفق بود",
       });
     }
+
+    // 2. First check if amenities exists in schema
+    const houseSchema = House.schema.obj;
+    const populateOptions = [];
+    
+    if (houseSchema.amenities) {
+      populateOptions.push({ path: 'amenities', select: 'name icon' });
+    }
+    
+    if (houseSchema.reviews) {
+      populateOptions.push({ path: 'reviews', select: 'rating comment' });
+    }
+
+    // 3. Query houses
+    const houses = await House.find({ owner: req.owner._id })
+      .populate(populateOptions)
+      .select('-__v')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // 4. Return response
+    return res.status(StatusCodes.OK).json({
+      status: "success",
+      msg: houses.length ? "خانه ها با موفقیت دریافت شدند" : "هیچ خانه ای ثبت نشده است",
+      count: houses.length,
+      houses,
+    });
+
   } catch (error) {
-    console.error(error.message);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      status: "failure",
+    console.error("Error fetching houses:", error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: "error",
       msg: "خطای داخلی سرور",
-      error,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };
@@ -1571,36 +1612,54 @@ exports.updateDocument = async (req, res) => {
   }
 };
 
-// # description -> HTTP VERB -> Accesss -> Access Type
-// # get all owners reservations -> GET -> Owner -> PRIVATE
-// @route = /api/owners/reservations
-exports.allReservation = async (req, res) => {
-  try {
-    let reservations = await Booking.find({ owner: req.owner._id });
+// # description -> HTTP VERB -> Access -> Access Type  
+// # get all owner reservations -> GET -> Owner -> PRIVATE  
+// @route = /api/owners/reservations  
+exports.allReservations = async (req, res) => {  
+  try {  
+    // 1. Validate owner authentication  
+    if (!req.owner?._id) {  
+      return res.status(StatusCodes.UNAUTHORIZED).json({  
+        status: "failure",  
+        msg: "احراز هویت ناموفق بود",  
+      });  
+    }  
 
-    if (reservations && reservations.length) {
-      return res.status(StatusCodes.OK).json({
-        status: "success",
-        msg: "رزروها پیدا شدند",
-        count: reservations.length,
-        reservations,
-      });
-    } else {
-      return res.status(StatusCodes.NOT_FOUND).json({
-        status: "failure",
-        msg: "رزروها پیدا نشدند",
-      });
-    }
-  } catch (error) {
-    console.error(error.message);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      status: "failure",
-      msg: "خطای داخلی سرور",
-      error,
-    });
-  }
+    // 2. Check if 'user' and 'service' fields exist in Booking schema  
+    const bookingSchema = Booking.schema.obj;  
+    const populateOptions = [];  
+
+    if (bookingSchema.user) {  
+      populateOptions.push({ path: 'user', select: 'name email phone' });  
+    }  
+
+    if (bookingSchema.service) {  
+      populateOptions.push({ path: 'service', select: 'title price' });  
+    }  
+
+    // 3. Query reservations (with safe population)  
+    const reservations = await Booking.find({ owner: req.owner._id })  
+      .populate(populateOptions)  
+      .sort({ createdAt: -1 })  
+      .lean();  
+
+    // 4. Return consistent response structure  
+    return res.status(StatusCodes.OK).json({  
+      status: "success",  
+      msg: reservations.length ? "رزروها با موفقیت دریافت شدند" : "هیچ رزروی یافت نشد",  
+      count: reservations.length,  
+      reservations,  
+    });  
+
+  } catch (error) {  
+    console.error("Error fetching reservations:", error);  
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({  
+      status: "error",  
+      msg: "خطای داخلی سرور",  
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,  
+    });  
+  }  
 };
-
 // # description -> HTTP VERB -> Accesss -> Access Type
 // # get single owners reservations -> GET -> Owner -> PRIVATE
 // @route = /api/owners/reservations/:reservationId

@@ -13,7 +13,7 @@ import {
   LineChart,
   Line,
 } from "recharts";
- 
+
 import { useDispatch } from "react-redux";
 import { setPageTitle } from "../../features/common/headerSlice";
 import TitleCard from "../../components/Cards/TitleCard";
@@ -23,6 +23,7 @@ import { LuNewspaper } from "react-icons/lu";
 import { PiBowlFood } from "react-icons/pi";
 import { VscListUnordered } from "react-icons/vsc";
 import { BsHouses } from "react-icons/bs";
+import { useOwnerAuthStore } from "../../stores/authStore";
 
 // Constants
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
@@ -53,8 +54,9 @@ const ChartCard = ({ title, children }) => (
 );
 
 const Dashboard = () => {
-  const token = localStorage.getItem("userToken");
   const dispatch = useDispatch();
+  // Get authentication state from authStore
+  const { isOwnerAuthenticated } = useOwnerAuthStore();
 
   const [houseCount, setHouseCount] = useState(0);
   const [adsCount, setAdsCount] = useState(0);
@@ -72,28 +74,27 @@ const Dashboard = () => {
     dispatch(setPageTitle({ title: "پنل کاربری" }));
   }, [dispatch]);
 
+  // Configure axios to send credentials
+  useEffect(() => {
+    axios.defaults.withCredentials = true;
+  }, []);
+
   // Fetch all data
   useEffect(() => {
     const fetchData = async () => {
+      if (!isOwnerAuthenticated) return; // Don't fetch if not authenticated
+
       try {
-        const houseResponse = await axios.get("/api/owners/houses", {
-          headers: { authorization: `Bearer ${token}` },
-        });
+        const houseResponse = await axios.get("/api/owners/houses");
         setHouseCount(houseResponse.data.count);
 
-        const adsResponse = await axios.get("/api/owners/ads", {
-          headers: { authorization: `Bearer ${token}` },
-        });
+        const adsResponse = await axios.get("/api/owners/ads");
         setAdsCount(adsResponse.data.count);
 
-        const ticketsResponse = await axios.get("/api/owners/support-tickets", {
-          headers: { authorization: `Bearer ${token}` },
-        });
+        const ticketsResponse = await axios.get("/api/owners/support-tickets");
         setSupportTicketCount(ticketsResponse.data.count);
 
-        const bookingResponse = await axios.get("/api/owners/bookings", {
-          headers: { authorization: `Bearer ${token}` },
-        });
+        const bookingResponse = await axios.get("/api/owners/reservations");
         setBookingCount(bookingResponse.data.count);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -101,7 +102,7 @@ const Dashboard = () => {
     };
 
     fetchData();
-  }, [token]);
+  }, [isOwnerAuthenticated]);
 
   // Update data state when counts change
   useEffect(() => {
@@ -160,13 +161,8 @@ const Dashboard = () => {
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="name"
-                tickMargin={15} // Increased space between X-axis labels and axis line
-              />
-              <YAxis
-                tickMargin={15} // Increased space between Y-axis labels and axis line
-              />
+              <XAxis dataKey="name" tickMargin={15} />
+              <YAxis tickMargin={15} />
               <Tooltip />
               <Bar dataKey="count" fill="#00C49F" radius={[10, 10, 0, 0]} />
             </BarChart>
@@ -179,13 +175,8 @@ const Dashboard = () => {
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-              dataKey="name"
-              tickMargin={15} // Increased space between X-axis labels and axis line
-            />
-            <YAxis
-              tickMargin={15} // Increased space between Y-axis labels and axis line
-            />
+            <XAxis dataKey="name" tickMargin={15} />
+            <YAxis tickMargin={15} />
             <Tooltip />
             <Line
               type="monotone"

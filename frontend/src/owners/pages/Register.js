@@ -1,155 +1,90 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-
+import { Link, useNavigate } from "react-router-dom";
 import {
   RiEye2Line,
   RiEyeCloseLine,
-  RiPhoneLin,
+  RiPhoneLine,
   RiUser2Line,
   RiMailLine,
-  RiPhoneLine,
   RiUser5Line,
 } from "@remixicon/react";
-
-import axios from "axios";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
+import { useOwnerAuthStore } from "../stores/authStore";
 
 function Register() {
-  const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [passwordVisible, setPasswordVisible] = useState(false);
-
+  const { register, isLoading } = useOwnerAuthStore();
   const navigate = useNavigate();
 
-  // error
-  const [nameError, setNameError] = useState(false);
-  const [nameErrorMsg, setNameErrorMsg] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    username: "",
+    email: "",
+    phone: "",
+    password: "",
+  });
 
-  const [usernameError, setUsernameError] = useState(false);
-  const [usernameErrorMsg, setUsernameErrorMsg] = useState("");
+  const [errors, setErrors] = useState({
+    name: "",
+    username: "",
+    email: "",
+    phone: "",
+    password: "",
+  });
 
-  const [emailError, setEmailError] = useState(false);
-  const [emailErrorMsg, setEmailErrorMsg] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
-  const [phoneError, setPhoneError] = useState(false);
-  const [phoneErrorMsg, setPhoneErrorMsg] = useState("");
-
-  const [passwordError, setPasswordError] = useState(false);
-  const [passwordErrorMsg, setPasswordErrorMsg] = useState("");
-
-  // btn spinner
-  const [btnSpinner, setBtnSpinner] = useState(false);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
 
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
   };
 
-  const handlePasswordChange = (e) => {
-    setPassword(e.target.value);
-  };
-
-  const register = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // name error
-    if (!name || name === "" || name === undefined || name === null) {
-      setNameError(true);
-      setNameErrorMsg("* نام و نام خانوادگی باید وارد شود");
+    // Validate form
+    const newErrors = {};
+    let hasError = false;
+
+    if (!formData.name.trim()) {
+      newErrors.name = "نام و نام خانوادگی ضروری است";
+      hasError = true;
     }
 
-    // username error
-    if (
-      !username ||
-      username === "" ||
-      username === undefined ||
-      username === null
-    ) {
-      setUsernameError(true);
-      setUsernameErrorMsg("* نام کاربری باید وارد شود");
+    if (!formData.username.trim()) {
+      newErrors.username = "نام کاربری ضروری است";
+      hasError = true;
     }
 
-    // email error
-    if (!email || email === "" || email === undefined || email === null) {
-      setEmailError(true);
-      setEmailErrorMsg("*  ایمیل باید وارد شود");
+    if (!formData.email.trim()) {
+      newErrors.email = "ایمیل ضروری است";
+      hasError = true;
     }
 
-    // phone error
-    if (!phone || phone === "" || phone === undefined || phone === null) {
-      setPhoneError(true);
-      setPhoneErrorMsg("*  شماره تلفن باید وارد شود");
+    if (!formData.phone.trim()) {
+      newErrors.phone = "شماره تلفن ضروری است";
+      hasError = true;
     }
 
-    // password error
-    if (
-      !password ||
-      password === "" ||
-      password === undefined ||
-      password === null
-    ) {
-      setPasswordError(true);
-      setPasswordErrorMsg("* گذرواژه باید وارد شود");
-    } else {
-      setBtnSpinner(true);
+    if (!formData.password.trim()) {
+      newErrors.password = "گذرواژه ضروری است";
+      hasError = true;
+    }
 
-      try {
-        axios
-          .post(
-            `/api/owners/auth/register`,
-            { name, username, email, phone, password },
-            {
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          )
-          .then((res) => {
-            setBtnSpinner(false);
+    setErrors(newErrors);
 
-            toast.success("با موفقیت ثبت نام شدید", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
+    if (hasError) return;
 
-            navigate("/owners/login");
-          })
-          .catch((error) => {
-            setBtnSpinner(false);
-            console.log("error", error);
-            let msg = error.response.data.msg || error.name;
-            toast.error(msg, {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-          });
-      } catch (error) {
-        setBtnSpinner(false);
-        console.log("error", error);
-        toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-          position: "top-left",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-      }
+    try {
+      await register(formData);
+      navigate("/owners/login");
+    } catch (error) {
+      console.error("Registration error:", error);
     }
   };
 
@@ -170,11 +105,11 @@ function Register() {
                       <img
                         width={500}
                         height={400}
-                        src="https://www.cjhole.co.uk/wp-content/uploads/2024/04/shutterstock_2195995789.jpg"
+                        src="https://i.pinimg.com/736x/f2/a7/8a/f2a78a484ee31f62ed9f1ea433597d9b.jpg"
                         style={{ borderRadius: "12px" }}
                         alt="اقامتگاه"
                         className="inline-block"
-                      ></img>
+                      />
                     </div>
                   </div>
                 </div>
@@ -202,174 +137,170 @@ function Register() {
                   </span>
                 </div>
               </div>
-              <div className="mt-2 rounded-sm">
-                <form className="space-y-2 mt-2">
-                  <div className="container mx-auto p-4">
-                    {/* name */}
-                    <div className="flex flex-col mb-4">
-                      <label
-                        htmlFor="name"
-                        className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-                      >
-                        نام و نام خانوادگی
-                      </label>
-                      <div className="relative">
-                        <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                          <RiUser2Line />
-                        </div>
-                        <input
-                          style={{ borderRadius: "5px" }}
-                          type="text"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                          placeholder="نام و نام خانوادگی"
-                        />
+              <form onSubmit={handleSubmit}>
+                <div className="container mx-auto p-4">
+                  <div className="flex flex-col mb-4">
+                    <label
+                      htmlFor="name"
+                      className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
+                    >
+                      نام و نام خانوادگی
+                    </label>
+                    <div className="relative">
+                      <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
+                        <RiUser2Line />
                       </div>
-                      <span className="text-red-500 relative text-sm">
-                        {nameError ? nameErrorMsg : ""}
-                      </span>
-                    </div>
-                    {/* username */}
-                    <div className="flex flex-col mb-4">
-                      <label
-                        htmlFor="username"
-                        className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-                      >
-                        نام کاربری
-                      </label>
-                      <div className="relative">
-                        <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                          <RiUser5Line />
-                        </div>
-                        <input
-                          style={{ borderRadius: "5px" }}
-                          type="text"
-                          value={username}
-                          onChange={(e) => setUsername(e.target.value)}
-                          className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                          placeholder="نام کاربری"
-                        />
-                      </div>
-                      <span className="text-red-500 relative text-sm">
-                        {usernameError ? usernameErrorMsg : ""}
-                      </span>
-                    </div>
-                    {/* phone */}
-                    <div className="flex flex-col mb-4">
-                      <label
-                        htmlFor="phone"
-                        className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-                      >
-                        شماره تلفن
-                      </label>
-                      <div className="relative">
-                        <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                          <RiPhoneLine />
-                        </div>
-                        <input
-                          style={{ borderRadius: "5px" }}
-                          type="text"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                          placeholder="شماره تلفن"
-                        />
-                      </div>
-                      <span className="text-red-500 relative text-sm">
-                        {phoneError ? phoneErrorMsg : ""}
-                      </span>
-                    </div>
-
-                    {/* email */}
-                    <div className="flex flex-col mb-1">
-                      <div className="flex flex-col mb-4">
-                        <label
-                          htmlFor="email"
-                          className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-                        >
-                          ایمیل
-                        </label>
-                        <div className="relative">
-                          <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                            <RiMailLine />
-                          </div>
-                          <input
-                            style={{ borderRadius: "5px" }}
-                            type="text"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                            placeholder="ایمیل"
-                          />
-                        </div>
-                        <span className="text-red-500 relative text-sm">
-                          {emailError ? emailErrorMsg : ""}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* password */}
-                    <div className="relative mb-4">
-                      <label
-                        className="block mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-                        htmlFor="password"
-                      >
-                        گذرواژه
-                      </label>
-
                       <input
-                        type={passwordVisible ? "text" : "password"}
-                        id="password"
-                        onChange={handlePasswordChange}
-                        value={password}
-                        className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                        placeholder="گذرواژه"
                         style={{ borderRadius: "5px" }}
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                        placeholder="نام و نام خانوادگی"
                       />
-
-                      <div
-                        onClick={togglePasswordVisibility}
-                        className="absolute inset-y-2 left-3 flex items-center cursor-pointer top-6"
-                      >
-                        {passwordVisible ? (
-                          <RiEye2Line className="text-gray-400" />
-                        ) : (
-                          <RiEyeCloseLine className="text-gray-400" />
-                        )}
-                      </div>
-                      <span className="text-red-500 relative text-sm">
-                        {passwordError ? passwordErrorMsg : ""}
-                      </span>
                     </div>
-
-                    {/* register user */}
-                    <div className="my-2 w-full">
-                      <button
-                        className="app-btn-blue w-full"
-                        onClick={register}
-                      >
-                        {btnSpinner ? (
-                          <div className="px-10 py-1 flex items-center justify-center">
-                            <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
-                          </div>
-                        ) : (
-                          <span>ثبت نام</span>
-                        )}
-                      </button>
-                    </div>
-                    <p className="text-sm text-gray-800">
-                      حساب دارید؟{" "}
-                      <Link
-                        to="/owners/login"
-                        className="hover:text-blue-900 hover:cursor-pointer"
-                      >
-                        ورود{" "}
-                      </Link>
-                    </p>
+                    <span className="text-red-500 relative text-sm">
+                      {errors.name}
+                    </span>
                   </div>
-                </form>
-              </div>
+
+                  <div className="flex flex-col mb-4">
+                    <label
+                      htmlFor="username"
+                      className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
+                    >
+                      نام کاربری
+                    </label>
+                    <div className="relative">
+                      <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
+                        <RiUser5Line />
+                      </div>
+                      <input
+                        style={{ borderRadius: "5px" }}
+                        type="text"
+                        name="username"
+                        value={formData.username}
+                        onChange={handleChange}
+                        className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                        placeholder="نام کاربری"
+                      />
+                    </div>
+                    <span className="text-red-500 relative text-sm">
+                      {errors.username}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col mb-4">
+                    <label
+                      htmlFor="phone"
+                      className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
+                    >
+                      شماره تلفن
+                    </label>
+                    <div className="relative">
+                      <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
+                        <RiPhoneLine />
+                      </div>
+                      <input
+                        style={{ borderRadius: "5px" }}
+                        type="text"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                        placeholder="شماره تلفن"
+                      />
+                    </div>
+                    <span className="text-red-500 relative text-sm">
+                      {errors.phone}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col mb-4">
+                    <label
+                      htmlFor="email"
+                      className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
+                    >
+                      ایمیل
+                    </label>
+                    <div className="relative">
+                      <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
+                        <RiMailLine />
+                      </div>
+                      <input
+                        style={{ borderRadius: "5px" }}
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                        placeholder="ایمیل"
+                      />
+                    </div>
+                    <span className="text-red-500 relative text-sm">
+                      {errors.email}
+                    </span>
+                  </div>
+
+                  <div className="relative mb-4">
+                    <label
+                      className="block mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
+                      htmlFor="password"
+                    >
+                      گذرواژه
+                    </label>
+                    <input
+                      type={passwordVisible ? "text" : "password"}
+                      id="password"
+                      name="password"
+                      onChange={handleChange}
+                      value={formData.password}
+                      className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                      placeholder="گذرواژه"
+                      style={{ borderRadius: "5px" }}
+                    />
+                    <div
+                      onClick={togglePasswordVisibility}
+                      className="absolute inset-y-2 left-3 flex items-center cursor-pointer top-6"
+                    >
+                      {passwordVisible ? (
+                        <RiEye2Line className="text-gray-400" />
+                      ) : (
+                        <RiEyeCloseLine className="text-gray-400" />
+                      )}
+                    </div>
+                    <span className="text-red-500 relative text-sm">
+                      {errors.password}
+                    </span>
+                  </div>
+
+                  <div className="my-2 w-full">
+                    <button
+                      type="submit"
+                      className="app-btn-blue w-full"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <div className="px-10 py-1 flex items-center justify-center">
+                          <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+                        </div>
+                      ) : (
+                        <span>ثبت نام</span>
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-sm text-gray-800">
+                    حساب دارید؟{" "}
+                    <Link
+                      to="/owners/login"
+                      className="hover:text-blue-900 hover:cursor-pointer"
+                    >
+                      ورود{" "}
+                    </Link>
+                  </p>
+                </div>
+              </form>
             </div>
           </div>
         </div>

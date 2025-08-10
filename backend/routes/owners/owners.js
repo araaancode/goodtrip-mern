@@ -143,7 +143,7 @@ router.put("/houses/:houseId/update-map", authOwner, ownerCtrls.updateMap);
 
 
 // reservations
-router.get('/reservations',authOwner, ownerCtrls.allReservation)
+router.get('/reservations',authOwner, ownerCtrls.allReservations)
 router.get('/reservations/:reservationId',authOwner, ownerCtrls.singleReservation)
 
 

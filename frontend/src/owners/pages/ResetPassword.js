@@ -1,195 +1,163 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import axios from "axios";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { RiLockPasswordLine } from "@remixicon/react";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useOwnerAuthStore } from '../stores/authStore';
 
 function ResetPassword() {
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const { resetPassword, isLoading } = useOwnerAuthStore();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token');
+  const ownerId = searchParams.get('ownerId');
 
-  let token = document.URL.split("?")[1].split("&")[0].split("=")[1];
-  let ownerId = document.URL.split("?")[1].split("&")[1].split("=")[1];
+  const [formData, setFormData] = useState({
+    password: '',
+    confirmPassword: ''
+  });
 
-  const [errorPasswordMessage, setErrorPasswordMessage] = useState("");
-  const [errorConfirmPasswordMessage, setErrorConfirmPasswordMessage] =
-    useState("");
+  const [errors, setErrors] = useState({
+    password: '',
+    confirmPassword: ''
+  });
 
-  // btn spinner
-  const [btnSpinner, setBtnSpinner] = useState(false);
-
-  const handlePasswordChange = (e) => {
-    setPassword(e.target.value);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
   };
 
-  const handleConfirmPasswordChange = (e) => {
-    setConfirmPassword(e.target.value);
-  };
-
-  const submitForm = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    let valid = true;
+    const newErrors = { ...errors };
 
-    setBtnSpinner(true);
+    // Validate password
+    if (!formData.password.trim()) {
+      newErrors.password = 'گذرواژه ضروری است!';
+      valid = false;
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'گذرواژه باید حداقل 6 کاراکتر باشد';
+      valid = false;
+    }
 
-    if (password.trim() === "")
-      return setErrorPasswordMessage("گذرواژه ضروری است!");
-    if (confirmPassword.trim() === "")
-      return setErrorConfirmPasswordMessage("نایید گذرواژه ضروری است!");
-    else {
-      const config = {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      };
+    // Validate confirm password
+    if (!formData.confirmPassword.trim()) {
+      newErrors.confirmPassword = 'تایید گذرواژه ضروری است!';
+      valid = false;
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'گذرواژه‌ها مطابقت ندارند';
+      valid = false;
+    }
 
-      axios
-        .post(
-          "/api/owners/auth/reset-password",
-          { password, confirmPassword, ownerId, token },
-          config
-        )
-        .then((data) => {
-          if (data) {
-            console.log(data);
+    setErrors(newErrors);
 
-            toast.info("!گذرواژه تغییر کرد", {
-              position: "top-right",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-
-            setBtnSpinner(false);
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-          setBtnSpinner(false);
-          toast.error(error, {
-            position: "top-right",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-          });
+    if (valid) {
+      try {
+        await resetPassword({
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
+          ownerId,
+          token
         });
+      } catch (error) {
+        console.error("Reset password error:", error);
+      }
     }
   };
 
   return (
     <>
       <div className="min-h-screen bg-gray-50 flex items-center text-right">
-        <div className="card mx-auto w-full max-w-5xl  shadow-xl">
-          <div className="grid md:grid-cols-2 grid-cols-1  bg-base-100 rounded-xl">
-            <div className="">
+        <div className="card mx-auto w-full max-w-5xl shadow-xl">
+          <div className="grid md:grid-cols-2 grid-cols-1 bg-base-100 rounded-xl">
+            <div className=''>
               <div className="hero min-h-full rounded-l-xl bg-base-200">
                 <div className="hero-content p-2">
                   <div className="w-50 px-6 py-4">
-                    <h1 className="mb-4 text-center font-bold text-lg">
-                      {" "}
-                      تغییر گذرواژه
-                    </h1>
+                    <h1 className="mb-4 text-center font-bold text-lg"> تغییر گذرواژه</h1>
                     <div className="my-auto">
-                      <img
-                        width={500}
-                        height={400}
-                        src="https://img.freepik.com/premium-photo/technology-image_1308217-1335.jpg?uid=R156737658&ga=GA1.1.972404931.1740587830&semt=ais_hybrid"
-                        style={{ borderRadius: "12px" }}
-                        alt="اقامتگاه"
+                      <img 
+                        width={500} 
+                        height={400} 
+                        src="https://img.freepik.com/premium-photo/technology-image_1308217-1335.jpg" 
+                        style={{ borderRadius: '12px' }} 
+                        alt="اقامتگاه" 
                         className="inline-block"
-                      ></img>
+                      />
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col bg-white px-2 sm:px-2 md:px-2 lg:px-2 py-10 w-full max-w-md m-auto">
+            <div className='flex flex-col bg-white px-2 sm:px-2 md:px-2 lg:px-2 py-10 w-full max-w-md m-auto'>
               <div className="font-medium mt-2 self-center text-xl sm:text-2xl uppercase text-gray-800">
-                <svg
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  fill="currentColor"
-                  className="remixicon w-12 h-12"
-                >
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="remixicon w-12 h-12">
                   <path d="M22.1034 19L12.8659 3.00017C12.7782 2.84815 12.6519 2.72191 12.4999 2.63414C12.0216 2.358 11.41 2.52187 11.1339 3.00017L1.89638 19H1V21C8.33333 21 15.6667 21 23 21V19H22.1034ZM7.59991 19.0002H4.20568L11.9999 5.50017L19.7941 19.0002H16.4001L12 11L7.59991 19.0002ZM12 15.1501L14.1175 19H9.88254L12 15.1501Z"></path>
                 </svg>
               </div>
               <div className="relative mt-2 h-px bg-gray-300">
                 <div className="absolute left-0 top-0 flex justify-center w-full -mt-2">
-                  <span className="bg-white px-4 text-xs text-gray-500 uppercase">
-                    تغییر گذرواژه{" "}
-                  </span>
+                  <span className="bg-white px-4 text-xs text-gray-500 uppercase">تغییر گذرواژه </span>
                 </div>
               </div>
-              <p className="mb-10 mt-8 text-right text-gray-500">
-                در زیر می توانید گذرواژه خود را تغییر دهید
-              </p>
-              <form>
+              <p className='mb-10 mt-8 text-right text-gray-500'>در زیر می توانید گذرواژه خود را تغییر دهید</p>
+              <form onSubmit={handleSubmit}>
                 <div className="flex flex-col mb-2">
-                  <label
-                    htmlFor="phone"
-                    className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-                  >
-                    گذرواژه
-                  </label>
+                  <label htmlFor="password" className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">گذرواژه</label>
                   <div className="relative">
                     <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
                       <RiLockPasswordLine />
                     </div>
-                    <input
-                      style={{ borderRadius: "5px" }}
-                      type="text"
-                      value={password}
-                      onChange={handlePasswordChange}
-                      className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                      placeholder="گذرواژه"
+                    <input 
+                      style={{ borderRadius: '5px' }} 
+                      type="password" 
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800" 
+                      placeholder="گذرواژه" 
                     />
                   </div>
-                  <span className="text-red-500 relative text-sm">
-                    {errorPasswordMessage ? errorPasswordMessage : ""}
-                  </span>
+                  <span className='text-red-500 relative text-sm'>{errors.password}</span>
                 </div>
 
                 <div className="flex flex-col mb-2">
-                  <label
-                    htmlFor="phone"
-                    className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-                  >
-                    تایید گذرواژه
-                  </label>
+                  <label htmlFor="confirmPassword" className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">تایید گذرواژه</label>
                   <div className="relative">
                     <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
                       <RiLockPasswordLine />
                     </div>
-                    <input
-                      style={{ borderRadius: "5px" }}
-                      type="text"
-                      value={confirmPassword}
-                      onChange={handleConfirmPasswordChange}
-                      className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                      placeholder="تایید گذرواژه"
+                    <input 
+                      style={{ borderRadius: '5px' }} 
+                      type="password" 
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800" 
+                      placeholder="تایید گذرواژه" 
                     />
                   </div>
-                  <span className="text-red-500 relative text-sm">
-                    {errorConfirmPasswordMessage
-                      ? errorConfirmPasswordMessage
-                      : ""}
-                  </span>
+                  <span className='text-red-500 relative text-sm'>{errors.confirmPassword}</span>
                 </div>
 
-                {/* change password */}
-                <div className="mb-2 mt-4 w-full" onClick={submitForm}>
-                  <button className="app-btn-blue w-full">
-                    {btnSpinner ? (
+                <div className="mb-2 mt-4 w-full">
+                  <button 
+                    type="submit"
+                    className="app-btn-blue w-full" 
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
                       <div className="px-10 py-1 flex items-center justify-center">
                         <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
                       </div>
@@ -199,16 +167,7 @@ function ResetPassword() {
                   </button>
                 </div>
 
-                {/* <div className='text-center mt-4'>حساب ندارید؟ <Link to="/owners/register">ثبت نام</Link></div> */}
-                <p className="text-sm text-gray-800">
-                  حساب ندارید؟{" "}
-                  <Link
-                    to="/owners/register"
-                    className="hover:text-blue-900 hover:cursor-pointer"
-                  >
-                    ثبت نام{" "}
-                  </Link>
-                </p>
+                <p className='text-sm text-gray-800'>حساب ندارید؟ <Link to='/owners/register' className='hover:text-blue-900 hover:cursor-pointer'>ثبت نام </Link></p>
               </form>
             </div>
           </div>
