@@ -1,5 +1,9 @@
 const { StatusCodes } = require("http-status-codes");
-const { S3Client, PutObjectCommand, DeleteObjectsCommand} = require("@aws-sdk/client-s3");
+const {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectsCommand,
+} = require("@aws-sdk/client-s3");
 const { Upload } = require("@aws-sdk/lib-storage");
 const crypto = require("crypto");
 const OwnerNotification = require("../../models/OwnerNotification");
@@ -8,7 +12,6 @@ const House = require("../../models/House");
 const OwnerAds = require("../../models/OwnerAds");
 const OwnerSupportTicket = require("../../models/OwnerSupportTicket");
 const Booking = require("../../models/Booking");
-
 
 // S3 Client for Liara
 const s3Client = new S3Client({
@@ -308,13 +311,12 @@ exports.allAds = async (req, res) => {
       count: ads.length,
       ads,
     });
-
   } catch (error) {
     console.error("Error fetching owner ads:", error);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       status: "error",
       msg: "Internal server error",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -625,17 +627,18 @@ exports.supportTickets = async (req, res) => {
     // 3. Handle response (consistent structure whether empty or not)
     return res.status(StatusCodes.OK).json({
       status: "success",
-      msg: tickets.length ? "تیکت های پشتیبانی پیدا شد" : "هیچ تیکت پشتیبانی یافت نشد",
+      msg: tickets.length
+        ? "تیکت های پشتیبانی پیدا شد"
+        : "هیچ تیکت پشتیبانی یافت نشد",
       count: tickets.length,
       tickets,
     });
-
   } catch (error) {
     console.error("Error fetching support tickets:", error);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       status: "error",
       msg: "خطای داخلی سرور",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -806,36 +809,37 @@ exports.getHouses = async (req, res) => {
     // 2. First check if amenities exists in schema
     const houseSchema = House.schema.obj;
     const populateOptions = [];
-    
+
     if (houseSchema.amenities) {
-      populateOptions.push({ path: 'amenities', select: 'name icon' });
+      populateOptions.push({ path: "amenities", select: "name icon" });
     }
-    
+
     if (houseSchema.reviews) {
-      populateOptions.push({ path: 'reviews', select: 'rating comment' });
+      populateOptions.push({ path: "reviews", select: "rating comment" });
     }
 
     // 3. Query houses
     const houses = await House.find({ owner: req.owner._id })
       .populate(populateOptions)
-      .select('-__v')
+      .select("-__v")
       .sort({ createdAt: -1 })
       .lean();
 
     // 4. Return response
     return res.status(StatusCodes.OK).json({
       status: "success",
-      msg: houses.length ? "خانه ها با موفقیت دریافت شدند" : "هیچ خانه ای ثبت نشده است",
+      msg: houses.length
+        ? "خانه ها با موفقیت دریافت شدند"
+        : "هیچ خانه ای ثبت نشده است",
       count: houses.length,
       houses,
     });
-
   } catch (error) {
     console.error("Error fetching houses:", error);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       status: "error",
       msg: "خطای داخلی سرور",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -873,6 +877,7 @@ exports.getHouse = async (req, res) => {
 // @route = /api/owners/houses
 exports.createHouse = async (req, res) => {
   try {
+    // Destructure all required fields from request body
     const {
       name,
       province,
@@ -907,53 +912,57 @@ exports.createHouse = async (req, res) => {
       kitchenOptions,
       bedRoomOptions,
     } = req.body;
-    const coverImageFile = req.files.cover && req.files.cover[0];
-    const imagesFiles = req.files.images || [];
-    const billFiles = req.files.bill || [];
-    const documentFiles = req.files.document || [];
 
-    // if (
-    //   !coverImageFile ||
-    //   imagesFiles.length > 6 ||
-    //   billFiles.length > 6 ||
-    //   documentFiles.length > 6 ||
-    //   !name ||
-    //   !province ||
-    //   !city ||
-    //   !description ||
-    //   !price ||
-    //   !postalCode ||
-    //   !housePhone ||
-    //   !meters ||
-    //   !year ||
-    //   !capacity ||
-    //   !houseRoles ||
-    //   !critrias ||
-    //   !houseType ||
-    //   !lat ||
-    //   !lng ||
-    //   !floor ||
-    //   !options ||
-    //   !heating ||
-    //   !cooling ||
-    //   !parking ||
-    //   !address ||
-    //   !houseOwner ||
-    //   !houseNumber ||
-    //   !hobbies ||
-    //   !enviornment ||
-    //   !ownerType ||
-    //   !rooms ||
-    //   !reservationRoles ||
-    //   !freeDates ||
-    //   !floorType ||
-    //   !kitchenOptions ||
-    //   !bedRoomOptions
-    // ) {
-    //   return res.status(400).json({ error: "All fileds are required" });
-    // }
+    // Handle latitude conversion and validation
+    let latitude;
+    if (Array.isArray(lat)) {
+      latitude = parseFloat(lat[0]);
+    } else if (typeof lat === "string") {
+      latitude = parseFloat(lat);
+    } else {
+      latitude = lat;
+    }
 
-    // Upload cover image to Liara in 'coverImage/' folder
+    // Handle longitude conversion and validation
+    let longitude;
+    if (Array.isArray(lng)) {
+      longitude = parseFloat(lng[0]);
+    } else if (typeof lng === "string") {
+      longitude = parseFloat(lng);
+    } else {
+      longitude = lng;
+    }
+
+    // Validate coordinates
+    if (
+      isNaN(latitude) ||
+      isNaN(longitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        status: "failure",
+        msg: "مختصات جغرافیایی نامعتبر است",
+      });
+    }
+
+    // Get files from request
+    const coverImageFile = req.files?.cover?.[0];
+    const imagesFiles = req.files?.images || [];
+    const billFiles = req.files?.bill || [];
+    const documentFiles = req.files?.document || [];
+
+    // Validate required files
+    if (!coverImageFile) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        status: "failure",
+        msg: "تصویر اصلی الزامی است",
+      });
+    }
+
+    // Upload cover image to S3
     const coverImageKey = `ownerHousePhotos/coverImage-${Date.now()}-${
       coverImageFile.originalname
     }`;
@@ -966,64 +975,61 @@ exports.createHouse = async (req, res) => {
       })
     );
 
-    // Upload additional images to 'images/' folder
-    const imagesUrls = [];
-    for (const file of imagesFiles) {
-      const imageKey = `ownerHousePhotos/images-${Date.now()}-${
-        file.originalname
-      }`;
-      await s3Client.send(
-        new PutObjectCommand({
-          Bucket: process.env.LIARA_BUCKET_NAME,
-          Key: imageKey,
-          Body: file.buffer,
-          ContentType: file.mimetype,
-        })
-      );
-      imagesUrls.push(
-        `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${imageKey}`
-      );
-    }
+    // Upload additional images
+    const imagesUrls = await Promise.all(
+      imagesFiles.map(async (file) => {
+        const imageKey = `ownerHousePhotos/images-${Date.now()}-${
+          file.originalname
+        }`;
+        await s3Client.send(
+          new PutObjectCommand({
+            Bucket: process.env.LIARA_BUCKET_NAME,
+            Key: imageKey,
+            Body: file.buffer,
+            ContentType: file.mimetype,
+          })
+        );
+        return `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${imageKey}`;
+      })
+    );
 
-    // Upload bill to 'bills/' folder
-    const billUrls = [];
-    for (const file of billFiles) {
-      const imageKey = `ownerHouseBills/bills-${Date.now()}-${
-        file.originalname
-      }`;
-      await s3Client.send(
-        new PutObjectCommand({
-          Bucket: process.env.LIARA_BUCKET_NAME,
-          Key: imageKey,
-          Body: file.buffer,
-          ContentType: file.mimetype,
-        })
-      );
-      billUrls.push(
-        `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${imageKey}`
-      );
-    }
+    // Upload bill documents
+    const billUrls = await Promise.all(
+      billFiles.map(async (file) => {
+        const billKey = `ownerHouseBills/bills-${Date.now()}-${
+          file.originalname
+        }`;
+        await s3Client.send(
+          new PutObjectCommand({
+            Bucket: process.env.LIARA_BUCKET_NAME,
+            Key: billKey,
+            Body: file.buffer,
+            ContentType: file.mimetype,
+          })
+        );
+        return `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${billKey}`;
+      })
+    );
 
-    // Upload document to 'documents/' folder
-    const documentUrls = [];
-    for (const file of documentFiles) {
-      const imageKey = `ownerHouseDocuments/documents-${Date.now()}-${
-        file.originalname
-      }`;
-      await s3Client.send(
-        new PutObjectCommand({
-          Bucket: process.env.LIARA_BUCKET_NAME,
-          Key: imageKey,
-          Body: file.buffer,
-          ContentType: file.mimetype,
-        })
-      );
-      documentUrls.push(
-        `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${imageKey}`
-      );
-    }
+    // Upload other documents
+    const documentUrls = await Promise.all(
+      documentFiles.map(async (file) => {
+        const docKey = `ownerHouseDocuments/documents-${Date.now()}-${
+          file.originalname
+        }`;
+        await s3Client.send(
+          new PutObjectCommand({
+            Bucket: process.env.LIARA_BUCKET_NAME,
+            Key: docKey,
+            Body: file.buffer,
+            ContentType: file.mimetype,
+          })
+        );
+        return `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${docKey}`;
+      })
+    );
 
-    // Save house to MongoDB
+    // Create new house document
     const house = new House({
       owner: req.owner._id,
       name,
@@ -1039,8 +1045,8 @@ exports.createHouse = async (req, res) => {
       houseRoles,
       critrias,
       houseType,
-      lat,
-      lng,
+      lat: latitude,
+      lng: longitude,
       floor,
       options,
       heating,
@@ -1064,18 +1070,38 @@ exports.createHouse = async (req, res) => {
       document: documentUrls,
     });
 
+    // Save to database
     await house.save();
+
+    // Return success response
     res.status(StatusCodes.CREATED).json({
       status: "success",
-      msg: "خانه ساخته شد",
-      data: house,
+      msg: "ملک با موفقیت ثبت شد",
+      data: {
+        houseId: house._id,
+        name: house.name,
+        address: house.address,
+        coverImage: house.cover,
+      },
     });
   } catch (error) {
     console.error("Error creating house:", error);
+
+    // Handle specific Mongoose validation errors
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map((err) => err.message);
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        status: "failure",
+        msg: "خطا در اعتبارسنجی داده‌ها",
+        errors,
+      });
+    }
+
+    // Generic error response
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       status: "failure",
-      msg: "خطای داخلی سرور",
-      error,
+      msg: "خطای سرور در ایجاد ملک",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -1235,7 +1261,9 @@ exports.updateImages = async (req, res) => {
     // Upload new images to S3
     const imageUrls = [];
     for (const file of imagePaths) {
-      const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
+      const uniqueSuffix = `${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2)}`;
       const imageKey = `ownerHousePhotos/photos-${uniqueSuffix}-${file.originalname}`;
 
       const upload = new Upload({
@@ -1445,7 +1473,6 @@ exports.updateDocument = async (req, res) => {
   //   });
   // }
 
-
   try {
     // Validate environment variables
     const { LIARA_BUCKET_NAME, LIARA_ENDPOINT } = process.env;
@@ -1503,7 +1530,10 @@ exports.updateDocument = async (req, res) => {
     if (house.document?.length > 0) {
       const objectsToDelete = house.document
         .map((url) => {
-          const key = url.replace(`${LIARA_ENDPOINT}/${LIARA_BUCKET_NAME}/`, "");
+          const key = url.replace(
+            `${LIARA_ENDPOINT}/${LIARA_BUCKET_NAME}/`,
+            ""
+          );
           return key ? { Key: key } : null;
         })
         .filter(Boolean);
@@ -1516,7 +1546,10 @@ exports.updateDocument = async (req, res) => {
 
         // Serialize to JSON and compute Content-MD5
         const deleteBodyJson = JSON.stringify(deleteBody);
-        const md5Hash = crypto.createHash("md5").update(deleteBodyJson).digest();
+        const md5Hash = crypto
+          .createHash("md5")
+          .update(deleteBodyJson)
+          .digest();
         const contentMD5 = md5Hash.toString("base64");
 
         // Configure delete parameters with Content-MD5
@@ -1530,7 +1563,10 @@ exports.updateDocument = async (req, res) => {
           const deleteCommand = new DeleteObjectsCommand(deleteParams);
           await s3Client.send(deleteCommand);
         } catch (err) {
-          console.error(`Failed to delete old images for house ${req.params.houseId}:`, err);
+          console.error(
+            `Failed to delete old images for house ${req.params.houseId}:`,
+            err
+          );
           throw new Error(`خطا در حذف مدارک قدیمی: ${err.message}`);
         }
       }
@@ -1539,7 +1575,9 @@ exports.updateDocument = async (req, res) => {
     // Upload new documents to S3
     const imageUrls = [];
     const uploadPromises = imagePaths.map(async (file) => {
-      const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
+      const uniqueSuffix = `${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2)}`;
       const imageKey = `ownerHousePhotos/document-${uniqueSuffix}-${file.originalname}`;
 
       const upload = new Upload({
@@ -1557,7 +1595,10 @@ exports.updateDocument = async (req, res) => {
         await upload.done();
         return `${LIARA_ENDPOINT}/${LIARA_BUCKET_NAME}/${imageKey}`;
       } catch (err) {
-        console.error(`Failed to upload ${file.originalname} for house ${req.params.houseId}:`, err);
+        console.error(
+          `Failed to upload ${file.originalname} for house ${req.params.houseId}:`,
+          err
+        );
         throw new Error(`خطا در آپلود فایل ${file.originalname}`);
       }
     });
@@ -1587,9 +1628,14 @@ exports.updateDocument = async (req, res) => {
       const md5Hash = crypto.createHash("md5").update(deleteBodyJson).digest();
       deleteParams.ContentMD5 = md5Hash.toString("base64");
 
-      await s3Client.send(new DeleteObjectsCommand(deleteParams)).catch((err) => {
-        console.error(`Failed to rollback uploads for house ${req.params.houseId}:`, err);
-      });
+      await s3Client
+        .send(new DeleteObjectsCommand(deleteParams))
+        .catch((err) => {
+          console.error(
+            `Failed to rollback uploads for house ${req.params.houseId}:`,
+            err
+          );
+        });
 
       return res.status(StatusCodes.BAD_REQUEST).json({
         status: "failure",
@@ -1603,7 +1649,10 @@ exports.updateDocument = async (req, res) => {
       house: updatedHouse,
     });
   } catch (error) {
-    console.error(`Error replacing documents for house ${req.params.houseId}:`, error.stack);
+    console.error(
+      `Error replacing documents for house ${req.params.houseId}:`,
+      error.stack
+    );
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       status: "failure",
       msg: "خطای داخلی سرور",
@@ -1612,53 +1661,54 @@ exports.updateDocument = async (req, res) => {
   }
 };
 
-// # description -> HTTP VERB -> Access -> Access Type  
-// # get all owner reservations -> GET -> Owner -> PRIVATE  
-// @route = /api/owners/reservations  
-exports.allReservations = async (req, res) => {  
-  try {  
-    // 1. Validate owner authentication  
-    if (!req.owner?._id) {  
-      return res.status(StatusCodes.UNAUTHORIZED).json({  
-        status: "failure",  
-        msg: "احراز هویت ناموفق بود",  
-      });  
-    }  
+// # description -> HTTP VERB -> Access -> Access Type
+// # get all owner reservations -> GET -> Owner -> PRIVATE
+// @route = /api/owners/reservations
+exports.allReservations = async (req, res) => {
+  try {
+    // 1. Validate owner authentication
+    if (!req.owner?._id) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        status: "failure",
+        msg: "احراز هویت ناموفق بود",
+      });
+    }
 
-    // 2. Check if 'user' and 'service' fields exist in Booking schema  
-    const bookingSchema = Booking.schema.obj;  
-    const populateOptions = [];  
+    // 2. Check if 'user' and 'service' fields exist in Booking schema
+    const bookingSchema = Booking.schema.obj;
+    const populateOptions = [];
 
-    if (bookingSchema.user) {  
-      populateOptions.push({ path: 'user', select: 'name email phone' });  
-    }  
+    if (bookingSchema.user) {
+      populateOptions.push({ path: "user", select: "name email phone" });
+    }
 
-    if (bookingSchema.service) {  
-      populateOptions.push({ path: 'service', select: 'title price' });  
-    }  
+    if (bookingSchema.service) {
+      populateOptions.push({ path: "service", select: "title price" });
+    }
 
-    // 3. Query reservations (with safe population)  
-    const reservations = await Booking.find({ owner: req.owner._id })  
-      .populate(populateOptions)  
-      .sort({ createdAt: -1 })  
-      .lean();  
+    // 3. Query reservations (with safe population)
+    const reservations = await Booking.find({ owner: req.owner._id })
+      .populate(populateOptions)
+      .sort({ createdAt: -1 })
+      .lean();
 
-    // 4. Return consistent response structure  
-    return res.status(StatusCodes.OK).json({  
-      status: "success",  
-      msg: reservations.length ? "رزروها با موفقیت دریافت شدند" : "هیچ رزروی یافت نشد",  
-      count: reservations.length,  
-      reservations,  
-    });  
-
-  } catch (error) {  
-    console.error("Error fetching reservations:", error);  
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({  
-      status: "error",  
-      msg: "خطای داخلی سرور",  
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,  
-    });  
-  }  
+    // 4. Return consistent response structure
+    return res.status(StatusCodes.OK).json({
+      status: "success",
+      msg: reservations.length
+        ? "رزروها با موفقیت دریافت شدند"
+        : "هیچ رزروی یافت نشد",
+      count: reservations.length,
+      reservations,
+    });
+  } catch (error) {
+    console.error("Error fetching reservations:", error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: "error",
+      msg: "خطای داخلی سرور",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
 };
 // # description -> HTTP VERB -> Accesss -> Access Type
 // # get single owners reservations -> GET -> Owner -> PRIVATE

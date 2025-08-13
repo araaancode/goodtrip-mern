@@ -1,24 +1,33 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
+import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useOwnerAuthStore } from "../stores/authStore";
 import TitleCard from "../components/Cards/TitleCard";
 import { setPageTitle } from "../features/common/headerSlice";
-import axios from "axios";
-import "../components/modal.css";
-import { PiNewspaperClipping } from "react-icons/pi";
-import { IoEyeOutline } from "react-icons/io5";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
+// Icons
+import { PiHouseLight } from "react-icons/pi";
+import { IoEyeOutline } from "react-icons/io5";
+import { FiEdit, FiTrash2 } from "react-icons/fi";
+import { FaSearch } from "react-icons/fa";
+
+// MUI Components
 import { DataGrid } from "@mui/x-data-grid";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { faIR } from "@mui/x-data-grid/locales";
-import { Box, TextField } from "@mui/material";
-import { IconButton } from "@mui/material";
+import {
+  Box,
+  TextField,
+  IconButton,
+  CircularProgress,
+  Button,
+} from "@mui/material";
 import { ArrowForwardIos, ArrowBackIos } from "@mui/icons-material";
-import CircularProgress from "@mui/material/CircularProgress";
 
-import dayjs from "dayjs";
-import "dayjs/locale/fa";
+// Configure axios to send credentials
+axios.defaults.withCredentials = true;
 
 const TopSideButtons = () => (
   <div className="inline-block">
@@ -27,37 +36,95 @@ const TopSideButtons = () => (
 );
 
 const MyHouses = () => {
+  const { isOwnerAuthenticated } = useOwnerAuthStore();
+  const dispatch = useDispatch();
+
+  // State
   const [houses, setHouses] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(8);
   const [loading, setLoading] = useState(true);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [refresh, setRefresh] = useState(false);
 
-  const dispatch = useDispatch();
 
+    console.log(isOwnerAuthenticated)
+
+  // Set page title
   useEffect(() => {
     dispatch(setPageTitle({ title: "لیست ملک ها" }));
-  }, []);
+  }, [dispatch]);
 
+  // Fetch houses
   useEffect(() => {
-    const token = localStorage.getItem("userToken");
-    const AuthStr = "Bearer ".concat(token);
-    setLoading(true);
-    axios
-      .get("/api/owners/houses", {
-        headers: { authorization: AuthStr },
-      })
-      .then((response) => {
-        setHouses(response.data.houses);
-        console.log(response);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.log("error " + error);
-        setLoading(false);
-      });
-  }, []);
+    if (!isOwnerAuthenticated) return;
 
+    const fetchHouses = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get("/api/owners/houses", {
+          withCredentials: true,
+        });
+        setHouses(response.data.houses || []);
+      } catch (error) {
+        console.error("Error fetching houses:", error);
+        toast.error("خطا در دریافت لیست ملک‌ها");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHouses();
+  }, [isOwnerAuthenticated, refresh]);
+
+  // Delete house function
+  const deleteHouse = async (id) => {
+    if (!window.confirm("آیا از حذف این ملک مطمئن هستید؟")) return;
+
+    setDeleteLoading(true);
+    setDeleteId(id);
+
+    try {
+      await axios.delete(`/api/owners/houses/${id}`, {
+        withCredentials: true,
+      });
+
+      setHouses(houses.filter((house) => house._id !== id));
+      toast.success("ملک با موفقیت حذف شد");
+      setRefresh(!refresh); // Trigger refresh
+    } catch (error) {
+      console.error("Error deleting house:", error);
+      toast.error("خطا در حذف ملک");
+    } finally {
+      setDeleteLoading(false);
+      setDeleteId(null);
+    }
+  };
+
+  // Toggle house status
+  const toggleStatus = async (id, currentStatus) => {
+    try {
+      const response = await axios.put(
+        `/api/owners/houses/${id}/status`,
+        { isActive: !currentStatus },
+        { withCredentials: true }
+      );
+
+      setHouses(
+        houses.map((house) =>
+          house._id === id ? { ...house, isActive: !currentStatus } : house
+        )
+      );
+      toast.success(`ملک ${!currentStatus ? "فعال" : "غیرفعال"} شد`);
+    } catch (error) {
+      console.error("Error toggling status:", error);
+      toast.error("خطا در تغییر وضعیت ملک");
+    }
+  };
+
+  // Columns configuration
   const columns = [
     {
       field: "_id",
@@ -88,6 +155,11 @@ const MyHouses = () => {
       field: "price",
       headerName: "قیمت",
       flex: 1,
+      renderCell: (params) => (
+        <span>
+          {params.value ? params.value.toLocaleString() + " تومان" : "—"}
+        </span>
+      ),
     },
     {
       field: "createdAt",
@@ -95,53 +167,84 @@ const MyHouses = () => {
       flex: 1,
       renderCell: (params) => (
         <div className="flex items-center gap-2">
-          <span>{new Date(params.value).toLocaleDateString("fa")}</span>
+          <span>{new Date(params.value).toLocaleDateString("fa-IR")}</span>
         </div>
       ),
     },
     {
       field: "isActive",
-      headerName: "وضعیت ملک",
+      headerName: "وضعیت",
       flex: 1,
       renderCell: (params) => (
-        <div className="flex items-center gap-2">
-          {params.value ? (
-            <span className="mt-5 bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-green-900 dark:text-green-300">
-              فعال
-            </span>
-          ) : (
-            <span className="mt-5 bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-red-900 dark:text-red-300">
-              غیرفعال
-            </span>
-          )}
-        </div>
+        <Button
+          variant="outlined"
+          size="small"
+          color={params.value ? "success" : "error"}
+          onClick={() => toggleStatus(params.row._id, params.value)}
+          disabled={deleteLoading && deleteId === params.row._id}
+        >
+          {params.value ? "فعال" : "غیرفعال"}
+        </Button>
       ),
     },
     {
-      field: "details",
-      headerName: " جزئیات ",
-      flex: 0.5,
+      field: "actions",
+      headerName: "عملیات",
+      flex: 1.5,
       sortable: false,
       filterable: false,
       renderCell: (params) => (
-        <a href={`/owners/houses/${params.row._id}/update`}>
-          <IoEyeOutline className="w-6 h-6 mt-3" />
-        </a>
+        <div className="flex gap-3">
+          <Button
+            variant="outlined"
+            color="primary"
+            size="small"
+            href={`/owners/houses/${params.row._id}/update`}
+            startIcon={<FiEdit />}
+          >
+            ویرایش
+          </Button>
+          <Button
+            variant="outlined"
+            color="secondary"
+            size="small"
+            href={`/owners/houses/${params.row._id}`}
+            startIcon={<IoEyeOutline />}
+          >
+            مشاهده
+          </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            size="small"
+            onClick={() => deleteHouse(params.row._id)}
+            disabled={deleteLoading && deleteId === params.row._id}
+            startIcon={
+              deleteLoading && deleteId === params.row._id ? (
+                <CircularProgress size={20} />
+              ) : (
+                <FiTrash2 />
+              )
+            }
+          >
+            حذف
+          </Button>
+        </div>
       ),
     },
   ];
 
-  const rows = houses.map((item) => ({
-    id: item._id,
-    _id: item._id,
-    name: item.name || "—",
-    createdAt: item.createdAt || null,
-    price: item.price,
-    isActive: item.isActive,
-    province: item.province,
-    city: item.city,
+  // Prepare rows data
+  const rows = houses.map((house) => ({
+    id: house._id,
+    ...house,
+    price: house.price || 0,
+    isActive: house.isActive || false,
+    province: house.province || "—",
+    city: house.city || "—",
   }));
 
+  // Filter rows based on search query
   const filteredRows = rows.filter((row) =>
     Object.values(row).some(
       (value) =>
@@ -150,9 +253,13 @@ const MyHouses = () => {
     )
   );
 
+  // Create MUI theme with RTL support
   const theme = createTheme(
     {
       direction: "rtl",
+      palette: {
+        mode: "light",
+      },
     },
     faIR
   );
@@ -160,151 +267,148 @@ const MyHouses = () => {
   return (
     <>
       <TitleCard title="" topMargin="mt-2" TopSideButtons={<TopSideButtons />}>
-        {houses.length > 0 ? (
-          <ThemeProvider theme={theme}>
-            <Box sx={{ height: 500, width: "100%" }}>
-              <Box
-                sx={{
-                  mb: 2,
-                  display: "flex",
-                  justifyContent: "flex-start",
-                }}
-              >
+        {!isOwnerAuthenticated ? (
+          <div className="text-center py-10">
+            <p className="text-red-500">
+              لطفاً برای مشاهده ملک‌های خود وارد شوید
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="flex justify-between items-center mb-4">
+              <Box sx={{ width: 300 }}>
                 <TextField
+                  fullWidth
                   placeholder="جستجو..."
                   variant="outlined"
                   size="small"
+                  value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  sx={{
-                    width: 300,
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": {
-                        borderColor: "#ccc",
-                        border: "0",
-                      },
-                      "&.Mui-focused fieldset": {
-                        border: 0,
-                      },
-                    },
-                  }}
-                  inputProps={{
-                    style: {
-                      textAlign: "right",
-                      direction: "rtl",
-                      outline: "0",
-                      border: "1px solid	#ccc",
-                      borderRadius: "5px",
-                    },
+                  InputProps={{
+                    startAdornment: <FaSearch className="ml-2 text-gray-400" />,
                   }}
                 />
               </Box>
+              <Button
+                variant="contained"
+                color="primary"
+                href="/owners/houses/add"
+              >
+                افزودن ملک جدید
+              </Button>
+            </div>
 
-              <DataGrid
-                rows={filteredRows}
-                columns={columns}
-                pagination
-                paginationMode="client"
-                paginationModel={{ page, pageSize }}
-                onPaginationModelChange={(newModel) => {
-                  setPage(newModel.page);
-                  setPageSize(newModel.pageSize);
-                }}
-                pageSizeOptions={[5, 8, 10, 20]}
-                disableRowSelectionOnClick
-                disableColumnMenu
-                loading={loading} // Enable MUI DataGrid's built-in loading state
-                slots={{
-                  loadingOverlay: () => (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        height: "100%",
-                      }}
-                    >
-                      <CircularProgress />
-                    </Box>
-                  ),
-                  noRowsOverlay: () => (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        height: "100%",
-                      }}
-                    >
-                      <CircularProgress />
-                    </Box>
-                  ),
-                }}
-                slotProps={{
-                  pagination: {
-                    labelRowsPerPage: "تعداد ردیف در هر صفحه:",
-                    nextIconButton: (
-                      <IconButton>
-                        <ArrowForwardIos />
-                      </IconButton>
-                    ),
-                    previousIconButton: (
-                      <IconButton>
-                        <ArrowBackIos />
-                      </IconButton>
-                    ),
-                  },
-                }}
-                localeText={{
-                  ...faIR.components.MuiDataGrid.defaultProps.localeText,
-                  footerPaginationDisplayedRows: (from, to, count) =>
-                    `${from}–${to} از ${count}`,
-                }}
-                sx={{
-                  direction: "rtl",
-                  fontFamily: "IRANSans, Tahoma, sans-serif",
-                  textAlign: "right",
-                  "& .MuiDataGrid-cell": {
-                    textAlign: "right",
-                    justifyContent: "flex-end",
-                  },
-                  "& .MuiDataGrid-columnHeaderTitle": {
-                    textAlign: "right",
-                    justifyContent: "flex-end",
-                    width: "100%",
-                  },
-                  "& .MuiDataGrid-columnHeaders": {
-                    backgroundColor: "#fff",
-                    fontWeight: "bold",
-                  },
-                  "& .MuiDataGrid-row": {
-                    backgroundColor: "#fff",
-                  },
-                  "& .MuiDataGrid-row:hover": {
-                    backgroundColor: "#fff",
-                  },
-                  "& .MuiTablePagination-root": {
-                    direction: "rtl",
-                  },
-                  "& .MuiTablePagination-actions": {
-                    direction: "rtl",
-                  },
-                  "& .MuiTablePagination-actions button svg": {
-                    // transform: "rotate(180deg)", // Flip left/right arrows
-                  },
-                  "& .MuiTablePagination-root .css-1hr2sou-MuiTablePagination-root":
-                    {
-                      display: "none",
-                      hidden: true,
-                    },
-                }}
-              />
-            </Box>
-          </ThemeProvider>
-        ) : (
-          <h1>هنوز هیچ ملکی اضافه نشده است.</h1>
+            {houses.length > 0 ? (
+              <ThemeProvider theme={theme}>
+                <Box sx={{ height: 500, width: "100%" }}>
+                  <DataGrid
+                    rows={filteredRows}
+                    columns={columns}
+                    pagination
+                    paginationMode="client"
+                    paginationModel={{ page, pageSize }}
+                    onPaginationModelChange={(newModel) => {
+                      setPage(newModel.page);
+                      setPageSize(newModel.pageSize);
+                    }}
+                    pageSizeOptions={[5, 8, 10, 20]}
+                    disableRowSelectionOnClick
+                    disableColumnMenu
+                    loading={loading}
+                    slots={{
+                      loadingOverlay: () => (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            height: "100%",
+                          }}
+                        >
+                          <CircularProgress />
+                        </Box>
+                      ),
+                      noRowsOverlay: () => (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            height: "100%",
+                            flexDirection: "column",
+                            gap: 1,
+                          }}
+                        >
+                          <PiHouseLight className="w-10 h-10 text-gray-400" />
+                          <p>هیچ ملکی یافت نشد</p>
+                        </Box>
+                      ),
+                    }}
+                    slotProps={{
+                      pagination: {
+                        labelRowsPerPage: "تعداد ردیف در هر صفحه:",
+                        nextIconButton: (
+                          <IconButton>
+                            <ArrowForwardIos />
+                          </IconButton>
+                        ),
+                        previousIconButton: (
+                          <IconButton>
+                            <ArrowBackIos />
+                          </IconButton>
+                        ),
+                      },
+                    }}
+                    localeText={{
+                      ...faIR.components.MuiDataGrid.defaultProps.localeText,
+                      footerPaginationDisplayedRows: (from, to, count) =>
+                        `${from}–${to} از ${count}`,
+                    }}
+                    sx={{
+                      fontFamily: "IRANSans, Tahoma, sans-serif",
+                      "& .MuiDataGrid-cell": {
+                        textAlign: "right",
+                        justifyContent: "flex-end",
+                      },
+                      "& .MuiDataGrid-columnHeaderTitle": {
+                        textAlign: "right",
+                        justifyContent: "flex-end",
+                        width: "100%",
+                      },
+                      "& .MuiDataGrid-columnHeaders": {
+                        backgroundColor: "#f8fafc",
+                        fontWeight: "bold",
+                      },
+                      "& .MuiDataGrid-row": {
+                        backgroundColor: "#fff",
+                        "&:hover": {
+                          backgroundColor: "#f8fafc",
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+              </ThemeProvider>
+            ) : (
+              <div className="text-center py-10">
+                <PiHouseLight className="w-16 h-16 mx-auto text-gray-400" />
+                <p className="mt-4 text-gray-600">
+                  هنوز هیچ ملکی اضافه نکرده‌اید
+                </p>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  href="/owners/houses/add"
+                  className="mt-4"
+                >
+                  افزودن ملک جدید
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </TitleCard>
-      <ToastContainer />
+      <ToastContainer position="top-right" rtl />
     </>
   );
 };
