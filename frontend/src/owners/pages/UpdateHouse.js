@@ -1,362 +1,85 @@
 import { useEffect, useState, useRef } from "react";
 import { useDispatch } from "react-redux";
-import TitleCard from "../components/Cards/TitleCard";
-import { setPageTitle } from "../features/common/headerSlice";
 import axios from "axios";
-
-import { PiHouseLight } from "react-icons/pi";
-import { TfiUser } from "react-icons/tfi";
-import { TbPhone } from "react-icons/tb";
-import { RxRulerHorizontal } from "react-icons/rx";
-import { PiHourglassSimpleLow } from "react-icons/pi";
-import { VscLaw } from "react-icons/vsc";
-import { FaUsers } from "react-icons/fa";
-import { IoCalendarOutline } from "react-icons/io5";
-import { PiImagesLight } from "react-icons/pi";
-import { PiWarehouseLight } from "react-icons/pi";
-import { SlOptions } from "react-icons/sl";
-import { PiThermometerColdLight } from "react-icons/pi";
-import { LuCircleParking } from "react-icons/lu";
-import { PiSolarRoof } from "react-icons/pi";
-import { CiImageOn } from "react-icons/ci";
-import { RiPriceTagLine } from "react-icons/ri";
-import { TbCircleDashedNumber4 } from "react-icons/tb";
-import { CiCalendar } from "react-icons/ci";
-import { HiOutlineDocumentArrowUp } from "react-icons/hi2";
-import { TbHomeEdit } from "react-icons/tb";
-import { LiaConciergeBellSolid } from "react-icons/lia";
-import { RiPriceTag3Line } from "react-icons/ri";
-import { FiInfo, FiMapPin } from "react-icons/fi";
-import { BsHouseExclamation } from "react-icons/bs";
-import { PiSignpostLight } from "react-icons/pi";
-import { CiCircleQuestion } from "react-icons/ci";
-import Select from "react-tailwindcss-select";
-import "react-tailwindcss-select/dist/index.css";
-
+import { toast } from "react-toastify";
+import { Dialog } from "@headlessui/react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import L from "leaflet";
+import Select from "react-tailwindcss-select";
+import "react-tailwindcss-select/dist/index.css";
 import "leaflet/dist/leaflet.css";
+
+// Icons
+import { PiHouseLight } from "react-icons/pi";
+import { TfiUser } from "react-icons/tfi";
+import { TbPhone, TbCircleDashedNumber4, TbHomeEdit } from "react-icons/tb";
+import { RxRulerHorizontal } from "react-icons/rx";
+import {
+  PiHourglassSimpleLow,
+  PiImagesLight,
+  PiWarehouseLight,
+  PiThermometerColdLight,
+  PiSolarRoof,
+  PiSignpostLight,
+} from "react-icons/pi";
+import { FaUsers } from "react-icons/fa";
+import { IoCalendarOutline } from "react-icons/io5";
+import { SlOptions } from "react-icons/sl";
+import { LuCircleParking } from "react-icons/lu";
+import { RiPriceTagLine, RiPriceTag3Line } from "react-icons/ri";
+import { CiCalendar, CiCircleQuestion } from "react-icons/ci";
+import { HiOutlineDocumentArrowUp } from "react-icons/hi2";
+import { LiaConciergeBellSolid } from "react-icons/lia";
+import { FiInfo, FiMapPin } from "react-icons/fi";
+import { BsHouseExclamation } from "react-icons/bs";
+
+// Components
+import TitleCard from "../components/Cards/TitleCard";
+import InputWithError from "../utils/InputWithError";
+import SelectWithError from "../utils/SelectWithError";
+import Spinner from "../utils/Spinner";
+
+// Data and utils
+import { setPageTitle } from "../features/common/headerSlice";
 import provincesData from "../components/provinces_cities.json";
-
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
-import { Dialog } from "@headlessui/react";
+import {
+  hobbiesList,
+  enviornmentList,
+  ownerTypeList,
+  weekDays,
+  houseTypeList,
+  houseOptions,
+  coolingList,
+  heatingList,
+  floorTypeList,
+  kitchenOptionList,
+  bedRoomOptionList,
+} from "../data/houseData";
+import useFormValidation from "../utils/useFormValidation";
+import useLoading from "../utils/useLoading";
+import { handleApiError } from "../utils/api";
 
 const markerIcon = new L.Icon({
   iconUrl: "https://www.svgrepo.com/show/312483/location-indicator-red.svg",
   iconSize: [50, 50],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
-  //   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-  //   shadowSize: [55, 55],
 });
 
-const hobbiesList = [
-  { value: "swimming_pool", label: "استخر" },
-  { value: "jacuzzi", label: "جکوزی" },
-  { value: "sauna", label: "سونا" },
-  { value: "home_cinema", label: "سینمای خانگی" },
-  { value: "game_room", label: "اتاق بازی" },
-  { value: "billiard_table", label: "میز بیلیارد" },
-  { value: "ping_pong_table", label: "میز پینگ‌پنگ" },
-  { value: "football_table", label: "فوتبال‌دستی" },
-  { value: "music_system", label: "سیستم صوتی" },
-  { value: "video_game_console", label: "کنسول بازی" },
-  { value: "library", label: "کتابخانه" },
-  { value: "barbecue", label: "باربیکیو" },
-  { value: "garden", label: "باغچه" },
-  { value: "playground", label: "زمین بازی کودکان" },
-  { value: "terrace", label: "تراس با ویو" },
-  { value: "basketball_hoop", label: "حلقه بسکتبال" },
-  { value: "mini_golf", label: "مینی‌گلف" },
-  { value: "karaoke", label: "کارائوکه" },
-  { value: "board_games", label: "بازی‌های رومیزی" },
-  { value: "fireplace", label: "شومینه" },
-  { value: "other", label: "سایر" },
-];
-
-const enviornmentList = [
-  { value: "mountain", label: "کوهستانی" },
-  { value: "wood", label: "جنگلی" },
-  { value: "sea", label: "دریا" },
-  { value: "beach", label: "ساحلی" },
-  { value: "dessert", label: "بیابانی" },
-  { value: "wild", label: "حیات وحش" },
-  { value: "ecotourism", label: "بوم گردی" },
-  { value: "antiquities", label: "باستانی تاریخی" },
-  { value: "central", label: "مرکز شهر" },
-  { value: "village", label: "روستایی" },
-  { value: "other", label: "سایر" },
-];
-
-const ownerTypeList = [
-  { value: "personal", label: "شخصی" },
-  { value: "co_owned", label: "مشاع" },
-  { value: "leased", label: "استیجاری" },
-  { value: "mortgaged", label: "رهنی" },
-  { value: "official_contract", label: "دارای سند رسمی" },
-  { value: "non_official_contract", label: "قولنامه‌ای (غیررسمی)" },
-  { value: "endowment", label: "وقفی" },
-  { value: "inheritance", label: "ارثی" },
-  { value: "cooperative", label: "تعاونی" },
-  { value: "governmental", label: "دولتی" },
-  { value: "confiscated", label: "تملیکی" },
-  { value: "other", label: "سایر" },
-];
-
-const weekDays = [
-  {
-    label: "روزهای هفته",
-    options: [
-      { value: "sat", label: "شنبه" },
-      { value: "sun", label: "یکشنبه" },
-      { value: "mon", label: "دوشنبه" },
-      { value: "thu", label: "سه شنبه" },
-      { value: "wed", label: "چهارشنبه" },
-      { value: "thur", label: "پنج شنبه" },
-      { value: "fri", label: "جمعه" },
-    ],
-  },
-];
-
-const houseTypeList = [
-  { value: "residential", label: "مسکونی" },
-  { value: "commercial", label: "تجاری" },
-  { value: "office", label: "اداری" },
-  { value: "industrial", label: "صنعتی" },
-  { value: "agricultural", label: "کشاورزی" },
-  { value: "villa", label: "ویلا" },
-  { value: "land", label: "زمین" },
-  { value: "garden", label: "باغ" },
-  { value: "warehouse", label: "انبار" },
-  { value: "shop", label: "مغازه" },
-  { value: "apartment", label: "آپارتمان" },
-  { value: "penthouse", label: "پنت‌هاوس" },
-  { value: "duplex", label: "دوبلکس" },
-  { value: "suite", label: "سوییت" },
-  { value: "hotel", label: "هتل" },
-  { value: "clinic", label: "کلینیک" },
-  { value: "cottage", label: "کلبه" },
-  { value: "room", label: "اتاق" },
-  { value: "old", label: "قدیمی" },
-  { value: "new", label: "نوساز" },
-  { value: "rebuild", label: "بازسازی" },
-  { value: "farm", label: "دامداری / مرغداری" },
-  { value: "other", label: "سایر" },
-];
-
-const houseOptions = [
-  { value: "parking", label: "پارکینگ" },
-  { value: "elevator", label: "آسانسور" },
-  { value: "private_elevator", label: "آسانسور اختصاصی" },
-  { value: "storage", label: "انباری" },
-  { value: "balcony", label: "بالکن" },
-  { value: "terrace", label: "تراس" },
-  { value: "yard", label: "حیاط" },
-  { value: "garden", label: "باغچه" },
-  { value: "roof_garden", label: "روف گاردن" },
-  { value: "swimming_pool", label: "استخر" },
-  { value: "jacuzzi", label: "جکوزی" },
-  { value: "sauna", label: "سونا" },
-  { value: "gym", label: "باشگاه ورزشی" },
-  { value: "barbecue", label: "باربیکیو" },
-  { value: "gazebo", label: "آلاچیق" },
-  { value: "fireplace", label: "شومینه" },
-  { value: "fountain", label: "آبنما" },
-  { value: "playground", label: "زمین بازی کودکان" },
-  { value: "security_door", label: "درب ضد سرقت" },
-  { value: "video_door_phone", label: "آیفون تصویری" },
-  { value: "alarm_system", label: "سیستم امنیتی" },
-  { value: "cctv", label: "دوربین مداربسته" },
-  { value: "security_guard", label: "نگهبانی ۲۴ ساعته" },
-  { value: "smart_home", label: "خانه هوشمند" },
-  { value: "remote_control_gate", label: "درب ریموت دار" },
-  { value: "furnished", label: "مبله" },
-  { value: "air_conditioning", label: "کولر گازی" },
-  { value: "central_heating", label: "سیستم گرمایشی مرکزی" },
-  { value: "floor_heating", label: "گرمایش از کف" },
-  { value: "package_heater", label: "پکیج" },
-  { value: "radiator", label: "رادیاتور" },
-  { value: "split_ac", label: "اسپیلت" },
-  { value: "chiller", label: "چیلر" },
-  { value: "fan_coil", label: "فن‌کویل" },
-  { value: "well_water", label: "چاه آب" },
-  { value: "electricity", label: "برق" },
-  { value: "three_phase_electricity", label: "برق سه‌فاز" },
-  { value: "generator", label: "ژنراتور برق" },
-  { value: "natural_gas", label: "گاز شهری" },
-  { value: "sewage_connection", label: "اتصال به فاضلاب شهری" },
-  { value: "water_tank", label: "مخزن آب" },
-  { value: "booster_pump", label: "پمپ تقویت فشار" },
-  { value: "solar_panel", label: "پنل خورشیدی" },
-  { value: "internet", label: "اینترنت" },
-  { value: "adsl", label: "اینترنت ADSL" },
-  { value: "fiber_optic", label: "فیبر نوری" },
-  { value: "satellite_tv", label: "ماهواره" },
-  { value: "landline", label: "تلفن ثابت" },
-  { value: "private_entrance", label: "ورودی مجزا" },
-  { value: "indoor_parking", label: "پارکینگ سرپوشیده" },
-  { value: "outdoor_parking", label: "پارکینگ روباز" },
-  { value: "multi_unit", label: "چند واحدی" },
-  { value: "single_unit", label: "تک واحدی" },
-  { value: "duplex", label: "دوبلکس" },
-  { value: "triplex", label: "تریپلکس" },
-  { value: "seaview", label: "ویو دریا" },
-  { value: "mountain_view", label: "ویو کوهستان" },
-  { value: "forest_view", label: "ویو جنگل" },
-  { value: "lake_view", label: "ویو دریاچه" },
-  { value: "city_view", label: "ویو شهر" },
-  { value: "private_beach", label: "ساحل اختصاصی" },
-  { value: "agricultural_license", label: "مجوز کشاورزی" },
-  { value: "well_documented", label: "دارای سند شش دانگ" },
-  { value: "partitioned_document", label: "سند تفکیکی" },
-  { value: "cooperative_ownership", label: "سند تعاونی" },
-  { value: "endowment_land", label: "زمین وقفی" },
-  { value: "building_permit", label: "پروانه ساخت" },
-  { value: "renovated", label: "بازسازی شده" },
-  { value: "newly_built", label: "نوساز" },
-  { value: "under_construction", label: "در حال ساخت" },
-  { value: "old_but_sound", label: "قدیمی ولی قابل سکونت" },
-  { value: "commercial_license", label: "مجوز تجاری" },
-  { value: "residential_license", label: "مجوز مسکونی" },
-  { value: "industrial_license", label: "مجوز صنعتی" },
-  { value: "frontage", label: "بر خیابان" },
-  { value: "corner_lot", label: "زمین دو بر" },
-  { value: "access_road", label: "دسترسی مناسب" },
-  { value: "other", label: "سایر" },
-];
-
-const coolingList = [
-  { value: "split_ac", label: "اسپیلت" },
-  { value: "gas_cooler", label: "کولر گازی" },
-  { value: "water_cooler", label: "کولر آبی" },
-  { value: "central_cooling", label: "سیستم سرمایش مرکزی" },
-  { value: "chiller", label: "چیلر" },
-  { value: "fan_coil", label: "فن‌کویل" },
-  { value: "vrf_system", label: "سیستم VRF" },
-  { value: "package_unit_cooling", label: "پکیج یونیت سرمایشی" },
-  { value: "ceiling_fan", label: "پنکه سقفی" },
-  { value: "wall_fan", label: "پنکه دیواری" },
-  { value: "floor_fan", label: "پنکه ایستاده" },
-  { value: "natural_ventilation", label: "تهویه طبیعی" },
-  { value: "other", label: "سایر" },
-];
-
-const heatingList = [
-  { value: "radiator", label: "رادیاتور" },
-  { value: "floor_heating", label: "گرمایش از کف" },
-  { value: "central_heating", label: "سیستم گرمایشی مرکزی" },
-  { value: "package_heater", label: "پکیج" },
-  { value: "wall_heater", label: "بخاری گازی دیواری" },
-  { value: "gas_heater", label: "بخاری گازی" },
-  { value: "oil_heater", label: "بخاری نفتی" },
-  { value: "wood_stove", label: "بخاری هیزمی" },
-  { value: "fireplace", label: "شومینه" },
-  { value: "electric_heater", label: "بخاری برقی" },
-  { value: "fan_coil", label: "فن‌کویل" },
-  { value: "chiller_heating", label: "سیستم چیلر گرمایشی" },
-  { value: "vrf_heating", label: "سیستم VRF گرمایشی" },
-  { value: "kerosene_heater", label: "بخاری چراغی (نفتی سنتی)" },
-  { value: "solar_heating", label: "سیستم گرمایش خورشیدی" },
-  { value: "other", label: "سایر" },
-];
-
-const floorTypeList = [
-  { value: "ceramic", label: "سرامیک" },
-  { value: "porcelain", label: "پرسلان" },
-  { value: "tile", label: "کاشی" },
-  { value: "laminate", label: "لمینت" },
-  { value: "parquet", label: "پارکت" },
-  { value: "hardwood", label: "چوب طبیعی" },
-  { value: "vinyl", label: "وینیل" },
-  { value: "epoxy", label: "اپوکسی" },
-  { value: "cement", label: "سیمانی" },
-  { value: "stone", label: "سنگ" },
-  { value: "granite", label: "سنگ گرانیت" },
-  { value: "marble", label: "سنگ مرمر" },
-  { value: "mosaic", label: "موزاییک" },
-  { value: "carpet", label: "موکت" },
-  { value: "carpet_flooring", label: "فرش دیواری" },
-  { value: "pvc", label: "کفپوش PVC" },
-  { value: "brick", label: "آجر فرش" },
-  { value: "rubber", label: "کفپوش لاستیکی" },
-  { value: "decking", label: "کفپوش چوبی فضای باز (دکینگ)" },
-  { value: "turquoise_tile", label: "کاشی فیروزه‌ای (سنتی)" },
-  { value: "terrazzo", label: "ترازو" },
-];
-
-const kitchenOptionList = [
-  { value: "open_kitchen", label: "آشپزخانه اپن" },
-  { value: "island_kitchen", label: "جزیره آشپزخانه" },
-  { value: "closed_kitchen", label: "آشپزخانه بسته" },
-  { value: "iranian_kitchen", label: "آشپزخانه سنتی (ایرانی)" },
-  { value: "western_kitchen", label: "آشپزخانه مدرن (فرنگی)" },
-  { value: "kitchenette", label: "آشپزخانه کوچک (کیت‌چن)" },
-  { value: "pantry", label: "پنتری (انباری آشپزخانه)" },
-  { value: "dishwasher", label: "ماشین ظرفشویی" },
-  { value: "gas_stove", label: "اجاق گاز رومیزی" },
-  { value: "oven", label: "فر توکار" },
-  { value: "microwave", label: "مایکروویو" },
-  { value: "refrigerator", label: "یخچال" },
-  { value: "hood", label: "هود" },
-  { value: "sink_double", label: "سینک دولگنه" },
-  { value: "sink_single", label: "سینک تک‌لگنه" },
-  { value: "granite_counter", label: "صفحه گرانیتی" },
-  { value: "quartz_counter", label: "صفحه کوارتز" },
-  { value: "marble_counter", label: "صفحه مرمری" },
-  { value: "melamine_cabinets", label: "کابینت ملامینه" },
-  { value: "mdf_cabinets", label: "کابینت MDF" },
-  { value: "wooden_cabinets", label: "کابینت چوبی" },
-  { value: "high_gloss_cabinets", label: "کابینت های‌گلاس" },
-  { value: "lighting_under_cabinets", label: "نور زیر کابینتی" },
-  { value: "built_in_appliances", label: "وسایل توکار" },
-  { value: "smart_kitchen", label: "آشپزخانه هوشمند" },
-  { value: "breakfast_bar", label: "بار صبحانه" },
-  { value: "water_purifier", label: "تصفیه آب" },
-  { value: "garbage_disposal", label: "دستگاه زباله‌خردکن" },
-  { value: "laundry_space", label: "فضای لباسشویی" },
-  { value: "kitchen_storage_drawers", label: "کشوهای نظم‌دهنده" },
-  { value: "pull_out_pantry", label: "پنتری کشویی" },
-  { value: "corner_carousel", label: "گردان کنج کابینت" },
-  { value: "chimney_hood", label: "هود شومینه‌ای" },
-  { value: "touch_controls", label: "پنل لمسی" },
-];
-
-const bedRoomOptionList = [
-  { value: "master_bedroom", label: "اتاق خواب مستر" },
-  { value: "built_in_closet", label: "کمد دیواری" },
-  { value: "walk_in_closet", label: "کلوزت روم (رختکن)" },
-  { value: "ensuite_bathroom", label: "حمام داخل اتاق" },
-  { value: "balcony_access", label: "دسترسی به بالکن" },
-  { value: "soundproofing", label: "عایق صدا" },
-  { value: "floor_heating", label: "گرمایش از کف" },
-  { value: "split_ac", label: "کولر اسپیلت" },
-  { value: "fan", label: "پنکه" },
-  { value: "fireplace", label: "شومینه" },
-  { value: "smart_lighting", label: "نورپردازی هوشمند" },
-  { value: "ceiling_lights", label: "نور مخفی سقف" },
-  { value: "curtains", label: "پرده" },
-  { value: "blackout_curtains", label: "پرده ضخیم (بلک‌اوت)" },
-  { value: "tv_mount", label: "محل نصب تلویزیون" },
-  { value: "wallpaper", label: "کاغذ دیواری" },
-  { value: "laminate_flooring", label: "کفپوش لمینت" },
-  { value: "parquet_flooring", label: "کفپوش پارکت" },
-  { value: "carpet_flooring", label: "موکت" },
-  { value: "bed_headboard_lighting", label: "نور بالای تخت" },
-  { value: "furniture_included", label: "مبلمان کامل" },
-  { value: "desk_space", label: "فضای میز مطالعه" },
-  { value: "vanity_table", label: "میز آرایش" },
-  { value: "mirror", label: "آینه قدی" },
-  { value: "book_shelves", label: "قفسه کتاب" },
-  { value: "safe_box", label: "گاوصندوق" },
-  { value: "smart_blinds", label: "پرده هوشمند" },
-  { value: "ceiling_fan", label: "پنکه سقفی" },
-  { value: "decorative_ceiling", label: "سقف دکوراتیو" },
-  { value: "bed_lamp", label: "چراغ کنار تخت" },
-];
-
 function UpdateHouse() {
+  const dispatch = useDispatch();
+  const { errors, validateField, validateForm, setErrors } =
+    useFormValidation();
+  const { loading, startLoading, stopLoading } = useLoading({
+    info: false,
+    cover: false,
+    images: false,
+    bill: false,
+    document: false,
+    map: false,
+  });
+
+  // Form state
   const [name, setName] = useState("");
   const [provinces, setProvinces] = useState([]);
   const [cities, setCities] = useState([]);
@@ -365,10 +88,6 @@ function UpdateHouse() {
   const [description, setDescription] = useState("");
   const [houseOwner, setHouseOwner] = useState("");
   const [price, setPrice] = useState(0);
-  const [photo, setPhoto] = useState(null);
-  const [photos, setPhotos] = useState([]);
-  const [phone, setPhone] = useState("");
-
   const [cover, setCover] = useState(null);
   const [images, setImages] = useState([]);
   const [postalCode, setPostalCode] = useState("");
@@ -401,368 +120,31 @@ function UpdateHouse() {
   const [reservationRoles, setReservationRoles] = useState([]);
   const [bedRoomOptions, setBedRoomOptions] = useState([]);
   const [house, setHouse] = useState({});
-  // const [selectedLocation, setSelectedLocation] = useState(null);
-
-  let token = localStorage.getItem("userToken");
-
-  // btn spinner
-  const [btnSpinnerInfo, setBtnSpinnerInfo] = useState(false);
-  const [btnSpinnerMap, setBtnSpinnerMap] = useState(false);
-  const [btnSpinnerBill, setBtnSpinnerBill] = useState(false);
-  const [btnSpinnerDocument, setBtnSpinnerDocument] = useState(false);
-  const [btnSpinnerCover, setBtnSpinnerCover] = useState(false);
-  const [btnSpinnerImages, setBtnSpinnerImages] = useState(false);
-
-  // const [coords, setCoords] = useState({ lat: null, lng: null });
-  // const handleLocationSelect = (location) => {
-  //   setCoords(location);
-  //   console.log("Selected Location:", location);
-  // };
-
+  const [position, setPosition] = useState([32.4279, 53.688]);
   const [isOpen, setIsOpen] = useState(false);
 
-  // errors
-  const [nameError, setNameError] = useState(false);
-  const [nameErrorMsg, setNameErrorMsg] = useState("");
-
-  const [provinceError, setProvinceError] = useState(false);
-  const [provinceErrorMsg, setProvinceErrorMsg] = useState("");
-
-  const [cityError, setCityError] = useState(false);
-  const [cityErrorMsg, setCityErrorMsg] = useState("");
-
-  const [houseOwnerError, setHouseOwnerError] = useState(false);
-  const [houseOwnerErrorMsg, setHouseOwnerErrorMsg] = useState("");
-
-  const [descriptionError, setDescriptionError] = useState(false);
-  const [descriptionErrorMsg, setDescriptionErrorMsg] = useState("");
-
-  const [priceError, setPriceError] = useState(false);
-  const [priceErrorMsg, setPriceErrorMsg] = useState("");
-
-  const [coverError, setCoverError] = useState(false);
-  const [coverErrorMsg, setCoverErrorMsg] = useState("");
-
-  const [imagesError, setImagesError] = useState(false);
-  const [imagesErrorMsg, setImagesErrorMsg] = useState("");
-
-  const [phoneError, setPhoneError] = useState(false);
-  const [phoneErrorMsg, setPhoneErrorMsg] = useState("");
-
-  const [postalCodeError, setPostalCodeError] = useState(false);
-  const [postalCodeErrorMsg, setPostalCodeErrorMsg] = useState("");
-
-  const [housePhoneError, setHousePhoneError] = useState(false);
-  const [housePhoneErrorMsg, setHousePhoneErrorMsg] = useState("");
-
-  const [metersError, setMetersError] = useState(false);
-  const [metersErrorMsg, setMetersErrorMsg] = useState("");
-
-  const [yearError, setYearError] = useState(false);
-  const [yearErrorMsg, setYearErrorMsg] = useState("");
-
-  const [capacityError, setCapacityError] = useState(false);
-  const [capacityErrorMsg, setCapacityErrorMsg] = useState("");
-
-  const [houseRolesError, setHouseRolesError] = useState(false);
-  const [houseRolesErrorMsg, setHouseRolesErrorMsg] = useState("");
-
-  const [critriasError, setCritriasError] = useState(false);
-  const [critriasErrorMsg, setCritriasErrorMsg] = useState("");
-
-  const [houseTypeError, setHouseTypeError] = useState(false);
-  const [houseTypeErrorMsg, setHouseTypeErrorMsg] = useState("");
-
-  // const [latError, setLatError] = useState(false);
-  // const [latErrorMsg, setLatErrorMsg] = useState("");
-
-  // const [lngError, setLngError] = useState(false);
-  // const [lngErrorMsg, setLngErrorMsg] = useState("");
-
-  const [positionError, setPositionError] = useState(false);
-  const [positionErrorMsg, setPositionErrorMsg] = useState("");
-
-  const [floorError, setFloorError] = useState(false);
-  const [floorErrorMsg, setFloorErrorMsg] = useState("");
-
-  const [optionsError, setOptionsError] = useState(false);
-  const [optionsErrorMsg, setOptionsErrorMsg] = useState("");
-
-  const [heatingError, setHeatingError] = useState(false);
-  const [heatingErrorMsg, setHeatingErrorMsg] = useState("");
-
-  const [coolingError, setCoolingError] = useState(false);
-  const [coolingErrorMsg, setCoolingErrorMsg] = useState("");
-
-  const [parkingError, setParkingError] = useState(false);
-  const [parkingErrorMsg, setParkingErrorMsg] = useState("");
-
-  const [billError, setBillError] = useState(false);
-  const [billErrorMsg, setBillErrorMsg] = useState("");
-
-  const [addressError, setAddressError] = useState(false);
-  const [addressErrorMsg, setAddressErrorMsg] = useState("");
-
-  const [houseNumberError, setHouseNumberError] = useState(false);
-  const [houseNumberErrorMsg, setHouseNumberErrorMsg] = useState("");
-
-  const [hobbiesError, setHobbiesError] = useState(false);
-  const [hobbiesErrorMsg, setHobbiesErrorMsg] = useState("");
-
-  const [enviornmentError, setEnviornmentError] = useState(false);
-  const [enviornmentErrorMsg, setEnviornmentErrorMsg] = useState("");
-
-  const [ownerTypeError, setOwnerTypeError] = useState(false);
-  const [ownerTypeErrorMsg, setOwnerTypeErrorMsg] = useState("");
-
-  const [roomsError, setRoomsError] = useState(false);
-  const [roomsErrorMsg, setRoomsErrorMsg] = useState("");
-
-  const [freeDatesError, setFreeDatesError] = useState(false);
-  const [freeDatesErrorMsg, setFreeDatesErrorMsg] = useState("");
-
-  const [documentError, setDocumentError] = useState(false);
-  const [documentErrorMsg, setDocumentErrorMsg] = useState("");
-
-  const [floorTypeError, setFloorTypeError] = useState(false);
-  const [floorTypeErrorMsg, setFloorTypeErrorMsg] = useState("");
-
-  const [discountError, setDiscountError] = useState(false);
-  const [discountErrorMsg, setDiscountErrorMsg] = useState("");
-
-  const [kitchenOptionsError, setKitchenOptionsError] = useState(false);
-  const [kitchenOptionsErrorMsg, setKitchenOptionsErrorMsg] = useState("");
-
-  const [reservationRolesError, setReservationRolesError] = useState(false);
-  const [reservationRolesErrorMsg, setReservationRolesErrorMsg] = useState("");
-
-  const [bedRoomOptionsError, setBedRoomOptionsError] = useState(false);
-  const [bedRoomOptionsErrorMsg, setBedRoomOptionsErrorMsg] = useState("");
-
-  // page main Title
-  const dispatch = useDispatch();
-  useEffect(() => {
-    dispatch(setPageTitle({ title: "ویرایش ملک" }));
-  }, []);
-
-  // photo vars
+  // File refs and state
   const [selectedFiles, setSelectedFiles] = useState([]);
-
-  const fileInputRef = useRef(null);
-  const acceptedFileExtensions = ["jpg", "png", "jpeg"];
-
-  const acceptedFileTypesString = acceptedFileExtensions
-    .map((ext) => `.${ext}`)
-    .join(",");
-
-  const handleFileChange = (event) => {
-    const newFilesArray = Array.from(event.target.files);
-    processFiles(newFilesArray);
-  };
-
-  const processFiles = (filesArray) => {
-    const newSelectedFiles = [...selectedFiles];
-    let hasError = false;
-    const fileTypeRegex = new RegExp(acceptedFileExtensions.join("|"), "i");
-    filesArray.forEach((file) => {
-      console.log(file);
-
-      if (newSelectedFiles.some((f) => f.name === file.name)) {
-        alert("File names must be unique", "error");
-        hasError = true;
-      } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
-        alert(
-          `Only ${acceptedFileExtensions.join(", ")} files are allowed`,
-          "error"
-        );
-        hasError = true;
-      } else {
-        newSelectedFiles.push(file);
-      }
-    });
-
-    if (!hasError) {
-      setSelectedFiles(newSelectedFiles);
-    }
-  };
-
-  const handleCustomButtonClick = () => {
-    fileInputRef.current.click();
-  };
-
-  const handleFileDelete = (index) => {
-    const updatedFiles = [...selectedFiles];
-    updatedFiles.splice(index, 1);
-    setSelectedFiles(updatedFiles);
-  };
-
-  // photos vars
   const [selectedFiles2, setSelectedFiles2] = useState([]);
-
-  const fileInputRef2 = useRef(null);
-  const acceptedFileExtensions2 = ["jpg", "png", "jpeg"];
-
-  const acceptedFileTypesString2 = acceptedFileExtensions2
-    .map((ext) => `.${ext}`)
-    .join(",");
-
-  const handleFileChange2 = (event) => {
-    const newFilesArray = Array.from(event.target.files);
-    processFiles2(newFilesArray);
-  };
-
-  const processFiles2 = (filesArray) => {
-    const newSelectedFiles2 = [...selectedFiles2];
-    let hasError = false;
-    const fileTypeRegex = new RegExp(acceptedFileExtensions2.join("|"), "i");
-    filesArray.forEach((file) => {
-      if (newSelectedFiles2.some((f) => f.name === file.name)) {
-        alert("File names must be unique", "error");
-        hasError = true;
-      } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
-        alert(
-          `Only ${acceptedFileExtensions2.join(", ")} files are allowed`,
-          "error"
-        );
-        hasError = true;
-      } else {
-        newSelectedFiles2.push(file);
-      }
-    });
-
-    if (!hasError) {
-      setSelectedFiles2(newSelectedFiles2);
-    }
-  };
-
-  const handleCustomButtonClick2 = () => {
-    fileInputRef2.current.click();
-  };
-
-  const handleFileDelete2 = (index) => {
-    const updatedFiles = [...selectedFiles2];
-    updatedFiles.splice(index, 1);
-    setSelectedFiles2(updatedFiles);
-  };
-
-  // bill vars
   const [selectedFilesBill, setSelectedFilesBill] = useState([]);
-
-  const fileInputRefBill = useRef(null);
-  const acceptedFileExtensionsBill = [
-    "jpg",
-    "png",
-    "jpeg",
-    "pdf",
-    "txt",
-    "docx",
-  ];
-
-  const acceptedFileTypesStringBill = acceptedFileExtensionsBill
-    .map((ext) => `.${ext}`)
-    .join(",");
-
-  const handleFileChangeBill = (event) => {
-    const newFilesArray = Array.from(event.target.files);
-    processFilesBill(newFilesArray);
-  };
-
-  const processFilesBill = (filesArray) => {
-    const newSelectedFilesBill = [...selectedFilesBill];
-    let hasError = false;
-    const fileTypeRegex = new RegExp(acceptedFileExtensionsBill.join("|"), "i");
-    filesArray.forEach((file) => {
-      if (newSelectedFilesBill.some((f) => f.name === file.name)) {
-        alert("File names must be unique", "error");
-        hasError = true;
-      } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
-        alert(
-          `Only ${acceptedFileExtensionsBill.join(", ")} files are allowed`,
-          "error"
-        );
-        hasError = true;
-      } else {
-        newSelectedFilesBill.push(file);
-      }
-    });
-
-    if (!hasError) {
-      setSelectedFilesBill(newSelectedFilesBill);
-    }
-  };
-
-  const handleCustomButtonClickBill = () => {
-    fileInputRefBill.current.click();
-  };
-
-  const handleFileDeleteBill = (index) => {
-    const updatedFiles = [...selectedFilesBill];
-    updatedFiles.splice(index, 1);
-    setSelectedFilesBill(updatedFiles);
-  };
-
-  // document vars
   const [selectedFilesDocument, setSelectedFilesDocument] = useState([]);
 
+  const fileInputRef = useRef(null);
+  const fileInputRef2 = useRef(null);
+  const fileInputRefBill = useRef(null);
   const fileInputRefDocument = useRef(null);
-  const acceptedFileExtensionsDocument = [
-    "jpg",
-    "png",
-    "jpeg",
-    "pdf",
-    "txt",
-    "docx",
-  ];
+  const markerRef = useRef(null);
 
-  const acceptedFileTypesStringDocument = acceptedFileExtensionsDocument
-    .map((ext) => `.${ext}`)
-    .join(",");
+  const token = localStorage.getItem("userToken");
+  const houseId = window.location.href.split("/houses/")[1].split("/update")[0];
 
-  const handleFileChangeDocument = (event) => {
-    const newFilesArray = Array.from(event.target.files);
-    processFilesDocument(newFilesArray);
-  };
-
-  const processFilesDocument = (filesArray) => {
-    const newSelectedFilesDocument = [...selectedFilesDocument];
-    let hasError = false;
-    const fileTypeRegex = new RegExp(
-      acceptedFileExtensionsDocument.join("|"),
-      "i"
-    );
-    filesArray.forEach((file) => {
-      if (newSelectedFilesDocument.some((f) => f.name === file.name)) {
-        alert("File names must be unique", "error");
-        hasError = true;
-      } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
-        alert(
-          `Only ${acceptedFileExtensionsDocument.join(", ")} files are allowed`,
-          "error"
-        );
-        hasError = true;
-      } else {
-        newSelectedFilesDocument.push(file);
-      }
-    });
-
-    if (!hasError) {
-      setSelectedFilesDocument(newSelectedFilesDocument);
-    }
-  };
-
-  const handleCustomButtonClickDocument = () => {
-    fileInputRefDocument.current.click();
-  };
-
-  const handleFileDeleteDocument = (index) => {
-    const updatedFiles = [...selectedFilesDocument];
-    updatedFiles.splice(index, 1);
-    setSelectedFilesDocument(updatedFiles);
-  };
-
-  // province and city data
+  // Set page title
   useEffect(() => {
-    // تبدیل داده‌ها به فرمتی که کامپوننت Select نیاز دارد
+    dispatch(setPageTitle({ title: "ویرایش ملک" }));
+  }, [dispatch]);
+
+  // Load provinces data
+  useEffect(() => {
     const formattedProvinces = provincesData.map((province) => ({
       label: province.name,
       value: province.id,
@@ -774,32 +156,128 @@ function UpdateHouse() {
     setProvinces(formattedProvinces);
   }, []);
 
-  const handleProvinceChange = (value) => {
-    setSelectedProvince(value);
-    setSelectedCity(null);
-    const selected = provinces.find((p) => p.value === value.value);
-    setCities(selected ? selected.cities : []);
-  };
+  // Load house data
+  useEffect(() => {
+    const fetchHouse = async () => {
+      try {
+        const response = await axios.get(`/api/owners/houses/${houseId}`, {
+          withCredentials: true,
+        });
 
-  // fecth house
-  let houseId = window.location.href.split("/houses/")[1].split("/update")[0];
 
-  // set up map
-  let iran = [32.4279, 53.688];
-  const [position, setPosition] = useState(iran);
-  const markerRef = useRef(null);
+        console.log(response)
 
-  // وقتی روی نقشه کلیک می‌کنیم
+        const houseData = response.data.house;
+        setHouse(houseData);
+        setName(houseData.name || "");
+        setDescription(houseData.description || "");
+        setHouseOwner(houseData.houseOwner || "");
+        setPrice(houseData.price || 0);
+        setCover(houseData.cover || null);
+        setImages(houseData.images || []);
+        setPostalCode(houseData.postalCode || "");
+        setMeters(houseData.meters || 0);
+        setYear(houseData.year || 0);
+        setCapacity(houseData.capacity || 0);
+        setHouseRoles(houseData.houseRoles || []);
+        setCritrias(houseData.critrias || []);
+        setHouseType(
+          houseData.houseType
+            ? { label: houseData.houseType, value: houseData.houseType }
+            : null
+        );
+        setFloor(houseData.floor || 0);
+        setPosition([houseData.lat || 32.4279, houseData.lng || 53.688]);
+        setParking(houseData.parking || 0);
+        setBill(houseData.bill || []);
+        setHousePhone(houseData.housePhone || "");
+        setAddress(houseData.address || "");
+        setHouseNumber(houseData.houseNumber || "");
+        setOwnerType(
+          houseData.ownerType
+            ? { label: houseData.ownerType, value: houseData.ownerType }
+            : null
+        );
+        setRooms(houseData.rooms || 0);
+        setDocument(houseData.document || []);
+        setDiscount(houseData.discount || 0);
+        setReservationRoles(houseData.reservationRoles || []);
+
+        if (houseData.hobbies) {
+          setHobbies(
+            hobbiesList.filter((item) => houseData.hobbies.includes(item.label))
+          );
+        }
+        if (houseData.enviornment) {
+          setEnviornment(
+            enviornmentList.filter((item) =>
+              houseData.enviornment.includes(item.label)
+            )
+          );
+        }
+        if (houseData.freeDates) {
+          setFreeDates(
+            weekDays.filter((item) => houseData.freeDates.includes(item.label))
+          );
+        }
+        if (houseData.options) {
+          setOptions(
+            houseOptions.filter((item) =>
+              houseData.options.includes(item.label)
+            )
+          );
+        }
+        if (houseData.cooling) {
+          setCooling(
+            coolingList.filter((item) => houseData.cooling.includes(item.label))
+          );
+        }
+        if (houseData.heating) {
+          setHeating(
+            heatingList.filter((item) => houseData.heating.includes(item.label))
+          );
+        }
+        if (houseData.floorType) {
+          setFloorType(
+            floorTypeList.filter((item) =>
+              houseData.floorType.includes(item.label)
+            )
+          );
+        }
+        if (houseData.kitchenOptions) {
+          setKitchenOptions(
+            kitchenOptionList.filter((item) =>
+              houseData.kitchenOptions.includes(item.label)
+            )
+          );
+        }
+        if (houseData.bedRoomOptions) {
+          setBedRoomOptions(
+            bedRoomOptionList.filter((item) =>
+              houseData.bedRoomOptions.includes(item.label)
+            )
+          );
+        }
+      } catch (error) {
+        handleApiError(error, toast);
+      }
+    };
+
+    fetchHouse();
+  }, [houseId, dispatch]);
+
+  // Map handlers
   const MapClickHandler = () => {
     useMapEvents({
       click(e) {
         setPosition([e.latlng.lat, e.latlng.lng]);
+        setLat(e.latlng.lat);
+        setLng(e.latlng.lng);
       },
     });
     return null;
   };
 
-  // وقتی مارکر کشیده و رها می‌شود
   const onDragEnd = () => {
     const marker = markerRef.current;
     if (marker != null) {
@@ -810,920 +288,490 @@ function UpdateHouse() {
     }
   };
 
-  // get single house
-  useEffect(() => {
-    axios
-      .get(`/api/owners/houses/${houseId}`, {
-        headers: {
-          authorization: `Bearer ${token}`,
+  const handleProvinceChange = (value) => {
+    setSelectedProvince(value);
+    setSelectedCity(null);
+    const selected = provinces.find((p) => p.value === value.value);
+    setCities(selected ? selected.cities : []);
+    setErrors((prev) => ({
+      ...prev,
+      selectedProvince: { hasError: false, message: "" },
+    }));
+  };
+
+  const handleCityChange = (value) => {
+    setSelectedCity(value);
+    setErrors((prev) => ({
+      ...prev,
+      selectedCity: { hasError: false, message: "" },
+    }));
+  };
+
+  // File handling functions
+  const handleFileChange = (event, setFiles, allowedExtensions) => {
+    const newFilesArray = Array.from(event.target.files);
+    const validFiles = newFilesArray.filter((file) => {
+      const extension = file.name.split(".").pop().toLowerCase();
+      return allowedExtensions.includes(extension);
+    });
+
+    if (validFiles.length !== newFilesArray.length) {
+      toast.error(`فقط فایل‌های ${allowedExtensions.join(", ")} مجاز هستند`, {
+        position: "top-left",
+        autoClose: 5000,
+      });
+    }
+
+    setFiles(validFiles);
+  };
+
+  const handleFileDelete = (index, files, setFiles) => {
+    const updatedFiles = [...files];
+    updatedFiles.splice(index, 1);
+    setFiles(updatedFiles);
+  };
+
+  // Form submission handlers
+  const UpdateHouseFunction = async () => {
+    startLoading("info");
+
+    const validationResults = validateForm({
+      name: {
+        value: name,
+        validations: [{ type: "required", fieldName: "نام ملک" }],
+      },
+      selectedProvince: {
+        value: selectedProvince,
+        validations: [{ type: "required", fieldName: "استان" }],
+      },
+      selectedCity: {
+        value: selectedCity,
+        validations: [{ type: "required", fieldName: "شهر" }],
+      },
+      houseOwner: {
+        value: houseOwner,
+        validations: [{ type: "required", fieldName: "نام صاحب ملک" }],
+      },
+      housePhone: {
+        value: housePhone,
+        validations: [{ type: "required", fieldName: "تلفن ملک" }],
+      },
+      meters: {
+        value: meters,
+        validations: [
+          { type: "required", fieldName: "متراژ" },
+          { type: "number", fieldName: "متراژ" },
+        ],
+      },
+      year: {
+        value: year,
+        validations: [
+          { type: "required", fieldName: "سال ساخت" },
+          { type: "number", fieldName: "سال ساخت" },
+        ],
+      },
+      capacity: {
+        value: capacity,
+        validations: [
+          { type: "required", fieldName: "ظرفیت" },
+          { type: "number", fieldName: "ظرفیت" },
+        ],
+      },
+      postalCode: {
+        value: postalCode,
+        validations: [{ type: "required", fieldName: "کدپستی" }],
+      },
+      hobbies: {
+        value: hobbies,
+        validations: [{ type: "arrayNotEmpty", fieldName: "امکانات تفریحی" }],
+      },
+      enviornment: {
+        value: enviornment,
+        validations: [{ type: "arrayNotEmpty", fieldName: "محیط ملک" }],
+      },
+      ownerType: {
+        value: ownerType,
+        validations: [{ type: "required", fieldName: "نوع مالکیت" }],
+      },
+      freeDates: {
+        value: freeDates,
+        validations: [{ type: "arrayNotEmpty", fieldName: "روزهای آزاد" }],
+      },
+      houseType: {
+        value: houseType,
+        validations: [{ type: "required", fieldName: "نوع ملک" }],
+      },
+      rooms: {
+        value: rooms,
+        validations: [
+          { type: "required", fieldName: "تعداد اتاق" },
+          { type: "number", fieldName: "تعداد اتاق" },
+        ],
+      },
+      floor: {
+        value: floor,
+        validations: [
+          { type: "required", fieldName: "تعداد طبقه" },
+          { type: "number", fieldName: "تعداد طبقه" },
+        ],
+      },
+      options: {
+        value: options,
+        validations: [{ type: "arrayNotEmpty", fieldName: "امکانات ملک" }],
+      },
+      cooling: {
+        value: cooling,
+        validations: [{ type: "arrayNotEmpty", fieldName: "سیستم سرمایش" }],
+      },
+      heating: {
+        value: heating,
+        validations: [{ type: "arrayNotEmpty", fieldName: "سیستم گرمایش" }],
+      },
+      parking: {
+        value: parking,
+        validations: [
+          { type: "required", fieldName: "تعداد پارکینگ" },
+          { type: "number", fieldName: "تعداد پارکینگ" },
+        ],
+      },
+      price: {
+        value: price,
+        validations: [
+          { type: "required", fieldName: "اجاره بها" },
+          { type: "number", fieldName: "اجاره بها" },
+        ],
+      },
+      houseNumber: {
+        value: houseNumber,
+        validations: [{ type: "required", fieldName: "پلاک ملک" }],
+      },
+      floorType: {
+        value: floorType,
+        validations: [{ type: "arrayNotEmpty", fieldName: "نوع کف پوش" }],
+      },
+      discount: {
+        value: discount,
+        validations: [
+          { type: "required", fieldName: "تخفیف" },
+          { type: "number", fieldName: "تخفیف" },
+        ],
+      },
+      kitchenOptions: {
+        value: kitchenOptions,
+        validations: [{ type: "arrayNotEmpty", fieldName: "امکانات آشپزخانه" }],
+      },
+      bedRoomOptions: {
+        value: bedRoomOptions,
+        validations: [
+          { type: "arrayNotEmpty", fieldName: "امکانات اتاق خواب" },
+        ],
+      },
+      reservationRoles: {
+        value: reservationRoles,
+        validations: [{ type: "required", fieldName: "قوانین رزرو" }],
+      },
+      houseRoles: {
+        value: houseRoles,
+        validations: [{ type: "required", fieldName: "ضوابط ملک" }],
+      },
+      critrias: {
+        value: critrias,
+        validations: [{ type: "required", fieldName: "محدودیت‌ها" }],
+      },
+      description: {
+        value: description,
+        validations: [{ type: "required", fieldName: "توضیحات" }],
+      },
+      address: {
+        value: address,
+        validations: [{ type: "required", fieldName: "آدرس" }],
+      },
+    });
+
+    if (!validationResults) {
+      stopLoading("info");
+      return;
+    }
+
+    try {
+      const response = await axios.put(
+        `/api/owners/houses/${houseId}/update-house`,
+        {
+          name,
+          province: selectedProvince?.label || "",
+          city: selectedCity?.label || "",
+          description,
+          price,
+          postalCode,
+          housePhone,
+          meters,
+          year,
+          capacity,
+          houseRoles,
+          critrias,
+          houseType: houseType?.label || "",
+          floor,
+          options: options.map((item) => item.label),
+          heating: heating.map((item) => item.label),
+          cooling: cooling.map((item) => item.label),
+          parking,
+          address,
+          houseNumber,
+          houseOwner,
+          hobbies: hobbies.map((item) => item.label),
+          enviornment: enviornment.map((item) => item.label),
+          ownerType: ownerType?.label || "",
+          rooms,
+          discount,
+          reservationRoles,
+          freeDates: freeDates.map((item) => item.label),
+          floorType: floorType.map((item) => item.label),
+          kitchenOptions: kitchenOptions.map((item) => item.label),
+          bedRoomOptions: bedRoomOptions.map((item) => item.label),
+          lat: position[0],
+          lng: position[1],
         },
-      })
-      .then((res) => {
-        setHouse(res.data.house);
-        setName(res.data.house.name);
-        setDescription(res.data.house.description);
-        setHouseOwner(res.data.house.houseOwner);
-        setPrice(res.data.house.price);
-        setCover(res.data.house.cover);
-        setImages(res.data.house.images);
-        setPostalCode(res.data.house.postalCode);
-        setMeters(res.data.house.meters);
-        setYear(res.data.house.year);
-        setCapacity(res.data.house.capacity);
-        setHouseRoles(res.data.house.houseRoles);
-        setCritrias(res.data.house.critrias);
-        setHouseRoles(res.data.house.houseRoles);
-        setHouseType(res.data.house.houseType);
-        setFloor(res.data.house.floor);
-        // setLat(res.data.house.lat);
-        // setLng(res.data.house.lng);
-        setPosition([res.data.house.lat, res.data.house.lng]);
-        // setOptions(res.data.house.options);
-        // setHeating(res.data.house.heating);
-        // setCooling(res.data.house.cooling);
-        setParking(res.data.house.parking);
-        setBill(res.data.house.bill);
-        setHousePhone(res.data.house.housePhone);
-        setAddress(res.data.house.address);
-        setHouseNumber(res.data.house.houseNumber);
-        // setHobbies(res.data.house.hobbies);
-        // setEnviornment(res.data.house.enviornment);
-        setOwnerType(res.data.house.ownerType);
-        setRooms(res.data.house.rooms);
-        // setFreeDates(res.data.house.freeDates);
-        setDocument(res.data.house.document);
-        // setFloorType(res.data.house.floorType);
-        setDiscount(res.data.house.discount);
-        // setKitchenOptions(res.data.house.kitchenOptions);
-        setReservationRoles(res.data.house.reservationRoles);
-        // setBedRoomOptions(res.data.house.bedRoomOptions);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }, []);
+        { withCredentials: true }
+      );
 
-  // Call API add house
-  const UpdateHouseFunction = () => {
-    setBtnSpinnerInfo(true);
-
-    if (
-      !name ||
-      name === "" ||
-      name === undefined ||
-      name === null ||
-      name.length === 0
-    ) {
-      setNameError(true);
-      setNameErrorMsg("* نام ملک باید وارد شود");
-    }
-
-    if (
-      !selectedProvince ||
-      selectedProvince === "" ||
-      selectedProvince === undefined ||
-      selectedProvince === null ||
-      selectedProvince.length === 0 ||
-      selectedProvince.label === undefined
-    ) {
-      setProvinceError(true);
-      setProvinceErrorMsg("* نام استان باید وارد شود");
-    }
-
-    if (
-      !selectedCity ||
-      selectedCity === "" ||
-      selectedCity === undefined ||
-      selectedCity === null ||
-      selectedCity.length === 0
-    ) {
-      setCityError(true);
-      setCityErrorMsg("* نام شهر باید وارد شود");
-    }
-
-    if (
-      !houseOwner ||
-      houseOwner === "" ||
-      houseOwner === undefined ||
-      houseOwner === null ||
-      houseOwner.length === 0
-    ) {
-      setHouseOwnerError(true);
-      setHouseOwnerErrorMsg("* نام و نام خانوادگی صاحب ملک باید وارد شود");
-    }
-
-    if (
-      !housePhone ||
-      housePhone === "" ||
-      housePhone === undefined ||
-      housePhone === null ||
-      housePhone.length === 0
-    ) {
-      setHousePhoneError(true);
-      setHousePhoneErrorMsg("* شماره ثابت ملک باید وارد شود");
-    }
-
-    if (
-      !meters ||
-      meters === "" ||
-      meters === undefined ||
-      meters === null ||
-      meters.length === 0
-    ) {
-      setMetersError(true);
-      setMetersErrorMsg("* متراژ ملک باید وارد شود");
-    }
-
-    if (
-      !year ||
-      year === "" ||
-      year === undefined ||
-      year === null ||
-      year.length === 0
-    ) {
-      setYearError(true);
-      setYearErrorMsg("* سال ساخت ملک باید وارد شود");
-    }
-
-    if (
-      !capacity ||
-      capacity === "" ||
-      capacity === undefined ||
-      capacity === null ||
-      capacity.length === 0
-    ) {
-      setCapacityError(true);
-      setCapacityErrorMsg("* ظرفیت ملک باید وارد شود");
-    }
-
-    if (
-      !postalCode ||
-      postalCode === "" ||
-      postalCode === undefined ||
-      postalCode === null ||
-      postalCode.length === 0
-    ) {
-      setPostalCodeError(true);
-      setPostalCodeErrorMsg("* کدپستی ملک باید وارد شود");
-    }
-
-    if (
-      !hobbies ||
-      hobbies === "" ||
-      hobbies === undefined ||
-      hobbies === null ||
-      hobbies.length === 0
-    ) {
-      setHobbiesError(true);
-      setHobbiesErrorMsg("* امکانات تفریحی و سرگرمی ملک باید وارد شود");
-    }
-
-    if (
-      !enviornment ||
-      enviornment === "" ||
-      enviornment === undefined ||
-      enviornment === null ||
-      enviornment.length === 0
-    ) {
-      setEnviornmentError(true);
-      setEnviornmentErrorMsg("* محیط ملک باید وارد شود");
-    }
-
-    if (
-      !ownerType ||
-      ownerType === "" ||
-      ownerType === undefined ||
-      ownerType === null ||
-      ownerType.length === 0
-    ) {
-      setOwnerTypeError(true);
-      setOwnerTypeErrorMsg("* نوع مالکیت ملک باید وارد شود");
-    }
-
-    if (
-      !freeDates ||
-      freeDates === "" ||
-      freeDates === undefined ||
-      freeDates === null ||
-      freeDates.length === 0
-    ) {
-      setFreeDatesError(true);
-      setFreeDatesErrorMsg("* روزهای باید وارد شود");
-    }
-
-    // if (
-    //   !selectedFiles ||
-    //   selectedFiles === "" ||
-    //   selectedFiles === undefined ||
-    //   selectedFiles === null ||
-    //   selectedFiles.length === 0
-    // ) {
-    //   setCoverError(true);
-    //   setCoverErrorMsg("* تصویر اصلی ملک باید وارد شود");
-    // }
-
-    // if (
-    //   !selectedFiles2 ||
-    //   selectedFiles2 === "" ||
-    //   selectedFiles2 === undefined ||
-    //   selectedFiles2 === null ||
-    //   selectedFiles2.length === 0
-    // ) {
-    //   setImagesError(true);
-    //   setImagesErrorMsg("* تصاویر ملک باید وارد شود");
-    // }
-
-    if (
-      !houseType ||
-      houseType === "" ||
-      houseType === undefined ||
-      houseType === null ||
-      houseType.length === 0
-    ) {
-      setHouseTypeError(true);
-      setHouseTypeErrorMsg("* نوع ملک باید وارد شود");
-    }
-
-    if (
-      !rooms ||
-      rooms === "" ||
-      rooms === undefined ||
-      rooms === null ||
-      rooms.length === 0
-    ) {
-      setRoomsError(true);
-      setRoomsErrorMsg("* تعداد اتاق ها باید وارد شود");
-    }
-
-    if (
-      !floor ||
-      floor === "" ||
-      floor === undefined ||
-      floor === null ||
-      floor.length === 0
-    ) {
-      setFloorError(true);
-      setFloorErrorMsg("* تعداد طبقه ها باید وارد شود");
-    }
-
-    if (
-      !options ||
-      options === "" ||
-      options === undefined ||
-      options === null ||
-      options.length === 0
-    ) {
-      setOptionsError(true);
-      setOptionsErrorMsg("* امکانات ملک باید وارد شود");
-    }
-
-    if (
-      !cooling ||
-      cooling === "" ||
-      cooling === undefined ||
-      cooling === null ||
-      cooling.length === 0
-    ) {
-      setCoolingError(true);
-      setCoolingErrorMsg("* سیستم سرمایش ملک باید وارد شود");
-    }
-
-    if (
-      !heating ||
-      heating === "" ||
-      heating === undefined ||
-      heating === null ||
-      heating.length === 0
-    ) {
-      setHeatingError(true);
-      setHeatingErrorMsg("* سیستم گرمایش ملک باید وارد شود");
-    }
-
-    if (
-      !parking ||
-      parking === "" ||
-      parking === undefined ||
-      parking === null
-    ) {
-      setParkingError(true);
-      setParkingErrorMsg("* تعداد پارکینگ ها باید وارد شود");
-    }
-
-    if (!price || price === "" || price === undefined || price === null) {
-      setPriceError(true);
-      setPriceErrorMsg("* اجاره بها باید وارد شود");
-    }
-
-    if (
-      !houseNumber ||
-      houseNumber === "" ||
-      houseNumber === undefined ||
-      houseNumber === null
-    ) {
-      setHouseNumberError(true);
-      setHouseNumberErrorMsg("* پلاک ملک باید وارد شود");
-    }
-
-    // if (
-    //   !document ||
-    //   document === "" ||
-    //   document === undefined ||
-    //   document === null
-    // ) {
-    //   setDocumentError(true);
-    //   setDocumentErrorMsg("* مدارک ملک دار باید وارد شود");
-    // }
-
-    // if (!bill || bill === "" || bill === undefined || bill === null) {
-    //   setBillError(true);
-    //   setBillErrorMsg("* قبوض ملک باید وارد شود");
-    // }
-
-    if (
-      !floorType ||
-      floorType === "" ||
-      floorType === undefined ||
-      floorType === null ||
-      floorType.length === 0
-    ) {
-      setFloorTypeError(true);
-      setFloorTypeErrorMsg("* نوع کف پوش ملک باید وارد شود");
-    }
-
-    if (
-      !discount ||
-      discount === "" ||
-      discount === undefined ||
-      discount === null
-    ) {
-      setDiscountError(true);
-      setDiscountErrorMsg("* تخفیف ملک باید وارد شود");
-    }
-
-    if (
-      !kitchenOptions ||
-      kitchenOptions === "" ||
-      kitchenOptions === undefined ||
-      kitchenOptions === null ||
-      kitchenOptions.length === 0
-    ) {
-      setKitchenOptionsError(true);
-      setKitchenOptionsErrorMsg("* امکانات آشپزخانه باید وارد شود");
-    }
-
-    if (
-      !bedRoomOptions ||
-      bedRoomOptions === "" ||
-      bedRoomOptions === undefined ||
-      bedRoomOptions === null ||
-      bedRoomOptions.length === 0
-    ) {
-      setBedRoomOptionsError(true);
-      setBedRoomOptionsErrorMsg("* امکانات اتاق خواب باید وارد شود");
-    }
-
-    if (
-      !reservationRoles ||
-      reservationRoles === "" ||
-      reservationRoles === undefined ||
-      reservationRoles === null ||
-      reservationRoles.length === 0
-    ) {
-      setReservationRolesError(true);
-      setReservationRolesErrorMsg("* قوانین رزرو ملک باید وارد شود");
-    }
-
-    if (
-      !houseRoles ||
-      houseRoles === "" ||
-      houseRoles === undefined ||
-      houseRoles === null ||
-      houseRoles.length === 0
-    ) {
-      setHouseRolesError(true);
-      setHouseRolesErrorMsg("* ضوابط و مقررات ملک باید وارد شود");
-    }
-
-    if (
-      !critrias ||
-      critrias === "" ||
-      critrias === undefined ||
-      critrias === null ||
-      critrias.length === 0
-    ) {
-      setCritriasError(true);
-      setCritriasErrorMsg("* محدویت های ملک باید وارد شود");
-    }
-
-    if (
-      !description ||
-      description === "" ||
-      description === undefined ||
-      description === null
-    ) {
-      setDescriptionError(true);
-      setDescriptionErrorMsg("* درباره ملک باید وارد شود");
-    }
-
-    if (
-      !description ||
-      description === "" ||
-      description === undefined ||
-      description === null
-    ) {
-      setDescriptionError(true);
-      setDescriptionErrorMsg("* درباره ملک باید وارد شود");
-    }
-
-    if (
-      !address ||
-      address === "" ||
-      address === undefined ||
-      address === null
-    ) {
-      setAddressError(true);
-      setAddressErrorMsg("* آدرس ملک باید وارد شود");
-    } else {
-      setBtnSpinnerInfo(false);
-
-      let newOptions = [];
-      options.forEach((item) => {
-        newOptions.push(item.label);
+      toast.success("ملک با موفقیت ویرایش شد", {
+        position: "top-left",
+        autoClose: 5000,
       });
 
-      let newHeating = [];
-      heating.forEach((item) => {
-        newHeating.push(item.label);
-      });
-
-      let newCooling = [];
-      cooling.forEach((item) => {
-        newCooling.push(item.label);
-      });
-
-      let newHobbies = [];
-      hobbies.forEach((item) => {
-        newHobbies.push(item.label);
-      });
-
-      let newEnviornment = [];
-      enviornment.forEach((item) => {
-        newEnviornment.push(item.label);
-      });
-
-      let newFreeDates = [];
-      freeDates.forEach((item) => {
-        newFreeDates.push(item.label);
-      });
-
-      let newFloorTypes = [];
-      floorType.forEach((item) => {
-        newFloorTypes.push(item.label);
-      });
-
-      let newKitchenOptions = [];
-      kitchenOptions.forEach((item) => {
-        newKitchenOptions.push(item.label);
-      });
-
-      let newBedroomOptions = [];
-      bedRoomOptions.forEach((item) => {
-        newBedroomOptions.push(item.label);
-      });
-
-      axios
-        .put(
-          `/api/owners/houses/${houseId}/update-house`,
-          {
-            name: name,
-            province: selectedProvince.label ? selectedProvince.label : "",
-            city: selectedCity.label ? selectedCity.label : "",
-            description: description,
-            price: price,
-            postalCode: postalCode,
-            housePhone: housePhone,
-            meters: meters,
-            year: year,
-            capacity: capacity,
-            houseRoles: houseRoles,
-            critrias: critrias,
-            houseType: houseType.label,
-            floor: floor,
-            options: newOptions,
-            heating: newHeating,
-            cooling: newCooling,
-            parking: parking,
-            address: address,
-            houseNumber: houseNumber,
-            houseOwner: houseOwner,
-            hobbies: newHobbies,
-            enviornment: newEnviornment,
-            ownerType: ownerType.label,
-            rooms: rooms,
-            discount: discount,
-            reservationRoles: reservationRoles,
-            freeDates: newFreeDates,
-            floorType: newFloorTypes,
-            kitchenOptions: newKitchenOptions,
-            bedRoomOptions: newBedroomOptions,
-          },
-          {
-            headers: {
-              authorization: "Bearer " + token,
-            },
-          }
-        )
-        .then((response) => {
-          setBtnSpinnerInfo(false);
-          toast.success("ملک ویرایش شد", {
-            position: "top-left",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-          });
-        })
-        .catch((error) => {
-          setBtnSpinnerInfo(false);
-          console.log("error", error);
-          toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-            position: "top-left",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-          });
-        });
+      // Update house data with the response
+      setHouse(response.data.house);
+    } catch (error) {
+      handleApiError(error, toast);
+    } finally {
+      stopLoading("info");
     }
   };
 
-  // update house cover image
   const UpdateHouseCover = async (e) => {
     e.preventDefault();
+    startLoading("cover");
 
     if (
-      !selectedFiles ||
-      selectedFiles === "" ||
-      selectedFiles === undefined ||
-      selectedFiles === null ||
-      selectedFiles.length === 0
+      !validateField("coverFile", selectedFiles[0], [
+        {
+          type: "file",
+          fieldName: "تصویر اصلی",
+          allowedExtensions: ["jpg", "png", "jpeg"],
+          maxSizeMB: 5,
+        },
+      ])
     ) {
-      setCoverError(true);
-      setCoverErrorMsg("* تصویر اصلی ملک باید وارد شود");
-    } else {
-      setBtnSpinnerCover(true);
+      stopLoading("cover");
+      return;
+    }
 
-      const formData = new FormData();
-      formData.append("cover", selectedFiles[0]);
+    const formData = new FormData();
+    formData.append("cover", selectedFiles[0]);
 
-      try {
-        setBtnSpinnerCover(true);
+    try {
+      const response = await axios.put(
+        `/api/owners/houses/${houseId}/update-cover`,
+        formData,
+        {
+          withCredentials: true, // Sends cookies automatically
+          headers: {
+            "Content-Type": "multipart/form-data", // Kept because it's essential for file uploads
+          },
+        }
+      );
 
-        await axios
-          .put(`/api/owners/houses/${houseId}/update-cover`, formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              authorization: `Bearer ${token}`,
-            },
-          })
-          .then((res) => {
-            setBtnSpinnerCover(false);
-
-            toast.success("تصویر اصلی ویرایش شد", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-            console.log("Response:", res.data.house);
-            setCover(res.data.house.cover);
-          })
-          .catch((error) => {
-            setBtnSpinnerCover(false);
-            console.log("error", error);
-            toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-          });
-      } catch (error) {
-        setBtnSpinnerCover(false);
-        console.log("error", error);
-        toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-          position: "top-left",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-      } finally {
-        setBtnSpinnerCover(false);
-      }
+      toast.success("تصویر اصلی با موفقیت ویرایش شد", {
+        position: "top-left",
+        autoClose: 5000,
+      });
+      setCover(response.data.house.cover);
+      setSelectedFiles([]);
+    } catch (error) {
+      handleApiError(error, toast);
+    } finally {
+      stopLoading("cover");
     }
   };
 
-  // update house images
   const UpdateHouseImages = async (e) => {
     e.preventDefault();
+    startLoading("images");
 
     if (
-      !selectedFiles2 ||
-      selectedFiles2 === "" ||
-      selectedFiles2 === undefined ||
-      selectedFiles2 === null ||
-      selectedFiles2.length === 0
+      !validateField("imagesFiles", selectedFiles2, [
+        {
+          type: "arrayNotEmpty",
+          fieldName: "تصاویر ملک",
+        },
+      ])
     ) {
-      setImagesError(true);
-      setImagesErrorMsg("* تصاویر ملک باید وارد شوند");
-    } else {
-      setBtnSpinnerImages(true);
+      stopLoading("images");
+      return;
+    }
 
-      const formData = new FormData();
+    const formData = new FormData();
+    selectedFiles2.forEach((file) => {
+      formData.append("images", file);
+    });
 
-      selectedFiles2.forEach((img) => {
-        formData.append("images", img);
+    try {
+      const response = await axios.put(
+        `/api/owners/houses/${houseId}/update-images`,
+        formData,
+        {
+          withCredentials: true, // Enables cookie authentication
+          headers: {
+            "Content-Type": "multipart/form-data", // Required for file uploads
+          },
+        }
+      );
+
+      toast.success("تصاویر ملک با موفقیت ویرایش شدند", {
+        position: "top-left",
+        autoClose: 5000,
       });
-
-      try {
-        setBtnSpinnerImages(true);
-
-        await axios
-          .put(`/api/owners/houses/${houseId}/update-images`, formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              authorization: `Bearer ${token}`,
-            },
-          })
-          .then((res) => {
-            console.log(res);
-            
-            setBtnSpinnerImages(false);
-
-            toast.success("تصاویر ملک ویرایش شدند", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-            setImages(res.data.house.images);
-          })
-          .catch((error) => {
-            setBtnSpinnerImages(false);
-            console.log("error", error);
-            toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-          });
-      } catch (error) {
-        setBtnSpinnerImages(false);
-        console.log("error", error);
-        toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-          position: "top-left",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-      } finally {
-        setBtnSpinnerImages(false);
-      }
+      setImages(response.data.house.images);
+      setSelectedFiles2([]);
+    } catch (error) {
+      handleApiError(error, toast);
+    } finally {
+      stopLoading("images");
     }
   };
 
-  // update house bill
   const UpdateHouseBill = async (e) => {
     e.preventDefault();
+    startLoading("bill");
 
     if (
-      !selectedFilesBill ||
-      selectedFilesBill === "" ||
-      selectedFilesBill === undefined ||
-      selectedFilesBill === null ||
-      selectedFilesBill.length === 0
+      !validateField("billFiles", selectedFilesBill, [
+        {
+          type: "arrayNotEmpty",
+          fieldName: "قبوض ملک",
+        },
+      ])
     ) {
-      setBillError(true);
-      setBillErrorMsg("* قبوض ملک باید وارد شوند");
-    } else {
-      setBtnSpinnerBill(true);
+      stopLoading("bill");
+      return;
+    }
 
-      const formData = new FormData();
+    const formData = new FormData();
+    selectedFilesBill.forEach((file) => {
+      formData.append("bill", file);
+    });
 
-      selectedFilesBill.forEach((img) => {
-        formData.append("bill", img);
+    try {
+      const response = await axios.put(
+        `/api/owners/houses/${houseId}/update-bill`,
+        formData,
+        {
+          withCredentials: true, // Enables cookie authentication
+          headers: {
+            "Content-Type": "multipart/form-data", // Required for file uploads
+          },
+        }
+      );
+
+      toast.success("قبوض ملک با موفقیت ویرایش شدند", {
+        position: "top-left",
+        autoClose: 5000,
       });
-
-      try {
-        setBtnSpinnerBill(true);
-
-        await axios
-          .put(`/api/owners/houses/${houseId}/update-bill`, formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              authorization: `Bearer ${token}`,
-            },
-          })
-          .then((res) => {
-            setBtnSpinnerBill(false);
-
-            toast.success("قبوض ملک ویرایش شدند", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-            console.log("Response:", res.data.house);
-            setBill(res.data.house.bill);
-          })
-          .catch((error) => {
-            setBtnSpinnerBill(false);
-            console.log("error", error);
-            toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-          });
-      } catch (error) {
-        setBtnSpinnerBill(false);
-        console.log("error", error);
-        toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-          position: "top-left",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-      } finally {
-        setBtnSpinnerBill(false);
-      }
+      setBill(response.data.house.bill);
+      setSelectedFilesBill([]);
+    } catch (error) {
+      handleApiError(error, toast);
+    } finally {
+      stopLoading("bill");
     }
   };
 
-  // update house document
   const UpdateHouseDocument = async (e) => {
     e.preventDefault();
+    startLoading("document");
 
     if (
-      !selectedFilesDocument ||
-      selectedFilesDocument === "" ||
-      selectedFilesDocument === undefined ||
-      selectedFilesDocument === null ||
-      selectedFilesDocument.length === 0
+      !validateField("documentFiles", selectedFilesDocument, [
+        {
+          type: "arrayNotEmpty",
+          fieldName: "مدارک ملک",
+        },
+      ])
     ) {
-      setDocumentError(true);
-      setDocumentErrorMsg("* مدارک ملک باید وارد شوند");
-    } else {
-      setBtnSpinnerDocument(true);
+      stopLoading("document");
+      return;
+    }
 
-      const formData = new FormData();
+    const formData = new FormData();
+    selectedFilesDocument.forEach((file) => {
+      formData.append("document", file);
+    });
 
-      selectedFilesDocument.forEach((img) => {
-        formData.append("document", img);
+    try {
+      const response = await axios.put(
+        `/api/owners/houses/${houseId}/update-document`,
+        formData,
+        {
+          withCredentials: true, // Enables cookie authentication
+          headers: {
+            "Content-Type": "multipart/form-data", // Required for file uploads
+          },
+        }
+      );
+
+      toast.success("مدارک ملک با موفقیت ویرایش شدند", {
+        position: "top-left",
+        autoClose: 5000,
       });
-
-      try {
-        setBtnSpinnerDocument(true);
-
-        await axios
-          .put(`/api/owners/houses/${houseId}/update-document`, formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              authorization: `Bearer ${token}`,
-            },
-          })
-          .then((res) => {
-            setBtnSpinnerDocument(false);
-
-            toast.success("مدارک ملک ویرایش شدند", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-            console.log("Response:", res.data.house);
-            setDocument(res.data.house.document);
-          })
-          .catch((error) => {
-            setBtnSpinnerDocument(false);
-            console.log("error", error);
-            toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-          });
-      } catch (error) {
-        setBtnSpinnerDocument(false);
-        console.log("error", error);
-        toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-          position: "top-left",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-      } finally {
-        setBtnSpinnerDocument(false);
-      }
+      setDocument(response.data.house.document);
+      setSelectedFilesDocument([]);
+    } catch (error) {
+      handleApiError(error, toast);
+    } finally {
+      stopLoading("document");
     }
   };
 
-  // update house map
-  const UpdateHouseMap = () => {
+  const UpdateHouseMap = async () => {
+    startLoading("map");
+
     if (
-      (!lat || lat === "" || lat === undefined || lat === null) &&
-      (!lng || lng === "" || lng === undefined || lng === null)
+      !validateField("position", position, [
+        {
+          type: "required",
+          fieldName: "موقعیت مکانی",
+        },
+      ])
     ) {
-      setPositionError(true);
-      setPositionErrorMsg("*موقعیت مکانی باید وارد شود");
-    } else {
-      setBtnSpinnerMap(true);
-      axios
-        .put(
-          `/api/owners/houses/${houseId}/update-map`,
-          {
-            lat: lat,
-            lng: lng,
-          },
-          {
-            headers: {
-              authorization: "Bearer " + token,
-            },
-          }
-        )
-        .then((response) => {
-          setBtnSpinnerMap(false);
-          toast.success("نقشه ویرایش شد", {
-            position: "top-left",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-          });
-        })
-        .catch((error) => {
-          setBtnSpinnerMap(false);
-          console.log("error", error);
-          toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-            position: "top-left",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-          });
-        });
+      stopLoading("map");
+      return;
+    }
+    try {
+      await axios.put(
+        `/api/owners/houses/${houseId}/update-map`,
+        {
+          lat: position[0],
+          lng: position[1],
+        },
+        {
+          withCredentials: true, // Replaces the token header with cookie auth
+        }
+      );
+
+      toast.success("نقشه ملک با موفقیت ویرایش شد", {
+        position: "top-left",
+        autoClose: 5000,
+      });
+    } catch (error) {
+      handleApiError(error, toast);
+    } finally {
+      stopLoading("map");
     }
   };
 
   const sendUpdateRequest = () => {
-    console.log("sendUpdateRequest");
+    setIsOpen(false);
+    UpdateHouseFunction();
   };
 
   return (
@@ -1750,7 +798,7 @@ function UpdateHouse() {
             <div className="flex items-center justify-center">
               <button
                 className="mt-4 rounded bg-blue-900 px-8 py-2 mx-2 text-white"
-                onClick={() => sendUpdateRequest()}
+                onClick={sendUpdateRequest}
               >
                 تایید
               </button>
@@ -1765,6 +813,7 @@ function UpdateHouse() {
           </Dialog.Panel>
         </div>
       </Dialog>
+
       <div className="p-4 sm:p-6">
         {/* House Card */}
         <div className="bg-white shadow-2xl rounded-2xl overflow-hidden mb-10 transform transition-all duration-500">
@@ -1876,7 +925,7 @@ function UpdateHouse() {
                   <div className="flex items-center">
                     <button
                       className="app-btn-gray bg-white"
-                      onClick={handleCustomButtonClick}
+                      onClick={() => fileInputRef.current.click()}
                     >
                       انتخاب تصویر اصلی
                     </button>
@@ -1885,10 +934,16 @@ function UpdateHouse() {
                       type="file"
                       id="cover"
                       name="cover"
-                      accept={acceptedFileTypesString}
+                      accept=".jpg,.png,.jpeg"
                       ref={fileInputRef}
                       className="hidden"
-                      onChange={handleFileChange}
+                      onChange={(e) =>
+                        handleFileChange(e, setSelectedFiles, [
+                          "jpg",
+                          "png",
+                          "jpeg",
+                        ])
+                      }
                       onClick={(event) => {
                         event.target.value = null;
                       }}
@@ -1910,7 +965,13 @@ function UpdateHouse() {
                             </div>
                             <button
                               type="button"
-                              onClick={() => handleFileDelete(index)}
+                              onClick={() =>
+                                handleFileDelete(
+                                  index,
+                                  selectedFiles,
+                                  setSelectedFiles
+                                )
+                              }
                               className="text-red-500 hover:text-red-700 focus:outline-none"
                             >
                               <svg
@@ -1937,24 +998,29 @@ function UpdateHouse() {
                   </div>
                 </div>
 
-                <span className="text-red-500 relative text-sm">
-                  {coverError ? coverErrorMsg : ""}
-                </span>
+                {errors.coverFile?.hasError && (
+                  <span className="text-red-500 text-sm mt-1">
+                    {errors.coverFile.message}
+                  </span>
+                )}
                 <div className="mt-6">
-                  <img
-                    className="rounded-md"
-                    src={cover}
-                    style={{ width: "50px", height: "50px" }}
-                    alt="تصویر اصلی ملک"
-                  />
+                  {cover && (
+                    <img
+                      className="rounded-md"
+                      src={cover}
+                      style={{ width: "50px", height: "50px" }}
+                      alt="تصویر اصلی ملک"
+                    />
+                  )}
                 </div>
                 <button
                   className="app-btn-blue mt-4"
                   onClick={UpdateHouseCover}
+                  disabled={loading.cover}
                 >
-                  {btnSpinnerCover ? (
+                  {loading.cover ? (
                     <div className="px-10 py-1 flex items-center justify-center">
-                      <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+                      <Spinner />
                     </div>
                   ) : (
                     <span className="text-lg">ویرایش تصویر اصلی </span>
@@ -1976,7 +1042,7 @@ function UpdateHouse() {
                   <div className="flex items-center">
                     <button
                       type="button"
-                      onClick={handleCustomButtonClick2}
+                      onClick={() => fileInputRef2.current.click()}
                       className="app-btn-gray bg-white"
                     >
                       انتخاب تصاویر خانه
@@ -1986,10 +1052,16 @@ function UpdateHouse() {
                       id="images"
                       name="images"
                       multiple
-                      accept={acceptedFileTypesString2}
+                      accept=".jpg,.png,.jpeg"
                       ref={fileInputRef2}
                       className="hidden"
-                      onChange={handleFileChange2}
+                      onChange={(e) =>
+                        handleFileChange(e, setSelectedFiles2, [
+                          "jpg",
+                          "png",
+                          "jpeg",
+                        ])
+                      }
                       onClick={(event) => {
                         event.target.value = null;
                       }}
@@ -2011,7 +1083,13 @@ function UpdateHouse() {
                             </div>
                             <button
                               type="button"
-                              onClick={() => handleFileDelete2(index)}
+                              onClick={() =>
+                                handleFileDelete(
+                                  index,
+                                  selectedFiles2,
+                                  setSelectedFiles2
+                                )
+                              }
                               className="text-red-500 hover:text-red-700 focus:outline-none"
                             >
                               <svg
@@ -2037,9 +1115,11 @@ function UpdateHouse() {
                     )}
                   </div>
                 </div>
-                <span className="text-red-500 relative text-sm">
-                  {imagesError ? imagesErrorMsg : ""}
-                </span>
+                {errors.imagesFiles?.hasError && (
+                  <span className="text-red-500 text-sm mt-1">
+                    {errors.imagesFiles.message}
+                  </span>
+                )}
                 <div className="mt-6 flex justify-start">
                   {images.map((file, index) => (
                     <img
@@ -2054,10 +1134,11 @@ function UpdateHouse() {
                 <button
                   className="app-btn-blue w-32 mt-4"
                   onClick={UpdateHouseImages}
+                  disabled={loading.images}
                 >
-                  {btnSpinnerImages ? (
+                  {loading.images ? (
                     <div className="px-10 py-1 flex items-center justify-center">
-                      <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+                      <Spinner />
                     </div>
                   ) : (
                     <span className="text-lg">ویرایش تصاویر خانه</span>
@@ -2070,902 +1151,504 @@ function UpdateHouse() {
 
               <h2 className="mt-6 mb-4 text-xl font-bold">ویرایش ملک</h2>
               {/* house name */}
-              <div className="flex flex-col mb-4">
-                <label
-                  htmlFor="name"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  نام ملک{" "}
-                </label>
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                    <PiHouseLight className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <input
-                    style={{ borderRadius: "5px" }}
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="نام ملک "
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {nameError ? nameErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="نام ملک"
+                icon={<PiHouseLight className="w-6 h-6 text-gray-400" />}
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onBlur={() =>
+                  validateField("name", name, [
+                    { type: "required", fieldName: "نام ملک" },
+                  ])
+                }
+                placeholder="نام ملک"
+                error={errors.name}
+              />
 
               {/* province*/}
-              <div className="mb-6">
-                <label className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block">
-                  استان
-                </label>
-                <small className="my-2 font-sm text-gray-500">
-                  استان انتخاب شده: * {house.province}
-                </small>
-                <Select
-                  value={selectedProvince}
-                  onChange={handleProvinceChange}
-                  options={provinces}
-                  primaryColor={"blue"}
-                  placeholder="انتخاب استان"
-                  isSearchable
-                  searchInputPlaceholder="جستجو استان"
-                  classNames={{
-                    searchIcon: "hidden", // This hides the search icon
-                  }}
-                />
-                <span className="text-red-500 relative text-sm">
-                  {provinceError ? provinceErrorMsg : ""}
-                </span>
-              </div>
+              <SelectWithError
+                label="استان"
+                value={selectedProvince}
+                onChange={handleProvinceChange}
+                options={provinces}
+                error={errors.selectedProvince}
+                isSearchable
+                searchInputPlaceholder="جستجو استان"
+              />
 
               {/* city */}
-              <div>
-                <label className="text-xs sm:text-sm tracking-wide text-gray-600 block">
-                  شهرستان
-                </label>
-                <small className="my-2 font-sm text-gray-500">
-                  شهرستان انتخاب شده: * {house.city}
-                </small>
-                <Select
-                  value={selectedCity}
-                  onChange={setSelectedCity}
-                  options={cities}
-                  primaryColor={"blue"}
-                  placeholder="انتخاب شهرستان"
-                  isSearchable
-                  isDisabled={!selectedProvince}
-                  searchInputPlaceholder="جستجو شهرستان"
-                  classNames={{
-                    searchIcon: "hidden", // This hides the search icon
-                  }}
-                />
-
-                <span className="text-red-500 relative text-sm">
-                  {cityError ? cityErrorMsg : ""}
-                </span>
-              </div>
+              <SelectWithError
+                label="شهرستان"
+                value={selectedCity}
+                onChange={handleCityChange}
+                options={cities}
+                error={errors.selectedCity}
+                isDisabled={!selectedProvince}
+                isSearchable
+                searchInputPlaceholder="جستجو شهرستان"
+              />
 
               {/* house owner name */}
-              <div className="flex flex-col mb-4 mt-6">
-                <label
-                  htmlFor="houseOwner"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  نام و نام خانوادگی صاحب ملک
-                </label>
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                    <TfiUser className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <input
-                    style={{ borderRadius: "5px" }}
-                    type="text"
-                    value={houseOwner}
-                    onChange={(e) => setHouseOwner(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="نام و نام خانوادگی صاحب ملک  "
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {houseOwnerError ? houseOwnerErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="نام و نام خانوادگی صاحب ملک"
+                icon={<TfiUser className="w-6 h-6 text-gray-400" />}
+                type="text"
+                value={houseOwner}
+                onChange={(e) => setHouseOwner(e.target.value)}
+                onBlur={() =>
+                  validateField("houseOwner", houseOwner, [
+                    { type: "required", fieldName: "نام صاحب ملک" },
+                  ])
+                }
+                placeholder="نام و نام خانوادگی صاحب ملک"
+                error={errors.houseOwner}
+              />
 
               {/* house phone */}
-              <div className="flex flex-col mb-4">
-                <label
-                  htmlFor="housePhone"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  شماره ثابت ملک
-                </label>
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                    <TbPhone className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <input
-                    style={{ borderRadius: "5px" }}
-                    type="text"
-                    value={housePhone}
-                    onChange={(e) => setHousePhone(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="  شماره ثابت ملک  "
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {housePhoneError ? housePhoneErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="شماره ثابت ملک"
+                icon={<TbPhone className="w-6 h-6 text-gray-400" />}
+                type="text"
+                value={housePhone}
+                onChange={(e) => setHousePhone(e.target.value)}
+                onBlur={() =>
+                  validateField("housePhone", housePhone, [
+                    { type: "required", fieldName: "تلفن ملک" },
+                  ])
+                }
+                placeholder="شماره ثابت ملک"
+                error={errors.housePhone}
+              />
 
               {/* house meters */}
-              <div className="flex flex-col mb-4">
-                <label
-                  htmlFor="meters"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  متراژ ملک{" "}
-                </label>
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                    <RxRulerHorizontal className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <input
-                    style={{ borderRadius: "5px" }}
-                    type="text"
-                    value={meters}
-                    onChange={(e) => setMeters(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="متراژ ملک"
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {metersError ? metersErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="متراژ ملک"
+                icon={<RxRulerHorizontal className="w-6 h-6 text-gray-400" />}
+                type="number"
+                value={meters}
+                onChange={(e) => setMeters(e.target.value)}
+                onBlur={() =>
+                  validateField("meters", meters, [
+                    { type: "required", fieldName: "متراژ" },
+                    { type: "number", fieldName: "متراژ" },
+                  ])
+                }
+                placeholder="متراژ ملک"
+                error={errors.meters}
+              />
 
               {/* house year */}
-              <div className="flex flex-col mb-4">
-                <label
-                  htmlFor="year"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  سال ساخت ملک{" "}
-                </label>
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                    <PiHourglassSimpleLow className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <input
-                    style={{ borderRadius: "5px" }}
-                    type="text"
-                    value={year}
-                    onChange={(e) => setYear(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="  سال ساخت ملک   "
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {yearError ? yearErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="سال ساخت ملک"
+                icon={
+                  <PiHourglassSimpleLow className="w-6 h-6 text-gray-400" />
+                }
+                type="number"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                onBlur={() =>
+                  validateField("year", year, [
+                    { type: "required", fieldName: "سال ساخت" },
+                    { type: "number", fieldName: "سال ساخت" },
+                  ])
+                }
+                placeholder="سال ساخت ملک"
+                error={errors.year}
+              />
 
               {/* house capacity */}
-              <div className="flex flex-col mb-4">
-                <label
-                  htmlFor="capacity"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  ظرفیت ملک{" "}
-                </label>
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                    <FaUsers className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <input
-                    style={{ borderRadius: "5px" }}
-                    type="text"
-                    value={capacity}
-                    onChange={(e) => setCapacity(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="  ظرفیت ملک   "
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {capacityError ? capacityErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="ظرفیت ملک"
+                icon={<FaUsers className="w-6 h-6 text-gray-400" />}
+                type="number"
+                value={capacity}
+                onChange={(e) => setCapacity(e.target.value)}
+                onBlur={() =>
+                  validateField("capacity", capacity, [
+                    { type: "required", fieldName: "ظرفیت" },
+                    { type: "number", fieldName: "ظرفیت" },
+                  ])
+                }
+                placeholder="ظرفیت ملک"
+                error={errors.capacity}
+              />
 
               {/* house postalCode */}
-              <div className="flex flex-col mb-4">
-                <label
-                  htmlFor="postalCode"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  کدپستی{" "}
-                </label>
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                    <PiSignpostLight className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <input
-                    style={{ borderRadius: "5px" }}
-                    type="text"
-                    value={postalCode}
-                    onChange={(e) => setPostalCode(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="کدپستی"
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {postalCodeError ? postalCodeErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="کدپستی"
+                icon={<PiSignpostLight className="w-6 h-6 text-gray-400" />}
+                type="text"
+                value={postalCode}
+                onChange={(e) => setPostalCode(e.target.value)}
+                onBlur={() =>
+                  validateField("postalCode", postalCode, [
+                    { type: "required", fieldName: "کدپستی" },
+                  ])
+                }
+                placeholder="کدپستی"
+                error={errors.postalCode}
+              />
 
               {/* house hobbies */}
-              <div className="flex flex-col mb-6">
-                <label
-                  htmlFor="hobbies"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  امکانات تفریحی و سرگرمی{" "}
-                </label>
-                <small className="my-2 font-sm text-gray-500">
-                  امکانات تفریحی و سرگرمی انتخاب شده: * {house.hobbies}
-                </small>
-                <div className="relative">
-                  <Select
-                    value={hobbies}
-                    onChange={(e) => setHobbies(e)}
-                    options={hobbiesList}
-                    isMultiple={true}
-                    placeholder="انتخاب امکانات تفریحی و سرگرمی"
-                    classNames={`placholder-gray-400`}
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {hobbiesError ? hobbiesErrorMsg : ""}
-                </span>
-              </div>
+              <SelectWithError
+                label="امکانات تفریحی و سرگرمی"
+                value={hobbies}
+                onChange={(value) => {
+                  setHobbies(value);
+                  validateField("hobbies", value, [
+                    { type: "arrayNotEmpty", fieldName: "امکانات تفریحی" },
+                  ]);
+                }}
+                options={hobbiesList}
+                isMultiple={true}
+                error={errors.hobbies}
+              />
 
               {/* house enviornment */}
-              <div className="flex flex-col mb-6">
-                <label
-                  htmlFor="enviornment"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  محیط ملک{" "}
-                </label>
-                <small className="my-2 font-sm text-gray-500">
-                  محیط انتخاب شده: * {house.enviornment}
-                </small>
-                <div className="relative">
-                  <Select
-                    value={enviornment}
-                    onChange={(e) => setEnviornment(e)}
-                    options={enviornmentList}
-                    isMultiple={true}
-                    placeholder="انتخاب محیط ملک"
-                    classNames={`placholder-gray-400`}
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {enviornmentError ? enviornmentErrorMsg : ""}
-                </span>
-              </div>
+              <SelectWithError
+                label="محیط ملک"
+                value={enviornment}
+                onChange={(value) => {
+                  setEnviornment(value);
+                  validateField("enviornment", value, [
+                    { type: "arrayNotEmpty", fieldName: "محیط ملک" },
+                  ]);
+                }}
+                options={enviornmentList}
+                isMultiple={true}
+                error={errors.enviornment}
+              />
 
               {/* house ownerType */}
-              <div className="flex flex-col mb-6">
-                <label
-                  htmlFor="ownerType"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  نوع مالکیت ملک{" "}
-                </label>
-                <small className="my-2 font-sm text-gray-500">
-                  نوع مالکیت انتخاب شده: * {house.ownerType}
-                </small>
-                <div className="relative">
-                  <Select
-                    value={ownerType}
-                    onChange={(e) => setOwnerType(e)}
-                    options={ownerTypeList}
-                    // isMultiple={true}
-                    placeholder="انتخاب نوع مالکیت ملک"
-                    classNames={`placholder-gray-400`}
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {ownerTypeError ? ownerTypeErrorMsg : ""}
-                </span>
-              </div>
+              <SelectWithError
+                label="نوع مالکیت ملک"
+                value={ownerType}
+                onChange={(value) => {
+                  setOwnerType(value);
+                  validateField("ownerType", value, [
+                    { type: "required", fieldName: "نوع مالکیت" },
+                  ]);
+                }}
+                options={ownerTypeList}
+                error={errors.ownerType}
+              />
 
               {/* house free dates */}
-              <div className="flex flex-col mb-6">
-                <label
-                  htmlFor="freeDates"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  روزهای أزاد{" "}
-                </label>
-                <small className="my-2 font-sm text-gray-500">
-                  روزهای آزاد انتخاب شده: * {house.freeDates}
-                </small>
-                <div className="relative">
-                  <Select
-                    value={freeDates}
-                    onChange={(e) => setFreeDates(e)}
-                    options={weekDays}
-                    isMultiple={true}
-                    placeholder="انتخاب روزهای آزاد"
-                    formatGroupLabel={(data) => (
-                      <div
-                        className={`py-2 text-xs flex items-center justify-between`}
-                      >
-                        <span className="font-bold">{data.label}</span>
-                      </div>
-                    )}
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {freeDatesError ? freeDatesErrorMsg : ""}
-                </span>
-              </div>
+              <SelectWithError
+                label="روزهای آزاد"
+                value={freeDates}
+                onChange={(value) => {
+                  setFreeDates(value);
+                  validateField("freeDates", value, [
+                    { type: "arrayNotEmpty", fieldName: "روزهای آزاد" },
+                  ]);
+                }}
+                options={weekDays}
+                isMultiple={true}
+                error={errors.freeDates}
+              />
 
               {/* house type */}
-              <div className="flex flex-col mb-6">
-                <label
-                  htmlFor="houseType"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  نوع ملک{" "}
-                </label>
-                <small className="my-2 font-sm text-gray-500">
-                  نوع ملک انتخاب شده: * {house.houseType}
-                </small>
-                <div className="relative">
-                  <Select
-                    value={houseType}
-                    onChange={(e) => setHouseType(e)}
-                    options={houseTypeList}
-                    // isMultiple={true}
-                    placeholder="انتخاب نوع ملک"
-                    formatGroupLabel={(data) => (
-                      <div
-                        className={`py-2 text-xs flex items-center justify-between`}
-                      >
-                        <span className="font-bold">{data.label}</span>
-                      </div>
-                    )}
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {houseTypeError ? houseTypeErrorMsg : ""}
-                </span>
-              </div>
+              <SelectWithError
+                label="نوع ملک"
+                value={houseType}
+                onChange={(value) => {
+                  setHouseType(value);
+                  validateField("houseType", value, [
+                    { type: "required", fieldName: "نوع ملک" },
+                  ]);
+                }}
+                options={houseTypeList}
+                error={errors.houseType}
+              />
 
               {/* house rooms */}
-              <div className="flex flex-col mb-4">
-                <label
-                  htmlFor="rooms"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  تعداد اتاق ها
-                </label>
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                    <PiWarehouseLight className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <input
-                    style={{ borderRadius: "5px" }}
-                    type="number"
-                    value={rooms}
-                    onChange={(e) => setRooms(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="تعداد اتاق ها  "
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {roomsError ? roomsErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="تعداد اتاق ها"
+                icon={<PiWarehouseLight className="w-6 h-6 text-gray-400" />}
+                type="number"
+                value={rooms}
+                onChange={(e) => setRooms(e.target.value)}
+                onBlur={() =>
+                  validateField("rooms", rooms, [
+                    { type: "required", fieldName: "تعداد اتاق" },
+                    { type: "number", fieldName: "تعداد اتاق" },
+                  ])
+                }
+                placeholder="تعداد اتاق ها"
+                error={errors.rooms}
+              />
 
               {/* house roof */}
-              <div className="flex flex-col mb-4">
-                <label
-                  htmlFor="floor"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  تعداد طبقه ها
-                </label>
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                    <PiSolarRoof className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <input
-                    style={{ borderRadius: "5px" }}
-                    type="text"
-                    value={floor}
-                    onChange={(e) => setFloor(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="تعداد طبقه ها  "
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {floorError ? floorErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="تعداد طبقه ها"
+                icon={<PiSolarRoof className="w-6 h-6 text-gray-400" />}
+                type="number"
+                value={floor}
+                onChange={(e) => setFloor(e.target.value)}
+                onBlur={() =>
+                  validateField("floor", floor, [
+                    { type: "required", fieldName: "تعداد طبقه" },
+                    { type: "number", fieldName: "تعداد طبقه" },
+                  ])
+                }
+                placeholder="تعداد طبقه ها"
+                error={errors.floor}
+              />
 
               {/* house options */}
-              <div className="flex flex-col mb-6">
-                <label
-                  htmlFor="options"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  امکانات ملک{" "}
-                </label>
-
-                <small className="my-2 font-sm text-gray-500">
-                  امکانات انتخاب شده: * {house.options}
-                </small>
-                <div className="relative">
-                  <Select
-                    value={options}
-                    onChange={(e) => setOptions(e)}
-                    options={houseOptions}
-                    isMultiple={true}
-                    placeholder="انتخاب امکانات ملک"
-                    formatGroupLabel={(data) => (
-                      <div
-                        className={`py-2 text-xs flex items-center justify-between`}
-                      >
-                        <span className="font-bold">{data.label}</span>
-                      </div>
-                    )}
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {optionsError ? optionsErrorMsg : ""}
-                </span>
-              </div>
+              <SelectWithError
+                label="امکانات ملک"
+                value={options}
+                onChange={(value) => {
+                  setOptions(value);
+                  validateField("options", value, [
+                    { type: "arrayNotEmpty", fieldName: "امکانات ملک" },
+                  ]);
+                }}
+                options={houseOptions}
+                isMultiple={true}
+                error={errors.options}
+              />
 
               {/* house cooling */}
-              <div className="flex flex-col mb-6">
-                <label
-                  htmlFor="cooling"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  سیستم سرمایش{" "}
-                </label>
-                <small className="my-2 font-sm text-gray-500">
-                  سیستم سرمایش انتخاب شده: * {house.cooling}
-                </small>
-                <div className="relative">
-                  <Select
-                    value={cooling}
-                    onChange={(e) => setCooling(e)}
-                    options={coolingList}
-                    isMultiple={true}
-                    placeholder="انتخاب سیستم سرمایش"
-                    formatGroupLabel={(data) => (
-                      <div
-                        className={`py-2 text-xs flex items-center justify-between`}
-                      >
-                        <span className="font-bold">{data.label}</span>
-                      </div>
-                    )}
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {coolingError ? coolingErrorMsg : ""}
-                </span>
-              </div>
+              <SelectWithError
+                label="سیستم سرمایش"
+                value={cooling}
+                onChange={(value) => {
+                  setCooling(value);
+                  validateField("cooling", value, [
+                    { type: "arrayNotEmpty", fieldName: "سیستم سرمایش" },
+                  ]);
+                }}
+                options={coolingList}
+                isMultiple={true}
+                error={errors.cooling}
+              />
 
               {/* house heating */}
-              <div className="flex flex-col mb-6">
-                <label
-                  htmlFor="heating"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  سیستم گرمایش{" "}
-                </label>
-                <small className="my-2 font-sm text-gray-500">
-                  سیستم گرمایش انتخاب شده: * {house.heating}
-                </small>
-                <div className="relative">
-                  <Select
-                    value={heating}
-                    onChange={(e) => setHeating(e)}
-                    options={heatingList}
-                    isMultiple={true}
-                    placeholder="انتخاب سیستم گرمایش"
-                    formatGroupLabel={(data) => (
-                      <div
-                        className={`py-2 text-xs flex items-center justify-between`}
-                      >
-                        <span className="font-bold">{data.label}</span>
-                      </div>
-                    )}
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {heatingError ? heatingErrorMsg : ""}
-                </span>
-              </div>
+              <SelectWithError
+                label="سیستم گرمایش"
+                value={heating}
+                onChange={(value) => {
+                  setHeating(value);
+                  validateField("heating", value, [
+                    { type: "arrayNotEmpty", fieldName: "سیستم گرمایش" },
+                  ]);
+                }}
+                options={heatingList}
+                isMultiple={true}
+                error={errors.heating}
+              />
 
               {/* house parking */}
-              <div className="flex flex-col mb-4">
-                <label
-                  htmlFor="parking"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  تعداد پارکینگ
-                </label>
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                    <LuCircleParking className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <input
-                    style={{ borderRadius: "5px" }}
-                    type="text"
-                    value={parking}
-                    onChange={(e) => setParking(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="تعداد پارکینگ"
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {parkingError ? parkingErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="تعداد پارکینگ"
+                icon={<LuCircleParking className="w-6 h-6 text-gray-400" />}
+                type="number"
+                value={parking}
+                onChange={(e) => setParking(e.target.value)}
+                onBlur={() =>
+                  validateField("parking", parking, [
+                    { type: "required", fieldName: "تعداد پارکینگ" },
+                    { type: "number", fieldName: "تعداد پارکینگ" },
+                  ])
+                }
+                placeholder="تعداد پارکینگ"
+                error={errors.parking}
+              />
 
               {/* house price*/}
-              <div className="flex flex-col mb-4">
-                <label
-                  htmlFor="price"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  اجاره بها
-                </label>
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                    <RiPriceTagLine className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <input
-                    style={{ borderRadius: "5px" }}
-                    type="text"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="اجاره بها"
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {priceError ? priceErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="اجاره بها"
+                icon={<RiPriceTagLine className="w-6 h-6 text-gray-400" />}
+                type="number"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                onBlur={() =>
+                  validateField("price", price, [
+                    { type: "required", fieldName: "اجاره بها" },
+                    { type: "number", fieldName: "اجاره بها" },
+                  ])
+                }
+                placeholder="اجاره بها"
+                error={errors.price}
+              />
 
               {/* house number*/}
-              <div className="flex flex-col mb-4">
-                <label
-                  htmlFor="houseNumber"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  پلاک ملک{" "}
-                </label>
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                    <TbCircleDashedNumber4 className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <input
-                    style={{ borderRadius: "5px" }}
-                    type="text"
-                    value={houseNumber}
-                    onChange={(e) => setHouseNumber(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="پلاک ملک"
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {houseNumberError ? houseNumberErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="پلاک ملک"
+                icon={
+                  <TbCircleDashedNumber4 className="w-6 h-6 text-gray-400" />
+                }
+                type="text"
+                value={houseNumber}
+                onChange={(e) => setHouseNumber(e.target.value)}
+                onBlur={() =>
+                  validateField("houseNumber", houseNumber, [
+                    { type: "required", fieldName: "پلاک ملک" },
+                  ])
+                }
+                placeholder="پلاک ملک"
+                error={errors.houseNumber}
+              />
 
               {/* floorType*/}
-              <div className="flex flex-col mb-6">
-                <label
-                  htmlFor="floorType"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  نوع کف پوش{" "}
-                </label>
-                <small className="my-2 font-sm text-gray-500">
-                  نوع کف پوش انتخاب شده: * {house.floorType}
-                </small>
-                <div className="relative">
-                  <Select
-                    value={floorType}
-                    onChange={(e) => setFloorType(e)}
-                    options={floorTypeList}
-                    isMultiple={true}
-                    placeholder="انتخاب نوع کف پوش"
-                    formatGroupLabel={(data) => (
-                      <div
-                        className={`py-2 text-xs flex items-center justify-between`}
-                      >
-                        <span className="font-bold">{data.label}</span>
-                      </div>
-                    )}
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {floorTypeError ? floorTypeErrorMsg : ""}
-                </span>
-              </div>
+              <SelectWithError
+                label="نوع کف پوش"
+                value={floorType}
+                onChange={(value) => {
+                  setFloorType(value);
+                  validateField("floorType", value, [
+                    { type: "arrayNotEmpty", fieldName: "نوع کف پوش" },
+                  ]);
+                }}
+                options={floorTypeList}
+                isMultiple={true}
+                error={errors.floorType}
+              />
 
               {/* discount*/}
-              <div className="flex flex-col mb-4">
-                <label
-                  htmlFor="discount"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  تخفیف ملک{" "}
-                </label>
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                    <HiOutlineDocumentArrowUp className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <input
-                    style={{ borderRadius: "5px" }}
-                    type="text"
-                    value={discount}
-                    onChange={(e) => setDiscount(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="  تخفیف ملک"
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {discountError ? discountErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="تخفیف ملک"
+                icon={
+                  <HiOutlineDocumentArrowUp className="w-6 h-6 text-gray-400" />
+                }
+                type="number"
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value)}
+                onBlur={() =>
+                  validateField("discount", discount, [
+                    { type: "required", fieldName: "تخفیف" },
+                    { type: "number", fieldName: "تخفیف" },
+                  ])
+                }
+                placeholder="تخفیف ملک"
+                error={errors.discount}
+              />
 
               {/* kitchenOptions*/}
-              <div className="flex flex-col mb-6">
-                <label
-                  htmlFor="kitchenOptions"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  امکانات آشپزخانه{" "}
-                </label>
-                <small className="my-2 font-sm text-gray-500">
-                  امکانات آشپزخانه انتخاب شده: * {house.kitchenOptions}
-                </small>
-                <div className="relative">
-                  <Select
-                    value={kitchenOptions}
-                    onChange={(e) => setKitchenOptions(e)}
-                    options={kitchenOptionList}
-                    isMultiple={true}
-                    placeholder="انتخاب امکانات آشپزخانه"
-                    formatGroupLabel={(data) => (
-                      <div
-                        className={`py-2 text-xs flex items-center justify-between`}
-                      >
-                        <span className="font-bold">{data.label}</span>
-                      </div>
-                    )}
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {kitchenOptionsError ? kitchenOptionsErrorMsg : ""}
-                </span>
-              </div>
+              <SelectWithError
+                label="امکانات آشپزخانه"
+                value={kitchenOptions}
+                onChange={(value) => {
+                  setKitchenOptions(value);
+                  validateField("kitchenOptions", value, [
+                    { type: "arrayNotEmpty", fieldName: "امکانات آشپزخانه" },
+                  ]);
+                }}
+                options={kitchenOptionList}
+                isMultiple={true}
+                error={errors.kitchenOptions}
+              />
 
               {/* bedRoomOptions*/}
-              <div className="flex flex-col mb-6">
-                <label
-                  htmlFor="bedRoomOptions"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  {" "}
-                  امکانات اتاق خواب{" "}
-                </label>
-                <small className="my-2 font-sm text-gray-500">
-                  امکانات اتاق خواب انتخاب شده: * {house.bedRoomOptions}
-                </small>
-                <div className="relative">
-                  <Select
-                    value={bedRoomOptions}
-                    onChange={(e) => setBedRoomOptions(e)}
-                    options={bedRoomOptionList}
-                    isMultiple={true}
-                    placeholder="انتخاب امکانات اتاق خواب"
-                    formatGroupLabel={(data) => (
-                      <div
-                        className={`py-2 text-xs flex items-center justify-between`}
-                      >
-                        <span className="font-bold">{data.label}</span>
-                      </div>
-                    )}
-                  />
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {bedRoomOptionsError ? bedRoomOptionsErrorMsg : ""}
-                </span>
-              </div>
+              <SelectWithError
+                label="امکانات اتاق خواب"
+                value={bedRoomOptions}
+                onChange={(value) => {
+                  setBedRoomOptions(value);
+                  validateField("bedRoomOptions", value, [
+                    { type: "arrayNotEmpty", fieldName: "امکانات اتاق خواب" },
+                  ]);
+                }}
+                options={bedRoomOptionList}
+                isMultiple={true}
+                error={errors.bedRoomOptions}
+              />
 
               {/* reservationRoles*/}
-              <div className="flex flex-col mb-4">
-                <label
-                  htmlFor="reservationRoles"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  قوانین رزرو ملک{" "}
-                </label>
-                <div className="relative">
-                  <div
-                    className="inline-flex items-center justify-center absolute left-0 h-full w-10 text-gray-400"
-                    style={{ bottom: "52px" }}
-                  >
-                    <LiaConciergeBellSolid className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <textarea
-                    style={{ borderRadius: "5px", resize: "none" }}
-                    type="text"
-                    value={reservationRoles}
-                    onChange={(e) => setReservationRoles(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="قوانین رزرو ملک "
-                  ></textarea>
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {reservationRolesError ? reservationRolesErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="قوانین رزرو ملک"
+                icon={
+                  <LiaConciergeBellSolid className="w-6 h-6 text-gray-400" />
+                }
+                value={reservationRoles}
+                onChange={(e) => setReservationRoles(e.target.value)}
+                onBlur={() =>
+                  validateField("reservationRoles", reservationRoles, [
+                    { type: "required", fieldName: "قوانین رزرو" },
+                  ])
+                }
+                placeholder="قوانین رزرو ملک"
+                error={errors.reservationRoles}
+                textarea={true}
+              />
 
               {/* house roles */}
-              <div className="flex flex-col mb-4">
-                <label
-                  htmlFor="houseRoles"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  ضوابط و مقررات ملک{" "}
-                </label>
-                <div className="relative">
-                  <div
-                    className="inline-flex items-center justify-center absolute left-0 h-full w-10 text-gray-400"
-                    style={{ bottom: "52px" }}
-                  >
-                    <TbHomeEdit className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <textarea
-                    style={{ borderRadius: "5px", resize: "none" }}
-                    type="text"
-                    value={houseRoles}
-                    onChange={(e) => setHouseRoles(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="ضوابط و مقررات ملک "
-                  ></textarea>
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {houseRolesError ? houseRolesErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="ضوابط و مقررات ملک"
+                icon={<TbHomeEdit className="w-6 h-6 text-gray-400" />}
+                value={houseRoles}
+                onChange={(e) => setHouseRoles(e.target.value)}
+                onBlur={() =>
+                  validateField("houseRoles", houseRoles, [
+                    { type: "required", fieldName: "ضوابط ملک" },
+                  ])
+                }
+                placeholder="ضوابط و مقررات ملک"
+                error={errors.houseRoles}
+                textarea={true}
+              />
 
               {/* house critrias */}
-              <div className="flex flex-col mb-4">
-                <label
-                  htmlFor="critrias"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  محدویت های ملک{" "}
-                </label>
-                <div className="relative">
-                  <div
-                    className="inline-flex items-center justify-center absolute left-0 h-full w-10 text-gray-400"
-                    style={{ bottom: "52px" }}
-                  >
-                    <BsHouseExclamation className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <textarea
-                    style={{ borderRadius: "5px", resize: "none" }}
-                    type="text"
-                    value={critrias}
-                    onChange={(e) => setCritrias(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="محدویت های ملک "
-                  ></textarea>
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {critriasError ? critriasErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="محدویت های ملک"
+                icon={<BsHouseExclamation className="w-6 h-6 text-gray-400" />}
+                value={critrias}
+                onChange={(e) => setCritrias(e.target.value)}
+                onBlur={() =>
+                  validateField("critrias", critrias, [
+                    { type: "required", fieldName: "محدودیت‌ها" },
+                  ])
+                }
+                placeholder="محدویت های ملک"
+                error={errors.critrias}
+                textarea={true}
+              />
 
               {/* description */}
-              <div className="flex flex-col mb-4">
-                <label
-                  htmlFor="description"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  درباره ملک{" "}
-                </label>
-                <div className="relative">
-                  <div
-                    className="inline-flex items-center justify-center absolute left-0 h-full w-10 text-gray-400"
-                    style={{ bottom: "52px" }}
-                  >
-                    <FiInfo className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <textarea
-                    style={{ borderRadius: "5px", resize: "none" }}
-                    type="text"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="درباره ملک "
-                  ></textarea>
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {descriptionError ? descriptionErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="درباره ملک"
+                icon={<FiInfo className="w-6 h-6 text-gray-400" />}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                onBlur={() =>
+                  validateField("description", description, [
+                    { type: "required", fieldName: "توضیحات" },
+                  ])
+                }
+                placeholder="درباره ملک"
+                error={errors.description}
+                textarea={true}
+              />
 
               {/*  address */}
-              <div className="flex flex-col mb-4">
-                <label
-                  htmlFor="address"
-                  className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 block"
-                >
-                  آدرس{" "}
-                </label>
-                <div className="relative">
-                  <div
-                    className="inline-flex items-center justify-center absolute left-0 h-full w-10 text-gray-400"
-                    style={{ bottom: "52px" }}
-                  >
-                    <FiMapPin className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <textarea
-                    style={{ borderRadius: "5px", resize: "none" }}
-                    type="text"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                    placeholder="آدرس "
-                  ></textarea>
-                </div>
-                <span className="text-red-500 relative text-sm">
-                  {addressError ? addressErrorMsg : ""}
-                </span>
-              </div>
+              <InputWithError
+                label="آدرس"
+                icon={<FiMapPin className="w-6 h-6 text-gray-400" />}
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                onBlur={() =>
+                  validateField("address", address, [
+                    { type: "required", fieldName: "آدرس" },
+                  ])
+                }
+                placeholder="آدرس"
+                error={errors.address}
+                textarea={true}
+              />
 
               <div className="mt-4 mb-8 w-32">
                 <button
                   className="app-btn-blue w-full"
-                  onClick={UpdateHouseFunction}
+                  onClick={() => setIsOpen(true)}
+                  disabled={loading.info}
                 >
-                  {btnSpinnerInfo ? (
+                  {loading.info ? (
                     <div className="px-10 py-1 flex items-center justify-center">
-                      <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+                      <Spinner />
                     </div>
                   ) : (
                     <span className="text-lg">ویرایش ملک</span>
@@ -2988,7 +1671,7 @@ function UpdateHouse() {
                   <div className="flex items-center">
                     <button
                       type="button"
-                      onClick={handleCustomButtonClickBill}
+                      onClick={() => fileInputRefBill.current.click()}
                       className="app-btn-gray bg-white"
                     >
                       انتخاب قبوض خانه
@@ -2998,10 +1681,19 @@ function UpdateHouse() {
                       id="bill"
                       name="bill"
                       multiple
-                      accept={acceptedFileTypesStringBill}
+                      accept=".jpg,.png,.jpeg,.pdf,.txt,.docx"
                       ref={fileInputRefBill}
                       className="hidden"
-                      onChange={handleFileChangeBill}
+                      onChange={(e) =>
+                        handleFileChange(e, setSelectedFilesBill, [
+                          "jpg",
+                          "png",
+                          "jpeg",
+                          "pdf",
+                          "txt",
+                          "docx",
+                        ])
+                      }
                       onClick={(event) => {
                         event.target.value = null;
                       }}
@@ -3023,7 +1715,13 @@ function UpdateHouse() {
                             </div>
                             <button
                               type="button"
-                              onClick={() => handleFileDeleteBill(index)}
+                              onClick={() =>
+                                handleFileDelete(
+                                  index,
+                                  selectedFilesBill,
+                                  setSelectedFilesBill
+                                )
+                              }
                               className="text-red-500 hover:text-red-700 focus:outline-none"
                             >
                               <svg
@@ -3049,9 +1747,11 @@ function UpdateHouse() {
                     )}
                   </div>
                 </div>
-                <span className="text-red-500 relative text-sm">
-                  {billError ? billErrorMsg : ""}
-                </span>
+                {errors.billFiles?.hasError && (
+                  <span className="text-red-500 text-sm mt-1">
+                    {errors.billFiles.message}
+                  </span>
+                )}
 
                 <div className="mt-6 flex justify-start">
                   {bill.map((file, index) => (
@@ -3068,10 +1768,11 @@ function UpdateHouse() {
                   <button
                     className="app-btn-blue w-full"
                     onClick={UpdateHouseBill}
+                    disabled={loading.bill}
                   >
-                    {btnSpinnerBill ? (
+                    {loading.bill ? (
                       <div className="px-10 py-1 flex items-center justify-center">
-                        <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+                        <Spinner />
                       </div>
                     ) : (
                       <span className="text-lg">ویرایش قبض</span>
@@ -3095,7 +1796,7 @@ function UpdateHouse() {
                   <div className="flex items-center">
                     <button
                       type="button"
-                      onClick={handleCustomButtonClickDocument}
+                      onClick={() => fileInputRefDocument.current.click()}
                       className="app-btn-gray bg-white"
                     >
                       انتخاب مدارک ملک
@@ -3105,10 +1806,19 @@ function UpdateHouse() {
                       id="document"
                       name="document"
                       multiple
-                      accept={acceptedFileTypesStringDocument}
+                      accept=".jpg,.png,.jpeg,.pdf,.txt,.docx"
                       ref={fileInputRefDocument}
                       className="hidden"
-                      onChange={handleFileChangeDocument}
+                      onChange={(e) =>
+                        handleFileChange(e, setSelectedFilesDocument, [
+                          "jpg",
+                          "png",
+                          "jpeg",
+                          "pdf",
+                          "txt",
+                          "docx",
+                        ])
+                      }
                       onClick={(event) => {
                         event.target.value = null;
                       }}
@@ -3130,7 +1840,13 @@ function UpdateHouse() {
                             </div>
                             <button
                               type="button"
-                              onClick={() => handleFileDeleteDocument(index)}
+                              onClick={() =>
+                                handleFileDelete(
+                                  index,
+                                  selectedFilesDocument,
+                                  setSelectedFilesDocument
+                                )
+                              }
                               className="text-red-500 hover:text-red-700 focus:outline-none"
                             >
                               <svg
@@ -3156,9 +1872,11 @@ function UpdateHouse() {
                     )}
                   </div>
                 </div>
-                <span className="text-red-500 relative text-sm">
-                  {documentError ? documentErrorMsg : ""}
-                </span>
+                {errors.documentFiles?.hasError && (
+                  <span className="text-red-500 text-sm mt-1">
+                    {errors.documentFiles.message}
+                  </span>
+                )}
                 <div className="mt-6 flex justify-start">
                   {document.map((file, index) => (
                     <img
@@ -3173,10 +1891,11 @@ function UpdateHouse() {
                 <button
                   className="app-btn-blue w-32 mt-4"
                   onClick={UpdateHouseDocument}
+                  disabled={loading.document}
                 >
-                  {btnSpinnerDocument ? (
+                  {loading.document ? (
                     <div className="px-10 py-1 flex items-center justify-center">
-                      <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+                      <Spinner />
                     </div>
                   ) : (
                     <span className="text-lg">ویرایش مدارک</span>
@@ -3210,18 +1929,21 @@ function UpdateHouse() {
                     <MapClickHandler />
                   </MapContainer>
 
-                  <span className="text-red-500 relative text-sm">
-                    {positionError ? positionErrorMsg : ""}
-                  </span>
+                  {errors.position?.hasError && (
+                    <span className="text-red-500 text-sm mt-1">
+                      {errors.position.message}
+                    </span>
+                  )}
                 </div>
 
                 <button
                   className="app-btn-blue w-32 mt-4"
                   onClick={UpdateHouseMap}
+                  disabled={loading.map}
                 >
-                  {btnSpinnerMap ? (
+                  {loading.map ? (
                     <div className="px-10 py-1 flex items-center justify-center">
-                      <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+                      <Spinner />
                     </div>
                   ) : (
                     <span className="text-lg">ویرایش نقشه</span>
@@ -3232,7 +1954,6 @@ function UpdateHouse() {
           </div>
         </TitleCard>
       </div>
-      <ToastContainer />
     </>
   );
 }

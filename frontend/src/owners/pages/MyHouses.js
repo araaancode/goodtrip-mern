@@ -49,9 +49,6 @@ const MyHouses = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [refresh, setRefresh] = useState(false);
 
-
-    console.log(isOwnerAuthenticated)
-
   // Set page title
   useEffect(() => {
     dispatch(setPageTitle({ title: "لیست ملک ها" }));
@@ -79,29 +76,7 @@ const MyHouses = () => {
     fetchHouses();
   }, [isOwnerAuthenticated, refresh]);
 
-  // Delete house function
-  const deleteHouse = async (id) => {
-    if (!window.confirm("آیا از حذف این ملک مطمئن هستید؟")) return;
 
-    setDeleteLoading(true);
-    setDeleteId(id);
-
-    try {
-      await axios.delete(`/api/owners/houses/${id}`, {
-        withCredentials: true,
-      });
-
-      setHouses(houses.filter((house) => house._id !== id));
-      toast.success("ملک با موفقیت حذف شد");
-      setRefresh(!refresh); // Trigger refresh
-    } catch (error) {
-      console.error("Error deleting house:", error);
-      toast.error("خطا در حذف ملک");
-    } finally {
-      setDeleteLoading(false);
-      setDeleteId(null);
-    }
-  };
 
   // Toggle house status
   const toggleStatus = async (id, currentStatus) => {
@@ -180,7 +155,6 @@ const MyHouses = () => {
           variant="outlined"
           size="small"
           color={params.value ? "success" : "error"}
-          onClick={() => toggleStatus(params.row._id, params.value)}
           disabled={deleteLoading && deleteId === params.row._id}
         >
           {params.value ? "فعال" : "غیرفعال"}
@@ -203,31 +177,6 @@ const MyHouses = () => {
             startIcon={<FiEdit />}
           >
             ویرایش
-          </Button>
-          <Button
-            variant="outlined"
-            color="secondary"
-            size="small"
-            href={`/owners/houses/${params.row._id}`}
-            startIcon={<IoEyeOutline />}
-          >
-            مشاهده
-          </Button>
-          <Button
-            variant="outlined"
-            color="error"
-            size="small"
-            onClick={() => deleteHouse(params.row._id)}
-            disabled={deleteLoading && deleteId === params.row._id}
-            startIcon={
-              deleteLoading && deleteId === params.row._id ? (
-                <CircularProgress size={20} />
-              ) : (
-                <FiTrash2 />
-              )
-            }
-          >
-            حذف
           </Button>
         </div>
       ),
