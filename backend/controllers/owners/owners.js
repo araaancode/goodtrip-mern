@@ -1347,41 +1347,88 @@ exports.updateMap = async (req, res) => {
   }
 };
 
-// # description -> HTTP VERB -> Accesss -> Access Type
-// # owner update house bills -> PUT -> Owner -> PRIVATE
-// @route = /api/owners/houses/:houseId/update-bill
 exports.updateBill = async (req, res) => {
   try {
-    const imagePaths = req.files.map((file) => file.path);
-
-    if (imagePaths.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "حداقل یک تصویر باید وارد کنید..!" });
+    // Validate input files
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        error: "حداقل یک تصویر باید وارد کنید..!",
+      });
     }
 
-    await House.findByIdAndUpdate(req.params.houseId, {
-      bill: imagePaths,
-    }).then((house) => {
-      if (house) {
-        return res.status(StatusCodes.OK).json({
-          status: "success",
-          msg: "مدارک ملک ویرایش شدند",
-          house,
+    // Fetch house to access existing bill
+    const house = await House.findById(req.params.houseId);
+    if (!house) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        status: "failure",
+        msg: "ملک یافت نشد",
+      });
+    }
+
+    // Delete old images from S3 if they exist
+    if (house.bill && house.bill.length > 0) {
+      // Filter out any null/undefined values and create delete objects
+      const deleteObjects = house.bill
+        .filter(url => url) // Remove null/undefined
+        .map(url => {
+          // More robust URL parsing
+          const urlParts = url.split(`${process.env.LIARA_BUCKET_NAME}/`);
+          return {
+            Key: urlParts.length > 1 ? urlParts[1] : url.split('/').pop()
+          };
         });
-      } else {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-          status: "failure",
-          msg: "قبوض ملک ویرایش نشدند",
-        });
+
+      if (deleteObjects.length > 0) {
+        const deleteParams = {
+          Bucket: process.env.LIARA_BUCKET_NAME,
+          Delete: { Objects: deleteObjects },
+        };
+        const deleteCommand = new DeleteObjectsCommand(deleteParams);
+        await s3Client.send(deleteCommand);
       }
+    }
+
+    // Upload new images to S3
+    const imageUrls = [];
+    for (const file of req.files) {
+      const uniqueSuffix = `${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2)}`;
+      const imageKey = `ownerHouseBill/bill-${uniqueSuffix}-${file.originalname}`;
+
+      const upload = new Upload({
+        client: s3Client,
+        params: {
+          Bucket: process.env.LIARA_BUCKET_NAME,
+          Key: imageKey,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+          CacheControl: "no-cache, no-store, must-revalidate",
+        },
+      });
+
+      await upload.done();
+      imageUrls.push(`${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${imageKey}`);
+    }
+
+    // Update house with new images
+    const updatedHouse = await House.findByIdAndUpdate(
+      req.params.houseId,
+      { bill: imageUrls },
+      { new: true }
+    );
+
+    return res.status(StatusCodes.OK).json({
+      status: "success",
+      msg: "تصاویر قدیمی حذف و با تصاویر جدید جایگزین شدند",
+      house: updatedHouse,
     });
   } catch (error) {
-    console.error(error.message);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+    console.error("Error replacing images:", error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       status: "failure",
       msg: "خطای داخلی سرور",
-      error,
+      error: error.message,
     });
   }
 };
