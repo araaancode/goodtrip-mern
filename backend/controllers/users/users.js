@@ -755,6 +755,11 @@ exports.findTestOwner = async (req, res) => {
   res.send(owner);
 };
 
+exports.findTestHosue = async (req, res) => {
+  let house = await House.findOne({ _id: "689c77f64b11b64279606232" });
+  res.send(house);
+};
+
 exports.getFoods = async (req, res) => {
   try {
     let foods = await Food.find({ isActive: true, isAvailable: true });

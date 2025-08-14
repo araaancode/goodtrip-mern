@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useDispatch } from "react-redux";
 import axios from "axios";
-import { toast } from "react-toastify";
+import { toast,ToastContainer } from "react-toastify";
 import { Dialog } from "@headlessui/react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import L from "leaflet";
@@ -1954,6 +1954,7 @@ function UpdateHouse() {
           </div>
         </TitleCard>
       </div>
+      <ToastContainer />
     </>
   );
 }
