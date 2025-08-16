@@ -1,13 +1,11 @@
 const express = require("express");
 const router = express();
 
-const multer = require("multer");
-
 const ownerCtrls = require("../../controllers/owners/owners");
 const authOwner = require("../../middlewares/authOwner");
 
+const multer = require("multer");
 const upload = require("../../utils/upload");
-
 const storage = multer.memoryStorage();
 const liaraUpload = multer({ storage });
 
@@ -36,17 +34,11 @@ router.get("/ads", authOwner, ownerCtrls.allAds);
 router.get("/ads/:adsId", authOwner, ownerCtrls.singleAds);
 router.post(
   "/ads",
-  authOwner,
-  upload.ownerAdsPhotosUpload.fields([
-    {
-      name: "photo",
-      maxCount: 1,
-    },
-    {
-      name: "photos",
-      maxCount: 6,
-    },
+  liaraUpload.fields([
+    { name: "photo", maxCount: 1 },
+    { name: "photos", maxCount: 6 },
   ]),
+  authOwner,
   ownerCtrls.createAds
 );
 

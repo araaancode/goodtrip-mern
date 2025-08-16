@@ -1,10 +1,10 @@
 import { useState, useRef } from "react";
 import { useOwnerAuthStore } from "../stores/authStore";
 import TitleCard from "../components/Cards/TitleCard";
-import { toast,ToastContainer } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import axios from "axios"
+import axios from "axios";
 
 // icons
 import { IoPricetagOutline } from "react-icons/io5";
@@ -139,7 +139,9 @@ function CreateAds() {
   };
 
   const processFiles = (filesArray, setFiles, field) => {
-    const newSelectedFiles = [...(field === "photo" ? selectedFiles : selectedFiles2)];
+    const newSelectedFiles = [
+      ...(field === "photo" ? selectedFiles : selectedFiles2),
+    ];
     let hasError = false;
     const fileTypeRegex = new RegExp(acceptedFileExtensions.join("|"), "i");
 
@@ -148,7 +150,9 @@ function CreateAds() {
         toast.error("نام فایل ها باید منحصر به فرد باشد");
         hasError = true;
       } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
-        toast.error(`فقط فایل های ${acceptedFileExtensions.join(", ")} قابل قبول هستند`);
+        toast.error(
+          `فقط فایل های ${acceptedFileExtensions.join(", ")} قابل قبول هستند`
+        );
         hasError = true;
       } else {
         newSelectedFiles.push(file);
@@ -168,7 +172,9 @@ function CreateAds() {
   };
 
   const handleFileDelete = (index, setFiles, field) => {
-    const updatedFiles = [...(field === "photo" ? selectedFiles : selectedFiles2)];
+    const updatedFiles = [
+      ...(field === "photo" ? selectedFiles : selectedFiles2),
+    ];
     updatedFiles.splice(index, 1);
     setFiles(updatedFiles);
 
@@ -176,9 +182,10 @@ function CreateAds() {
     if (updatedFiles.length === 0) {
       setErrors({
         ...errors,
-        [field]: field === "photo" 
-          ? "تصویر اصلی آگهی باید وارد شود" 
-          : "تصاویر آگهی باید وارد شوند",
+        [field]:
+          field === "photo"
+            ? "تصویر اصلی آگهی باید وارد شود"
+            : "تصاویر آگهی باید وارد شوند",
       });
     }
   };
@@ -209,10 +216,7 @@ function CreateAds() {
       selectedFiles2.forEach((image) => formDataToSend.append("photos", image));
 
       const response = await axios.post(`/api/owners/ads`, formDataToSend, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          authorization: `Bearer ${token}`,
-        },
+        withCredentials: true,
       });
 
       // Reset form on success
@@ -378,7 +382,9 @@ function CreateAds() {
                       <span className="text-base mx-2">{file.name}</span>
                       <button
                         type="button"
-                        onClick={() => handleFileDelete(index, setSelectedFiles, "photo")}
+                        onClick={() =>
+                          handleFileDelete(index, setSelectedFiles, "photo")
+                        }
                         className="text-red-500 hover:text-red-700"
                       >
                         ×
@@ -434,7 +440,9 @@ function CreateAds() {
                       <span className="text-base mx-2">{file.name}</span>
                       <button
                         type="button"
-                        onClick={() => handleFileDelete(index, setSelectedFiles2, "photos")}
+                        onClick={() =>
+                          handleFileDelete(index, setSelectedFiles2, "photos")
+                        }
                         className="text-red-500 hover:text-red-700"
                       >
                         ×
@@ -502,11 +510,7 @@ function CreateAds() {
 
         {/* Submit button */}
         <div className="mt-4">
-          <button
-            type="submit"
-            className="app-btn-blue"
-            disabled={btnSpinner}
-          >
+          <button type="submit" className="app-btn-blue" disabled={btnSpinner}>
             {btnSpinner ? (
               <div className="px-10 py-1 flex items-center justify-center">
                 <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>

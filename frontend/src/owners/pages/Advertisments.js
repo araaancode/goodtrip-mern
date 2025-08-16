@@ -1,289 +1,221 @@
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useOwnerAuthStore } from "../stores/authStore";
 import TitleCard from "../components/Cards/TitleCard";
-import { setPageTitle } from "../features/common/headerSlice";
-import axios from "axios";
-import "../components/modal.css";
-import { PiNewspaperClipping } from "react-icons/pi";
-import { IoEyeOutline } from "react-icons/io5";
-import { ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { IoEyeOutline } from "react-icons/io5";
+import axios from "axios";
 
 import { DataGrid } from "@mui/x-data-grid";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { faIR } from "@mui/x-data-grid/locales";
-import { Box, TextField } from "@mui/material";
-import { IconButton } from "@mui/material";
-import { ArrowForwardIos, ArrowBackIos } from "@mui/icons-material";
-import CircularProgress from "@mui/material/CircularProgress";
+import { Box, TextField, CircularProgress, Typography } from "@mui/material";
 
-import dayjs from "dayjs";
-import "dayjs/locale/fa";
-
-const TopSideButtons = () => (
-  <div className="inline-block">
-    <h6>لیست آگهی ها</h6>
-  </div>
-);
+// Configure axios to always send credentials
+axios.defaults.withCredentials = true;
 
 const Advertisments = () => {
+  const { isOwnerAuthenticated, checkAuthOwner } = useOwnerAuthStore();
   const [ads, setAds] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(8);
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 8,
+  });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const dispatch = useDispatch();
+  const fetchAds = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      if (!isOwnerAuthenticated) {
+        await checkAuthOwner();
+        if (!isOwnerAuthenticated) {
+          throw new Error("لطفاً ابتدا وارد شوید");
+        }
+      }
+
+      const response = await axios.get("/api/owners/ads");
+      
+      if (response.data.status === "success") {
+        // تبدیل داده‌ها به ساختار یکسان
+        const processedAds = response.data.ads.map(ad => ({
+          ...ad,
+          id: ad._id,
+          ownerName: ad.owner?.name || "نامشخص",
+          companyName: ad.company?.name || "شرکت نامشخص",
+          formattedPrice: ad.price ? `${ad.price.toLocaleString('fa-IR')} تومان` : "قیمت نامشخص",
+          formattedDate: ad.createdAt ? new Date(ad.createdAt).toLocaleDateString('fa-IR') : "تاریخ نامشخص"
+        }));
+
+        setAds(processedAds);
+      } else {
+        throw new Error(response.data.msg || "خطا در دریافت آگهی‌ها");
+      }
+    } catch (error) {
+      console.error("خطا در دریافت آگهی‌ها:", error);
+      setError(error.response?.data?.msg || error.message);
+      toast.error(error.response?.data?.msg || "خطا در بارگذاری آگهی‌ها");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    dispatch(setPageTitle({ title: "لیست آگهی ها" }));
-  }, []);
-
-  useEffect(() => {
-    const token = localStorage.getItem("userToken");
-    const AuthStr = "Bearer ".concat(token);
-    setLoading(true);
-    axios
-      .get("/api/owners/ads", {
-        headers: { authorization: AuthStr },
-      })
-      .then((response) => {
-        setAds(response.data.ads);
-        console.log(response);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.log("error " + error);
-        setLoading(false);
-      });
-  }, []);
+    fetchAds();
+  }, [isOwnerAuthenticated]);
 
   const columns = [
     {
       field: "_id",
-      headerName: "کد آگهی",
+      headerName: "شناسه آگهی",
       flex: 1,
       renderCell: (params) => (
-        <div className="flex items-center gap-2">
-          <span>{params.value}</span>
-        </div>
+        <Typography variant="body2" noWrap>
+          {params.value}
+        </Typography>
       ),
     },
     {
-      field: "name",
-      headerName: "نام آگهی",
+      field: "title",
+      headerName: "عنوان آگهی",
+      flex: 1,
+      renderCell: (params) => params.value || "—"
+    },
+    {
+      field: "companyName",
+      headerName: "نام شرکت",
       flex: 1,
     },
-
     {
-      field: "company",
-      headerName: "نام مشتری",
-      flex: 1,
-    },
-
-    {
-      field: "price",
+      field: "formattedPrice",
       headerName: "قیمت",
       flex: 1,
     },
     {
-      field: "createdAt",
+      field: "formattedDate",
       headerName: "تاریخ ایجاد",
       flex: 1,
-      renderCell: (params) => (
-        <div className="flex items-center gap-2">
-          <span>{new Date(params.value).toLocaleDateString("fa")}</span>
-        </div>
-      ),
     },
-
     {
-      field: "details",
-      headerName: " جزئیات ",
+      field: "actions",
+      headerName: "جزئیات",
       flex: 0.5,
       sortable: false,
       filterable: false,
       renderCell: (params) => (
         <a href={`/owners/advertisments/${params.row._id}/update`}>
-          <IoEyeOutline className="w-6 h-6 mt-3" />
+          <IoEyeOutline className="w-6 h-6" title="مشاهده جزئیات" />
         </a>
       ),
     },
   ];
 
-  const rows = ads.map((item) => ({
-    id: item._id,
-    _id: item._id,
-    name: item.title || "—",
-    createdAt: item.createdAt || null,
-    company: item.company.name,
-    price: item.price,
-  }));
-
-  const filteredRows = rows.filter((row) =>
-    Object.values(row).some(
-      (value) =>
-        value &&
-        value.toString().toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredRows = ads.filter(ad => 
+    Object.values({
+      _id: ad._id,
+      title: ad.title,
+      companyName: ad.companyName,
+      formattedPrice: ad.formattedPrice,
+      formattedDate: ad.formattedDate,
+    }).some(
+      value => value?.toString().toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
 
-  const theme = createTheme(
-    {
-      direction: "rtl",
-    },
-    faIR
-  );
+  const theme = createTheme({ 
+    direction: "rtl",
+    typography: {
+      fontFamily: "'IRANSans', 'Tahoma', sans-serif",
+    }
+  }, faIR);
 
   return (
-    <>
-      <TitleCard title="" topMargin="mt-2" TopSideButtons={<TopSideButtons />}>
-        {ads.length > 0 ? (
-          <ThemeProvider theme={theme}>
-            <Box sx={{ height: 500, width: "100%" }}>
-              <Box
-                sx={{
-                  mb: 2,
-                  display: "flex",
-                  justifyContent: "flex-start",
-                }}
-              >
-                <TextField
-                  placeholder="جستجو..."
-                  variant="outlined"
-                  size="small"
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  sx={{
-                    width: 300,
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": {
-                        borderColor: "#ccc",
-                        border: "0",
-                      },
-                      "&.Mui-focused fieldset": {
-                        border: 0,
-                      },
-                    },
-                  }}
-                  inputProps={{
-                    style: {
-                      textAlign: "right",
-                      direction: "rtl",
-                      outline: "0",
-                      border: "1px solid	#ccc",
-                      borderRadius: "5px",
-                    },
-                  }}
-                />
-              </Box>
+    <TitleCard title="لیست آگهی‌های شما" topMargin="mt-2">
+      <ThemeProvider theme={theme}>
+        <Box sx={{ height: 500, width: "100%" }}>
+          <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-start" }}>
+            <TextField
+              placeholder="جستجو..."
+              variant="outlined"
+              size="small"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{
+                width: 300,
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": { borderColor: "#ccc" },
+                  "&.Mui-focused fieldset": { borderColor: "#3b82f6" },
+                },
+              }}
+              InputProps={{
+                sx: { 
+                  borderRadius: "8px",
+                  "& input": { 
+                    textAlign: "right",
+                    fontFamily: "'IRANSans', 'Tahoma', sans-serif"
+                  }
+                }
+              }}
+            />
+          </Box>
 
-              <DataGrid
-                rows={filteredRows}
-                columns={columns}
-                pagination
-                paginationMode="client"
-                paginationModel={{ page, pageSize }}
-                onPaginationModelChange={(newModel) => {
-                  setPage(newModel.page);
-                  setPageSize(newModel.pageSize);
-                }}
-                pageSizeOptions={[5, 8, 10, 20]}
-                disableRowSelectionOnClick
-                disableColumnMenu
-                loading={loading} // Enable MUI DataGrid's built-in loading state
-                slots={{
-                  loadingOverlay: () => (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        height: "100%",
-                      }}
-                    >
-                      <CircularProgress />
-                    </Box>
-                  ),
-                  noRowsOverlay: () => (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        height: "100%",
-                      }}
-                    >
-                      <CircularProgress />
-                    </Box>
-                  ),
-                }}
-                slotProps={{
-                  pagination: {
-                    labelRowsPerPage: "تعداد ردیف در هر صفحه:",
-                    nextIconButton: (
-                      <IconButton>
-                        <ArrowForwardIos />
-                      </IconButton>
-                    ),
-                    previousIconButton: (
-                      <IconButton>
-                        <ArrowBackIos />
-                      </IconButton>
-                    ),
-                  },
-                }}
-                localeText={{
-                  ...faIR.components.MuiDataGrid.defaultProps.localeText,
-                  footerPaginationDisplayedRows: (from, to, count) =>
-                    `${from}–${to} از ${count}`,
-                }}
-                sx={{
-                  direction: "rtl",
-                  fontFamily: "IRANSans, Tahoma, sans-serif",
-                  textAlign: "right",
-                  "& .MuiDataGrid-cell": {
-                    textAlign: "right",
-                    justifyContent: "flex-end",
-                  },
-                  "& .MuiDataGrid-columnHeaderTitle": {
-                    textAlign: "right",
-                    justifyContent: "flex-end",
-                    width: "100%",
-                  },
-                  "& .MuiDataGrid-columnHeaders": {
-                    backgroundColor: "#fff",
-                    fontWeight: "bold",
-                  },
-                  "& .MuiDataGrid-row": {
-                    backgroundColor: "#fff",
-                  },
-                  "& .MuiDataGrid-row:hover": {
-                    backgroundColor: "#fff",
-                  },
-                  "& .MuiTablePagination-root": {
-                    direction: "rtl",
-                  },
-                  "& .MuiTablePagination-actions": {
-                    direction: "rtl",
-                  },
-                  "& .MuiTablePagination-actions button svg": {
-                    // transform: "rotate(180deg)", // Flip left/right arrows
-                  },
-                  "& .MuiTablePagination-root .css-1hr2sou-MuiTablePagination-root":
-                    {
-                      display: "none",
-                      hidden: true,
-                    },
-                }}
-              />
+          {error ? (
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              height: 300,
+              color: 'error.main'
+            }}>
+              <Typography fontFamily="'IRANSans', 'Tahoma', sans-serif">
+                {error}
+              </Typography>
             </Box>
-          </ThemeProvider>
-        ) : (
-          <h1>هنوز هیچ آگهی اضافه نشده است.</h1>
-        )}
-      </TitleCard>
-      <ToastContainer />
-    </>
+          ) : (
+            <DataGrid
+              rows={filteredRows}
+              columns={columns}
+              pagination
+              paginationModel={paginationModel}
+              onPaginationModelChange={setPaginationModel}
+              pageSizeOptions={[5, 8, 10, 20]}
+              disableRowSelectionOnClick
+              loading={loading}
+              localeText={{
+                ...faIR.components.MuiDataGrid.defaultProps.localeText,
+                footerPaginationDisplayedRows: ({ from, to, count }) =>
+                  `${from}–${to} از ${count}`,
+                noRowsLabel: "داده‌ای موجود نیست",
+                columnMenuLabel: "منو",
+                columnMenuShowColumns: "نمایش ستون‌ها",
+                columnMenuFilter: "فیلتر",
+                columnMenuHideColumn: "مخفی کردن",
+                columnMenuUnsort: "عدم مرتب‌سازی",
+                columnMenuSortAsc: "مرتب‌سازی صعودی",
+                columnMenuSortDesc: "مرتب‌سازی نزولی",
+              }}
+              sx={{
+                "& .MuiDataGrid-cell": {
+                  textAlign: "right",
+                  justifyContent: "flex-end",
+                  fontFamily: "'IRANSans', 'Tahoma', sans-serif"
+                },
+                "& .MuiDataGrid-columnHeaderTitle": {
+                  fontWeight: "bold",
+                  fontFamily: "'IRANSans', 'Tahoma', sans-serif"
+                },
+                "& .MuiDataGrid-footerContainer": {
+                  direction: "rtl"
+                }
+              }}
+            />
+          )}
+        </Box>
+      </ThemeProvider>
+    </TitleCard>
   );
 };
 

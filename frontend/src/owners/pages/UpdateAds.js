@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import TitleCard from "../components/Cards/TitleCard";
-import Select from "react-tailwindcss-select";
 import "react-tailwindcss-select/dist/index.css";
 import Swal from "sweetalert2";
 import axios from "axios";
@@ -15,8 +14,10 @@ import { CiCircleQuestion } from "react-icons/ci";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Dialog } from "@headlessui/react";
+import { useOwnerAuthStore } from "../stores/authStore";
 
 function UpdateAds() {
+  const { isOwnerAuthenticated } = useOwnerAuthStore();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -27,10 +28,8 @@ function UpdateAds() {
   const [photos, setPhotos] = useState([]);
   const [btnSpinner, setBtnSpinner] = useState(false);
   const [ads, setAds] = useState({});
-
   const [isOpen, setIsOpen] = useState(false);
 
-  let token = localStorage.getItem("userToken");
   let adsId = window.location.href
     .split("/advertisments/")[1]
     .split("/update")[0];
@@ -84,11 +83,11 @@ function UpdateAds() {
     const fileTypeRegex = new RegExp(acceptedFileExtensions.join("|"), "i");
     filesArray.forEach((file) => {
       if (newSelectedFiles.some((f) => f.name === file.name)) {
-        toast.error("File names must be unique");
+        toast.error("نام فایل ها باید منحصر به فرد باشد");
         hasError = true;
       } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
         toast.error(
-          `Only ${acceptedFileExtensions.join(", ")} files are allowed`
+          `فقط فایل های ${acceptedFileExtensions.join(", ")} مجاز هستند`
         );
         hasError = true;
       } else {
@@ -117,11 +116,11 @@ function UpdateAds() {
     const fileTypeRegex = new RegExp(acceptedFileExtensions2.join("|"), "i");
     filesArray.forEach((file) => {
       if (newSelectedFiles2.some((f) => f.name === file.name)) {
-        toast.error("File names must be unique");
+        toast.error("نام فایل ها باید منحصر به فرد باشد");
         hasError = true;
       } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
         toast.error(
-          `Only ${acceptedFileExtensions2.join(", ")} files are allowed`
+          `فقط فایل های ${acceptedFileExtensions2.join(", ")} مجاز هستند`
         );
         hasError = true;
       } else {
@@ -140,54 +139,90 @@ function UpdateAds() {
 
   // Fetch ad data
   useEffect(() => {
-    axios
-      .get(`/api/owners/ads/${adsId}`, {
-        headers: { authorization: `Bearer ${token}` },
-      })
-      .then((res) => {
-        console.log("Fetched ad data:", res.data.ads); // Debug: Check response
-        setName(res.data.ads.company.name);
-        setPhone(res.data.ads.company.phone);
-        setAddress(res.data.ads.company.address);
-        setTitle(res.data.ads.title);
-        setDescription(res.data.ads.description);
-        setPrice(res.data.ads.price);
-        setPhoto(res.data.ads.photo || null); // Ensure photo is set
-        setPhotos(res.data.ads.photos || []); // Ensure photos is an array
-        setAds(res.data.ads);
-      })
-      .catch((error) => {
+    if (!isOwnerAuthenticated) {
+      toast.error("لطفا ابتدا وارد شوید");
+      return;
+    }
+
+    const fetchAdData = async () => {
+      try {
+        const response = await axios.get(`/api/owners/ads/${adsId}`, {
+          withCredentials: true
+        });
+        
+        const adData = response.data.ads;
+        setName(adData.company.name);
+        setPhone(adData.company.phone);
+        setAddress(adData.company.address);
+        setTitle(adData.title);
+        setDescription(adData.description);
+        setPrice(adData.price);
+        setPhoto(adData.photo || null);
+        setPhotos(adData.photos || []);
+        setAds(adData);
+      } catch (error) {
         console.error("Error fetching ad:", error);
-        toast.error("خطا در بارگذاری آگهی. لطفا دوباره تلاش کنید.");
-      });
-  }, [adsId, token]);
+        toast.error(error.response?.data?.message || "خطا در بارگذاری آگهی. لطفا دوباره تلاش کنید.");
+      }
+    };
+
+    fetchAdData();
+  }, [adsId, isOwnerAuthenticated]);
+
+  // Validate form fields
+  const validateForm = () => {
+    let isValid = true;
+
+    if (!name) {
+      setNameError(true);
+      setNameErrorMsg("* نام و نام خانوادگی مشتری باید وارد شود");
+      isValid = false;
+    }
+
+    if (!phone) {
+      setPhoneError(true);
+      setPhoneErrorMsg("* شماره مشتری باید وارد شود");
+      isValid = false;
+    }
+
+    if (!address) {
+      setAddressError(true);
+      setAddressErrorMsg("* آدرس مشتری باید وارد شود");
+      isValid = false;
+    }
+
+    if (!title) {
+      setTitleError(true);
+      setTitleErrorMsg("* عنوان آگهی باید وارد شود");
+      isValid = false;
+    }
+
+    if (!description) {
+      setDescriptionError(true);
+      setDescriptionErrorMsg("* توضیحات آگهی باید وارد شود");
+      isValid = false;
+    }
+
+    return isValid;
+  };
+
+  // Reset error states
+  const resetErrors = () => {
+    setNameError(false);
+    setPhoneError(false);
+    setAddressError(false);
+    setTitleError(false);
+    setDescriptionError(false);
+    setPhotoError(false);
+    setPhotosError(false);
+  };
 
   // Update ad details
   const updateAdsHandle = (e) => {
     e.preventDefault();
-    if (!name) {
-      setNameError(true);
-      setNameErrorMsg("* نام و نام خانوادگی مشتری باید وارد شود");
-      return;
-    }
-    if (!phone) {
-      setPhoneError(true);
-      setPhoneErrorMsg("* شماره مشتری باید وارد شود");
-      return;
-    }
-    if (!address) {
-      setAddressError(true);
-      setAddressErrorMsg("* آدرس مشتری باید وارد شود");
-      return;
-    }
-    if (!title) {
-      setTitleError(true);
-      setTitleErrorMsg("* عنوان آگهی باید وارد شود");
-      return;
-    }
-    if (!description) {
-      setDescriptionError(true);
-      setDescriptionErrorMsg("* توضیحات آگهی باید وارد شود");
+    resetErrors();
+
+    if (!validateForm()) {
       return;
     }
 
@@ -198,109 +233,99 @@ function UpdateAds() {
   // Update main photo
   const updatePhotoFunction = async (e) => {
     e.preventDefault();
+    resetErrors();
+
     if (!selectedFiles.length) {
       setPhotoError(true);
       setPhotoErrorMsg("* تصویر اصلی آگهی باید وارد شود");
       return;
     }
+
     setBtnSpinner(true);
     const formData = new FormData();
     formData.append("photo", selectedFiles[0]);
+
     try {
-      const res = await axios.put(
+      const response = await axios.put(
         `/api/owners/ads/${adsId}/update-photo`,
         formData,
         {
+          withCredentials: true,
           headers: {
             "Content-Type": "multipart/form-data",
-            authorization: `Bearer ${token}`,
           },
         }
       );
-      setBtnSpinner(false);
-      toast.success("تصویر اصلی ویرایش شد", {
-        position: "top-left",
-        autoClose: 5000,
-      });
-      setPhoto(res.data.ads.photo);
-      setAds((prev) => ({ ...prev, photo: res.data.ads.photo }));
+
+      setPhoto(response.data.ads.photo);
+      setAds((prev) => ({ ...prev, photo: response.data.ads.photo }));
+      setSelectedFiles([]);
+      toast.success("تصویر اصلی ویرایش شد");
     } catch (error) {
+      toast.error(error.response?.data?.message || "خطایی در ویرایش تصویر رخ داد. لطفا دوباره تلاش کنید.");
+    } finally {
       setBtnSpinner(false);
-      toast.error("خطایی وجود دارد. دوباره امتحان کنید!", {
-        position: "top-left",
-        autoClose: 5000,
-      });
     }
   };
 
   // Update additional photos
   const updatePhotosFunction = async (e) => {
     e.preventDefault();
+    resetErrors();
+
     if (!selectedFiles2.length) {
       setPhotosError(true);
-      setPhotosErrorMsg("* تصاویر آگهی باید وارد شوند");
+      setPhotosErrorMsg("* حداقل یک تصویر باید وارد شود");
       return;
     }
+
     setBtnSpinner(true);
     const formData = new FormData();
     selectedFiles2.forEach((img) => formData.append("photos", img));
+
     try {
-      const res = await axios.put(
+      const response = await axios.put(
         `/api/owners/ads/${adsId}/update-photos`,
         formData,
         {
+          withCredentials: true,
           headers: {
             "Content-Type": "multipart/form-data",
-            authorization: `Bearer ${token}`,
           },
         }
       );
-      setBtnSpinner(false);
-      toast.success("تصاویر آگهی ویرایش شدند", {
-        position: "top-left",
-        autoClose: 5000,
-      });
-      setPhotos(res.data.ads.photos || []);
-      setAds((prev) => ({ ...prev, photos: res.data.ads.photos }));
+
+      setPhotos(response.data.ads.photos || []);
+      setAds((prev) => ({ ...prev, photos: response.data.ads.photos }));
+      setSelectedFiles2([]);
+      toast.success("تصاویر آگهی ویرایش شدند");
     } catch (error) {
+      toast.error(error.response?.data?.message || "خطایی در ویرایش تصاویر رخ داد. لطفا دوباره تلاش کنید.");
+    } finally {
       setBtnSpinner(false);
-      toast.error("خطایی وجود دارد. دوباره امتحان کنید!", {
-        position: "top-left",
-        autoClose: 5000,
-      });
     }
   };
 
   // Update ads
   const sendUpdateRequest = async () => {
     setIsOpen(false);
-    setBtnSpinner(false);
+    setBtnSpinner(true);
 
-    await axios
-      .put(
+    try {
+      await axios.put(
         `/api/owners/ads/${adsId}/update-ads`,
         { name, phone, address, title, description, price },
         {
-          headers: {
-            "Content-Type": "application/json",
-            authorization: `Bearer ${token}`,
-          },
+          withCredentials: true
         }
-      )
-      .then(() => {
-        setBtnSpinner(false);
-        toast.success("آگهی ویرایش شد", {
-          position: "top-left",
-          autoClose: 5000,
-        });
-      })
-      .catch((error) => {
-        setBtnSpinner(false);
-        toast.error("خطایی وجود دارد. دوباره امتحان کنید!", {
-          position: "top-left",
-          autoClose: 5000,
-        });
-      });
+      );
+      
+      toast.success("آگهی با موفقیت ویرایش شد");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "خطایی در ویرایش آگهی رخ داد. لطفا دوباره تلاش کنید.");
+    } finally {
+      setBtnSpinner(false);
+    }
   };
 
   // Check if image URL is valid
@@ -310,8 +335,6 @@ function UpdateAds() {
     img.src = url;
     return img.complete || img.width + img.height > 0;
   };
-
-  console.log(ads);
 
   return (
     <>
@@ -373,7 +396,7 @@ function UpdateAds() {
                   <span className="font-bold">نام مشتری: </span>
                   {name || "نام و نام خانوادگی مشتری"}
                 </p>
-                <p className="text-gray-700 flex itemsram items-center gap-2">
+                <p className="text-gray-700 flex items-center gap-2">
                   <svg
                     className="w-5 h-5 font-bold"
                     fill="none"
@@ -403,12 +426,12 @@ function UpdateAds() {
                 </p>
               </div>
               <div className="flex-1">
-                {/* {photo && isValidImageUrl(photo) ? (
+                {photo && isValidImageUrl(photo) ? (
                   <img
                     src={photo}
                     alt="Main Ad"
                     className="w-full h-[500px] object-cover rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"
-                    onError={(e) => (e.target.src = fallbackImage)} // Fallback on error
+                    onError={(e) => (e.target.src = fallbackImage)}
                   />
                 ) : (
                   <div className="w-full h-[320px] bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
@@ -416,10 +439,7 @@ function UpdateAds() {
                       تصویر اصلی
                     </span>
                   </div>
-                )} */}
-
-                <img src={photo} alt="ads cover photo" />
-                <a href={photo}>show photo</a>
+                )}
               </div>
             </div>
             <div className="flex flex-wrap justify-start gap-4">
@@ -430,7 +450,7 @@ function UpdateAds() {
                     src={file}
                     alt={`Ad ${index + 1}`}
                     className="w-24 h-24 object-cover rounded-md shadow-sm hover:scale-105 transition-transform duration-200"
-                    onError={(e) => (e.target.src = fallbackImage)} // Fallback on error
+                    onError={(e) => (e.target.src = fallbackImage)}
                   />
                 ))
               ) : (
@@ -662,7 +682,10 @@ function UpdateAds() {
                   <input
                     type="text"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      setNameError(false);
+                    }}
                     className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
                     placeholder="نام و نام خانوادگی مشتری"
                     style={{ borderRadius: "5px" }}
@@ -687,7 +710,10 @@ function UpdateAds() {
                     min={11}
                     max={11}
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      setPhoneError(false);
+                    }}
                     className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
                     placeholder="شماره مشتری"
                     style={{ borderRadius: "5px" }}
@@ -710,7 +736,10 @@ function UpdateAds() {
                   <input
                     type="text"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) => {
+                      setTitle(e.target.value);
+                      setTitleError(false);
+                    }}
                     className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
                     placeholder="عنوان آگهی"
                     style={{ borderRadius: "5px" }}
@@ -733,7 +762,10 @@ function UpdateAds() {
                   <input
                     type="number"
                     value={price}
-                    onChange={(e) => setPrice(e.target.value)}
+                    onChange={(e) => {
+                      setPrice(e.target.value);
+                      setPriceError(false);
+                    }}
                     className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
                     placeholder="قیمت آگهی"
                     style={{ borderRadius: "5px" }}
@@ -759,7 +791,10 @@ function UpdateAds() {
                 <IoIosInformationCircleOutline className="absolute left-3 top-4 text-gray-400 w-6 h-6" />
                 <textarea
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    setDescriptionError(false);
+                  }}
                   className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
                   placeholder="توضیحات"
                   style={{ borderRadius: "5px", resize: "none" }}
@@ -781,7 +816,10 @@ function UpdateAds() {
                 <HiOutlineMapPin className="absolute left-3 top-4 text-gray-400 w-6 h-6" />
                 <textarea
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
+                  onChange={(e) => {
+                    setAddress(e.target.value);
+                    setAddressError(false);
+                  }}
                   className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
                   placeholder="آدرس"
                   style={{ borderRadius: "5px", resize: "none" }}

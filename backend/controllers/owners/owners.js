@@ -353,11 +353,11 @@ exports.singleAds = async (req, res) => {
 // # get create owner ads -> POST -> Owner -> PRIVATE
 // @route = /api/owners/ads
 exports.createAds = async (req, res) => {
-  let company = {};
-
-  company.name = req.body.name;
-  company.phone = req.body.phone;
-  company.address = req.body.address;
+  let company = {
+    name: req.body.name,
+    phone: req.body.phone,
+    address: req.body.address,
+  };
 
   try {
     const { title, description, price, name, phone, address } = req.body;
@@ -379,39 +379,40 @@ exports.createAds = async (req, res) => {
         .json({ error: "Title, cover image, and up to 6 images are required" });
     }
 
-    // Upload cover image to Liara in 'ads/' folder
-    const coverImageKey = `ownerAdsPhotos/photo-${Date.now()}-${
-      coverImageFile.originalname
-    }`;
-    await s3Client.send(
-      new PutObjectCommand({
+    // --- Upload cover image ---
+    const coverImageKey = `ownerAdsPhotos/photo-${Date.now()}-${coverImageFile.originalname}`;
+    const coverUpload = new Upload({
+      client: s3Client,
+      params: {
         Bucket: process.env.LIARA_BUCKET_NAME,
         Key: coverImageKey,
-        Body: coverImageFile.buffer,
+        Body: coverImageFile.buffer, // یا استریم
         ContentType: coverImageFile.mimetype,
-      })
-    );
+      },
+    });
+    await coverUpload.done();
 
-    // Upload additional images to 'ads/' folder
+    // --- Upload additional images ---
     const imageUrls = [];
     for (const file of imageFiles) {
-      const imageKey = `ownerAdsPhotos/photos-${Date.now()}-${
-        file.originalname
-      }`;
-      await s3Client.send(
-        new PutObjectCommand({
+      const imageKey = `ownerAdsPhotos/photos-${Date.now()}-${file.originalname}`;
+      const imageUpload = new Upload({
+        client: s3Client,
+        params: {
           Bucket: process.env.LIARA_BUCKET_NAME,
           Key: imageKey,
           Body: file.buffer,
           ContentType: file.mimetype,
-        })
-      );
+        },
+      });
+      await imageUpload.done();
+
       imageUrls.push(
         `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${imageKey}`
       );
     }
 
-    // Save ads to MongoDB
+    // --- Save ads to MongoDB ---
     const ads = new OwnerAds({
       title,
       description,
