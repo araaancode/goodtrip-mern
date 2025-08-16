@@ -9,6 +9,8 @@ const upload = require("../../utils/upload");
 const storage = multer.memoryStorage();
 const liaraUpload = multer({ storage });
 
+
+
 // owner profile
 router.get("/me", authOwner, ownerCtrls.getMe);
 router.put("/update-profile", authOwner, ownerCtrls.updateProfile);
@@ -46,15 +48,11 @@ router.put("/ads/:adsId/update-ads", authOwner, ownerCtrls.updateAds);
 router.put(
   "/ads/:adsId/update-photo",
   authOwner,
-  upload.ownerAdsPhotosUpload.single("photo"),
+  upload.ownerAdsPhotosUpload.single("photo"), 
   ownerCtrls.updateAdsPhoto
 );
-router.put(
-  "/ads/:adsId/update-photos",
-  authOwner,
-  upload.ownerAdsPhotosUpload.single("photos"),
-  ownerCtrls.updateAdsPhotos
-);
+
+router.put('/ads/:adsId/update-photos', authOwner, liaraUpload.array("photos", 6), ownerCtrls.updateAdsPhotos)
 router.delete("/ads/:adsId", authOwner, ownerCtrls.deleteAds);
 
 // support tickets

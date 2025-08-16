@@ -12,6 +12,7 @@ const House = require("../../models/House");
 const OwnerAds = require("../../models/OwnerAds");
 const OwnerSupportTicket = require("../../models/OwnerSupportTicket");
 const Booking = require("../../models/Booking");
+const fs=require("fs")
 
 // S3 Client for Liara
 const s3Client = new S3Client({
@@ -443,38 +444,6 @@ exports.createAds = async (req, res) => {
 // # update owner ads -> PUT -> Owner -> PRIVATE
 // @route = /api/owners/ads/:adsId/update-ads
 exports.updateAds = async (req, res) => {
-  // try {
-  //   await OwnerAds.findByIdAndUpdate(
-  //     req.params.adsId,
-  //     {
-  //       title: req.body.title,
-  //       description: req.body.description,
-  //       price: req.body.price,
-  //     },
-  //     { new: true }
-  //   ).then((ads) => {
-  //     if (ads) {
-  //       return res.status(StatusCodes.OK).json({
-  //         status: "success",
-  //         msg: "آگهی ویرایش شد",
-  //         ads,
-  //       });
-  //     } else {
-  //       return res.status(StatusCodes.BAD_REQUEST).json({
-  //         status: "failure",
-  //         msg: "آگهی ویرایش نشد",
-  //       });
-  //     }
-  //   });
-  // } catch (error) {
-  //   console.error(error.message);
-  //   res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-  //     status: "failure",
-  //     msg: "خطای داخلی سرور",
-  //     error,
-  //   });
-  // }
-
   try {
     let company = {
       name: req.body.name,
@@ -519,8 +488,23 @@ exports.updateAds = async (req, res) => {
 // @route = /api/owners/ads/:adsId/update-photo
 exports.updateAdsPhoto = async (req, res) => {
   try {
+    const coverImageFile = req.file ? req.file : null;
+
+    // Upload cover image to Liara in 'ads/' folder
+    const coverImageKey = `ownerAdsPhotos/photo-${Date.now()}-${
+      coverImageFile.originalname
+    }`;
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: process.env.LIARA_BUCKET_NAME,
+        Key: coverImageKey,
+        Body: coverImageFile.buffer,
+        ContentType: coverImageFile.mimetype,
+      })
+    );
+
     await OwnerAds.findByIdAndUpdate(req.params.adsId, {
-      photo: req.file.filename,
+      photo: `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${coverImageKey}`,
     }).then((ads) => {
       if (ads) {
         return res.status(StatusCodes.OK).json({
@@ -550,28 +534,66 @@ exports.updateAdsPhoto = async (req, res) => {
 // @route = /api/owners/ads/:adsId/update-photos
 exports.updateAdsPhotos = async (req, res) => {
   try {
-    await OwnerAds.findByIdAndUpdate(req.params.adsId, {
-      photos: req.file.filename,
-    }).then((ads) => {
-      if (ads) {
-        return res.status(StatusCodes.OK).json({
-          status: "success",
-          msg: "تصاویر آگهی ویرایش شدند",
-          ads,
-        });
-      } else {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-          status: "failure",
-          msg: "تصاویر آگهی ویرایش نشدند",
-        });
-      }
-    });
+    const imagePaths = req.files ? req.files : []; // Ensure req.files is an array
+
+    // Upload images to 'ownerAdsPhotos/' folder
+    const imageUrls = [];
+    for (const file of imagePaths) {
+      const imageKey = `ownerAdsPhotos/photos-${Date.now()}-${
+        file.originalname
+      }`;
+
+      // Use Upload from @aws-sdk/lib-storage
+      const upload = new Upload({
+        client: s3Client,
+        params: {
+          Bucket: process.env.LIARA_BUCKET_NAME,
+          Key: imageKey,
+          Body: file.buffer, // Buffer from multer
+          ContentType: file.mimetype,
+        },
+      });
+
+      // Execute the upload
+      await upload.done();
+
+      // Construct the public URL
+      imageUrls.push(
+        `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${imageKey}`
+      );
+    }
+
+    if (imageUrls.length === 0) {
+      return res.status(400).json({
+        error: "حداقل یک تصویر باید وارد کنید..!",
+      });
+    }
+
+    // Update the ownerAds document
+    const updatedAds = await OwnerAds.findByIdAndUpdate(
+      req.params.adsId,
+      { photos: imageUrls },
+      { new: true } // Return the updated document
+    );
+
+    if (updatedAds) {
+      return res.status(StatusCodes.OK).json({
+        status: "success",
+        msg: "تصاویر آگهی ویرایش شدند",
+        ads: updatedAds,
+      });
+    } else {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        status: "failure",
+        msg: "تصاویر آگهی ویرایش نشدند",
+      });
+    }
   } catch (error) {
-    console.error(error.message);
+    console.error("Error:", error.message);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       status: "failure",
       msg: "خطای داخلی سرور",
-      error,
+      error: error.message,
     });
   }
 };
