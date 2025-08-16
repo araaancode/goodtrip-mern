@@ -7,6 +7,7 @@ import "../components/modal.css";
 import { IoEyeOutline } from "react-icons/io5";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useOwnerAuthStore } from "../stores/authStore";
 
 import { DataGrid } from "@mui/x-data-grid";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -31,29 +32,31 @@ const SupportTickets = () => {
   const [loading, setLoading] = useState(true);
   const [pageSize, setPageSize] = useState(8);
   const dispatch = useDispatch();
+  const { isOwnerAuthenticated } = useOwnerAuthStore();
 
   useEffect(() => {
     dispatch(setPageTitle({ title: "لیست تیکت ها" }));
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
-    const token = localStorage.getItem("userToken");
-    const AuthStr = "Bearer ".concat(token);
+    if (!isOwnerAuthenticated) return;
 
-    setLoading(true);
-    axios
-      .get("/api/owners/support-tickets", {
-        headers: { authorization: AuthStr },
-      })
-      .then((response) => {
+    const fetchTickets = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get("/api/owners/support-tickets", {
+          withCredentials: true
+        });
         setSupportTickets(response.data.tickets);
+      } catch (error) {
+        console.error("Error fetching tickets:", error);
+      } finally {
         setLoading(false);
-      })
-      .catch((error) => {
-        console.log("error " + error);
-        setLoading(false);
-      });
-  }, []);
+      }
+    };
+
+    fetchTickets();
+  }, [isOwnerAuthenticated]);
 
   const columns = [
     {
@@ -125,24 +128,6 @@ const SupportTickets = () => {
         return <div className="badge">{status}</div>;
       },
     },
-    // {
-    //   field: "isRead",
-    //   headerName: "خوانده شده/نشده",
-    //   flex: 1,
-    //   renderCell: (params) => (
-    //     <div className="flex items-center gap-2">
-    //       {params.value.isRead ? (
-    //         <span className="mt-5 bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-green-900 dark:text-green-300">
-    //           خوانده شده
-    //         </span>
-    //       ) : (
-    //         <span className="mt-5 bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-red-900 dark:text-red-300">
-    //           خوانده نشده
-    //         </span>
-    //       )}
-    //     </div>
-    //   ),
-    // },
     {
       field: "createdAt",
       headerName: "تاریخ ایجاد",
@@ -247,7 +232,7 @@ const SupportTickets = () => {
                 pageSizeOptions={[5, 8, 10, 20]}
                 disableRowSelectionOnClick
                 disableColumnMenu
-                loading={loading} // Enable MUI DataGrid's built-in loading state
+                loading={loading}
                 slots={{
                   loadingOverlay: () => (
                     <Box
@@ -323,14 +308,6 @@ const SupportTickets = () => {
                   "& .MuiTablePagination-actions": {
                     direction: "rtl",
                   },
-                  "& .MuiTablePagination-actions button svg": {
-                    // transform: "rotate(180deg)", // Flip left/right arrows
-                  },
-                  "& .MuiTablePagination-root .css-1hr2sou-MuiTablePagination-root":
-                    {
-                      display: "none",
-                      hidden: true,
-                    },
                 }}
               />
             </Box>

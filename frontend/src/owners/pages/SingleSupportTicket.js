@@ -1,15 +1,13 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect } from "react";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-
-import Swal from 'sweetalert2'
-import axios from "axios"
+import Swal from 'sweetalert2';
+import axios from "axios";
 import { GoLaw } from "react-icons/go";
 import { IoIosInformationCircleOutline } from "react-icons/io";
-
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
+import { useOwnerAuthStore } from "../stores/authStore";
 
 const showPersianStatus = (c) => {
     if (c === "Open") {
@@ -17,14 +15,13 @@ const showPersianStatus = (c) => {
     }
     else if (c === "In Progress") {
         return "در حال بررسی"
-
     } else {
         return "بسته شده"
     }
 }
 
 function SingleSupportTicket() {
-
+    const { owner: authOwner, token, isOwnerAuthenticated } = useOwnerAuthStore();
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("")
     const [date, setDate] = useState("")
@@ -34,17 +31,15 @@ function SingleSupportTicket() {
     const [btnSpinner, setBtnSpinner] = useState(false)
     const [comment, setComment] = useState('');
 
-    // url
-    let token = localStorage.getItem("userToken")
-    let stId = window.location.href.split('/support-tickets/')[1].split('/update')[0]
-
+    // Get ticket ID from URL
+    const stId = window.location.href.split('/support-tickets/')[1].split('/update')[0]
 
     const modules = {
         toolbar: [
             [{ header: [1, 2, false] }],
             ['bold', 'italic', 'underline', 'strike'],
-            [{ 'align': ['right'] }], // Align text
-            [{ 'direction': 'rtl' }], // RTL button
+            [{ 'align': ['right'] }],
+            [{ 'direction': 'rtl' }],
             [{ list: 'ordered' }, { list: 'bullet' }],
             ['link', 'image'],
             ['clean']
@@ -55,99 +50,93 @@ function SingleSupportTicket() {
     const [commentError, setCommentError] = useState(false)
     const [commentErrorMsg, setCommentErrorMsg] = useState("")
 
-    
-
     // get single support tickets
-
     useEffect(() => {
         const fetchSupportTicket = async () => {
-            await axios.get(`/api/owners/support-tickets/${stId}`, {
-                headers: {
-                    authorization: `Bearer ${token}`,
-                },
-            })
-                .then((response) => {
-                    setTicket(response.data.ticket);
-                    setTitle(response.data.ticket.title)
-                    setDescription(response.data.ticket.description)
-                    setDate(response.data.ticket.createdAt)
-                    setComments(response.data.ticket.comments);
-                    console.log(response.data.ticket.comments);
-                })
-                .catch((error) => {
-                    console.error(error);
+            try {
+                const response = await axios.get(`/api/owners/support-tickets/${stId}`, {
+                    withCredentials: true
                 });
+                setTicket(response.data.ticket);
+                setTitle(response.data.ticket.title)
+                setDescription(response.data.ticket.description)
+                setDate(response.data.ticket.createdAt)
+                setComments(response.data.ticket.comments);
+            } catch (error) {
+                console.error(error);
+            }
         }
-        fetchSupportTicket()
 
+        const fetchOwnerData = async () => {
+            try {
+                const res = await axios.get('/api/owners/me', {
+                    withCredentials: true
+                });
+                setOwner(res.data.owner);
+            } catch (err) {
+                console.log(err);
+            }
+        }
 
-        axios.get(`/api/owners/me`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'authorization': 'Bearer ' + token
-            },
-        }).then((res) => {
-            setOwner(res.data.owner);
-        }).catch((err) => {
-            console.log(err);
-        })
+        if (isOwnerAuthenticated) {
+            fetchSupportTicket();
+            fetchOwnerData();
+        }
+    }, [isOwnerAuthenticated, stId])
 
-    }, [])
-
-    const sendSupportTicket = (e) => {
+    const sendSupportTicket = async (e) => {
         e.preventDefault();
 
         if (!comment || comment === "" || comment === undefined || comment === null) {
             setCommentError(true)
             setCommentErrorMsg("*  پیام باید وارد شود")
-        } else {
-            setBtnSpinner(true)
-
-            try {
-                axios.put(`/api/owners/support-tickets/${stId}/add-comment`, { comment }, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'authorization': 'Bearer ' + token
-                    },
-                }).then((res) => {
-
-                    setBtnSpinner(false)
-
-                    toast.success('پیام فرستاده شد', {
-                        position: "top-left",
-                        autoClose: 5000,
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
-                    })
-
-                })
-
-            } catch (error) {
-                setBtnSpinner(false)
-                console.log('error', error)
-                toast.error('خطایی وجود دارد. دوباره امتحان کنید !', {
-                    position: "top-left",
-                    autoClose: 5000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    progress: undefined,
-                })
-            }
+            return;
         }
 
+        setBtnSpinner(true)
+
+        try {
+            await axios.put(`/api/owners/support-tickets/${stId}/add-comment`, 
+                { comment }, 
+                { withCredentials: true }
+            );
+
+            setBtnSpinner(false)
+            toast.success('پیام فرستاده شد', {
+                position: "top-left",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
+
+            // Refresh comments after sending new one
+            const response = await axios.get(`/api/owners/support-tickets/${stId}`, {
+                withCredentials: true
+            });
+            setComments(response.data.ticket.comments);
+            setComment(''); // Clear the comment input
+
+        } catch (error) {
+            setBtnSpinner(false)
+            console.log('error', error)
+            toast.error('خطایی وجود دارد. دوباره امتحان کنید !', {
+                position: "top-left",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            })
+        }
     }
-
-
 
     return (
         <>
             <div className="grid grid-cols-[2fr_1fr] gap-4 p-4">
-
                 {/* ticket */}
                 <div className="card w-full p-6 bg-base-100 shadow-xl mt-6">
                     <div className="text-xl font-semibold text-right">
@@ -166,8 +155,6 @@ function SingleSupportTicket() {
                                 </div>
                                 <p className="mt-2">{ticket.description}</p>
                             </div>
-
-
 
                             <div className="divider mt-2"></div>
 
@@ -191,38 +178,29 @@ function SingleSupportTicket() {
                                             <p className="mt-2">{c.comment}</p>
                                         </div>
                                     )
-
                                 ))
                             ) : (
                                 <p className="text-gray-700">تیکت شما هنوز پاسخ داده نشده است...</p>
                             )}
 
-
-
-
                             {/* text editor */}
                             <p className="mt-6 mb-2">پیام: </p>
-                            {/* <div style={{ direction: 'rtl', textAlign: 'right' }}>
-                            <ReactQuill
-                                value={comment}
-                                onChange={setComment}
-                                modules={modules}
-                                theme="snow"
-                                className="rtl-editor"
-                            />
-                        </div> */}
-
                             <div className="flex flex-col mb-2">
                                 <div className="relative">
                                     <div className="inline-flex items-center justify-center absolute left-0 h-full w-10 text-gray-400" style={{ bottom: "52px" }}>
                                         <IoIosInformationCircleOutline className="w-6 h-6 text-gray-400" />
                                     </div>
-                                    <textarea style={{ borderRadius: '5px', resize: 'none' }} type="text" value={comment}
-                                        onChange={(e) => setComment(e.target.value)} className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800" placeholder="توضیحات تیکت پشتیبانی "></textarea>
+                                    <textarea 
+                                        style={{ borderRadius: '5px', resize: 'none' }} 
+                                        type="text" 
+                                        value={comment}
+                                        onChange={(e) => setComment(e.target.value)} 
+                                        className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800" 
+                                        placeholder="توضیحات تیکت پشتیبانی"
+                                    />
                                 </div>
                                 <span className='text-red-500 relative text-sm'>{commentError ? commentErrorMsg : ""}</span>
                             </div>
-
 
                             {/* send support ticket button */}
                             <div className="mt-4">
@@ -236,7 +214,6 @@ function SingleSupportTicket() {
                                     )}
                                 </button>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -279,7 +256,6 @@ function SingleSupportTicket() {
                             <li>پشتیبانی سایت</li>
                         </ul>
                     </div>
-
                 </div>
             </div>
             <ToastContainer />
@@ -287,5 +263,4 @@ function SingleSupportTicket() {
     )
 }
 
-
-export default SingleSupportTicket
+export default SingleSupportTicket;
