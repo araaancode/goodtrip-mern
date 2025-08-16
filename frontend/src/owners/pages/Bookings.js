@@ -4,7 +4,6 @@ import TitleCard from "../components/Cards/TitleCard";
 import { setPageTitle } from "../features/common/headerSlice";
 import axios from "axios";
 import "../components/modal.css";
-import { PiNewspaperClipping } from "react-icons/pi";
 import { IoEyeOutline } from "react-icons/io5";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -12,13 +11,10 @@ import "react-toastify/dist/ReactToastify.css";
 import { DataGrid } from "@mui/x-data-grid";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { faIR } from "@mui/x-data-grid/locales";
-import { Box, TextField } from "@mui/material";
-import { IconButton } from "@mui/material";
+import { Box, TextField, IconButton, CircularProgress } from "@mui/material";
 import { ArrowForwardIos, ArrowBackIos } from "@mui/icons-material";
-import CircularProgress from "@mui/material/CircularProgress";
 
-import dayjs from "dayjs";
-import "dayjs/locale/fa";
+import { useOwnerAuthStore } from "../stores/authStore"; 
 
 const TopSideButtons = () => (
   <div className="inline-block">
@@ -35,73 +31,57 @@ const Bookings = () => {
 
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    dispatch(setPageTitle({ title: "لیست رزروها" }));
-  }, []);
+  // ✅ We still listen to auth state, in case you want to check authentication
+  const isOwnerAuthenticated = useOwnerAuthStore(
+    (state) => state.isOwnerAuthenticated
+  );
 
   useEffect(() => {
-    const token = localStorage.getItem("userToken");
-    const AuthStr = "Bearer ".concat(token);
+    dispatch(setPageTitle({ title: "لیست رزروها" }));
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (!isOwnerAuthenticated) return; // Prevent API call if not logged in
+
     setLoading(true);
+
     axios
-      .get("/api/owners/reservations", {
-        headers: { authorization: AuthStr },
-      })
+      .get("/api/owners/reservations", { withCredentials: true }) 
       .then((response) => {
-        setReservations(response.data.reservations);
-        console.log(response);
+        setReservations(response.data.reservations || []);
         setLoading(false);
       })
       .catch((error) => {
-        console.log("error " + error);
+        console.error("Error fetching reservations:", error);
         setLoading(false);
       });
-  }, []);
+  }, [isOwnerAuthenticated]);
 
   const columns = [
-    {
-      field: "_id",
-      headerName: "کد رزرو",
-      flex: 1,
-      renderCell: (params) => (
-        <div className="flex items-center gap-2">
-          <span>{params.value}</span>
-        </div>
-      ),
-    },
-    
-    {
-      field: "price",
-      headerName: "قیمت",
-      flex: 1,
-    },
+    { field: "_id", headerName: "کد رزرو", flex: 1 },
+    { field: "price", headerName: "قیمت", flex: 1 },
     {
       field: "createdAt",
       headerName: "تاریخ ایجاد",
       flex: 1,
       renderCell: (params) => (
-        <div className="flex items-center gap-2">
-          <span>{new Date(params.value).toLocaleDateString("fa")}</span>
-        </div>
+        <span>{new Date(params.value).toLocaleDateString("fa")}</span>
       ),
     },
     {
       field: "isActive",
       headerName: "وضعیت رزرو",
       flex: 1,
-      renderCell: (params) => (
-        <div className="flex items-center gap-2">
-          {params.value ? (
-            <span className="mt-5 bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-green-900 dark:text-green-300">
-              فعال
-            </span>
-          ) : (
-            <span className="mt-5 bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-red-900 dark:text-red-300">
-              غیرفعال
-            </span>
-          )}
-        </div>
-      ),
+      renderCell: (params) =>
+        params.value ? (
+          <span className="mt-5 bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm">
+            فعال
+          </span>
+        ) : (
+          <span className="mt-5 bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm">
+            غیرفعال
+          </span>
+        ),
     },
     {
       field: "details",
@@ -110,7 +90,7 @@ const Bookings = () => {
       sortable: false,
       filterable: false,
       renderCell: (params) => (
-        <a href={`/owners/reservations/${params.row._id}/update`}>
+        <a href={`/owners/bookings/${params.row._id}/update`}>
           <IoEyeOutline className="w-6 h-6 mt-3" />
         </a>
       ),
@@ -136,12 +116,7 @@ const Bookings = () => {
     )
   );
 
-  const theme = createTheme(
-    {
-      direction: "rtl",
-    },
-    faIR
-  );
+  const theme = createTheme({ direction: "rtl" }, faIR);
 
   return (
     <>
@@ -149,13 +124,7 @@ const Bookings = () => {
         {reservations.length > 0 ? (
           <ThemeProvider theme={theme}>
             <Box sx={{ height: 500, width: "100%" }}>
-              <Box
-                sx={{
-                  mb: 2,
-                  display: "flex",
-                  justifyContent: "flex-start",
-                }}
-              >
+              <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-start" }}>
                 <TextField
                   placeholder="جستجو..."
                   variant="outlined"
@@ -164,13 +133,8 @@ const Bookings = () => {
                   sx={{
                     width: 300,
                     "& .MuiOutlinedInput-root": {
-                      "& fieldset": {
-                        borderColor: "#ccc",
-                        border: "0",
-                      },
-                      "&.Mui-focused fieldset": {
-                        border: 0,
-                      },
+                      "& fieldset": { borderColor: "#ccc", border: "0" },
+                      "&.Mui-focused fieldset": { border: 0 },
                     },
                   }}
                   inputProps={{
@@ -198,7 +162,7 @@ const Bookings = () => {
                 pageSizeOptions={[5, 8, 10, 20]}
                 disableRowSelectionOnClick
                 disableColumnMenu
-                loading={loading} // Enable MUI DataGrid's built-in loading state
+                loading={loading}
                 slots={{
                   loadingOverlay: () => (
                     <Box
@@ -225,21 +189,6 @@ const Bookings = () => {
                     </Box>
                   ),
                 }}
-                slotProps={{
-                  pagination: {
-                    labelRowsPerPage: "تعداد ردیف در هر صفحه:",
-                    nextIconButton: (
-                      <IconButton>
-                        <ArrowForwardIos />
-                      </IconButton>
-                    ),
-                    previousIconButton: (
-                      <IconButton>
-                        <ArrowBackIos />
-                      </IconButton>
-                    ),
-                  },
-                }}
                 localeText={{
                   ...faIR.components.MuiDataGrid.defaultProps.localeText,
                   footerPaginationDisplayedRows: (from, to, count) =>
@@ -265,23 +214,6 @@ const Bookings = () => {
                   "& .MuiDataGrid-row": {
                     backgroundColor: "#fff",
                   },
-                  "& .MuiDataGrid-row:hover": {
-                    backgroundColor: "#fff",
-                  },
-                  "& .MuiTablePagination-root": {
-                    direction: "rtl",
-                  },
-                  "& .MuiTablePagination-actions": {
-                    direction: "rtl",
-                  },
-                  "& .MuiTablePagination-actions button svg": {
-                    // transform: "rotate(180deg)", // Flip left/right arrows
-                  },
-                  "& .MuiTablePagination-root .css-1hr2sou-MuiTablePagination-root":
-                    {
-                      display: "none",
-                      hidden: true,
-                    },
                 }}
               />
             </Box>

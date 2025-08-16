@@ -141,11 +141,19 @@ router.put(
 
 router.put("/houses/:houseId/update-map", authOwner, ownerCtrls.updateMap);
 
-
 // reservations
-router.get('/reservations',authOwner, ownerCtrls.allReservations)
-router.get('/reservations/:reservationId',authOwner, ownerCtrls.singleReservation)
+router.get("/reservations", authOwner, ownerCtrls.allReservations);
+router.get(
+  "/reservations/:reservationId",
+  authOwner,
+  ownerCtrls.singleReservation
+);
 
+router.patch(
+  "/reservations/:reservationId/status",
+  authOwner,
+  ownerCtrls.changeBookingStatus
+);
 
 // router.get('/finance', ownerCtrls.finance)
 // router.get('/my-tickets', ownerCtrls.myTickets)

@@ -1369,12 +1369,12 @@ exports.updateBill = async (req, res) => {
     if (house.bill && house.bill.length > 0) {
       // Filter out any null/undefined values and create delete objects
       const deleteObjects = house.bill
-        .filter(url => url) // Remove null/undefined
-        .map(url => {
+        .filter((url) => url) // Remove null/undefined
+        .map((url) => {
           // More robust URL parsing
           const urlParts = url.split(`${process.env.LIARA_BUCKET_NAME}/`);
           return {
-            Key: urlParts.length > 1 ? urlParts[1] : url.split('/').pop()
+            Key: urlParts.length > 1 ? urlParts[1] : url.split("/").pop(),
           };
         });
 
@@ -1408,7 +1408,9 @@ exports.updateBill = async (req, res) => {
       });
 
       await upload.done();
-      imageUrls.push(`${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${imageKey}`);
+      imageUrls.push(
+        `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${imageKey}`
+      );
     }
 
     // Update house with new images
@@ -1437,7 +1439,6 @@ exports.updateBill = async (req, res) => {
 // # owner update house documents -> PUT -> Owner -> PRIVATE
 // @route = /api/owners/houses/:houseId/update-document
 exports.updateDocument = async (req, res) => {
-  
   try {
     // Validate environment variables
     const { LIARA_BUCKET_NAME, LIARA_ENDPOINT } = process.env;
@@ -1695,6 +1696,68 @@ exports.singleReservation = async (req, res) => {
     }
   } catch (error) {
     console.error(error.message);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: "failure",
+      msg: "خطای داخلی سرور",
+      error,
+    });
+  }
+};
+
+// @desc    Change booking status
+// @route   PATCH /api/owners/bookings/:id/status
+// @access  Private (Owner)
+exports.changeBookingStatus = async (req, res) => {
+  try {
+    const { isConfirmed } = req.body;
+
+    // Validate input
+    if (typeof isConfirmed !== "boolean") {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        status: "failure",
+        msg: "لطفا مقدار وضعیت را به صورت صحیح ارسال کنید",
+      });
+    }
+    // Find and update the booking
+    const booking = await Booking.findOneAndUpdate(
+      {
+        _id: req.params.reservationId,
+        owner: req.owner._id,
+      },
+      { isConfirmed },
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
+      .populate("user", "name email phone")
+      .populate("house", "title location price");
+
+    if (!booking) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        status: "failure",
+        msg: `رزروی با شناسه ${req.params.reservationId} یافت نشد`,
+      });
+    }
+
+    // Prepare response data
+    const responseData = {
+      message: isConfirmed ? "رزرو با موفقیت تایید شد" : "رزرو با موفقیت رد شد",
+      booking: {
+        _id: booking._id,
+        checkIn: booking.checkIn,
+        checkOut: booking.checkOut,
+        guests: booking.guests,
+        price: booking.price,
+        isConfirmed: booking.isConfirmed,
+        user: booking.user,
+        house: booking.house,
+      },
+    };
+
+    res.status(StatusCodes.OK).json(responseData);
+  } catch (error) {
+    console.error(error);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       status: "failure",
       msg: "خطای داخلی سرور",

@@ -1,118 +1,103 @@
-import Dashboard from "../pages/protected/Dashboard";
-import Welcome from "../pages/protected/Welcome";
-import Page404 from "../pages/protected/404";
-import Blank from "../pages/protected/Blank";
-import Rents from "../pages/Rents";
-import Bookings from "../pages/Bookings";
-import MyHouses from "../pages/MyHouses";
-import Comments from "../pages/Comments";
-import Rates from "../pages/Rates";
-import Financials from "../pages/Financials";
-import Advertisments from "../pages/Advertisments";
-import Prices from "../pages/Prices";
-import Support from "../pages/Support";
-import Bank from "../pages/Bank";
-import Profile from "../pages/Profile";
-import AddHouse from "../pages/AddHouse";
-import CreateAds from "../pages/CreateAds";
-import CreateSupportTicket from "../pages/CreateSupportTicket";
-import SupportTickets from "../pages/SupportTickets";
-import SingleSupportTicket from "../pages/SingleSupportTicket";
-import UpdateAds from "../pages/UpdateAds";
-import UpdateHouse from "../pages/UpdateHouse";
+import React, { lazy, Suspense } from 'react';
+
+// Lazy load all page components
+const Dashboard = lazy(() => import("../pages/protected/Dashboard"));
+const Welcome = lazy(() => import("../pages/protected/Welcome"));
+const Page404 = lazy(() => import("../pages/protected/404"));
+const Blank = lazy(() => import("../pages/protected/Blank"));
+const Bookings = lazy(() => import("../pages/Bookings"));
+const Booking = lazy(() => import("../pages/Booking"));
+const Advertisments = lazy(() => import("../pages/Advertisments"));
+const Support = lazy(() => import("../pages/Support"));
+const Bank = lazy(() => import("../pages/Bank"));
+const Profile = lazy(() => import("../pages/Profile"));
+const AddHouse = lazy(() => import("../pages/AddHouse"));
+const CreateAds = lazy(() => import("../pages/CreateAds"));
+const CreateSupportTicket = lazy(() => import("../pages/CreateSupportTicket"));
+const SupportTickets = lazy(() => import("../pages/SupportTickets"));
+const SingleSupportTicket = lazy(() => import("../pages/SingleSupportTicket"));
+const UpdateAds = lazy(() => import("../pages/UpdateAds"));
+const UpdateHouse = lazy(() => import("../pages/UpdateHouse"));
+const MyHouses = lazy(() => import("../pages/MyHouses"));
+
+const Loading = () => <div>Loading...</div>
+
+// Wrap each component with Suspense
+const lazyLoadComponent = (Component) => (props) => (
+  <Suspense fallback={<Loading />}>
+    <Component {...props} />
+  </Suspense>
+);
 
 const routes = [
   {
     path: "/dashboard",
-    component: Dashboard,
+    component: lazyLoadComponent(Dashboard),
   },
   {
     path: "/add-house",
-    component: AddHouse,
+    component: lazyLoadComponent(AddHouse),
   },
   {
     path: "/bookings",
-    component: Bookings,
+    component: lazyLoadComponent(Bookings),
   },
-
-  {
-    path: "/financials",
-    component: Financials,
+   {
+    path: "/bookings/:reservationId/update",
+    component: lazyLoadComponent(Booking),
   },
+ 
   {
     path: "/my-houses",
-    component: MyHouses,
+    component: lazyLoadComponent(MyHouses),
   },
   {
     path: "/houses/:houseId/update",
-    component: UpdateHouse,
+    component: lazyLoadComponent(UpdateHouse),
   },
   {
     path: "/create-advertisment",
-    component: CreateAds,
+    component: lazyLoadComponent(CreateAds),
   },
   {
     path: "/advertisments",
-    component: Advertisments,
+    component: lazyLoadComponent(Advertisments),
   },
-
   {
     path: '/advertisments/:adsId/update',
-    component: UpdateAds,
-  },
-
-  {
-    path: "/comments",
-    component: Comments,
+    component: lazyLoadComponent(UpdateAds),
   },
   {
-    path: "/rates",
-    component: Rates,
+    path: '/support-tickets',
+    component: lazyLoadComponent(SupportTickets),
   },
-  {
-    path: "/price",
-    component: Prices,
-  },
-
-  {
-      path: '/support-tickets',
-      component: SupportTickets,
-    },
-
-    
-
   {
     path: '/create-support-ticket',
-    component: CreateSupportTicket,
+    component: lazyLoadComponent(CreateSupportTicket),
   },
-
-    {
-      path: '/support-tickets/:stId',
-      component: SingleSupportTicket,
-    },
-
+  {
+    path: '/support-tickets/:stId',
+    component: lazyLoadComponent(SingleSupportTicket),
+  },
   {
     path: "/support",
-    component: Support,
+    component: lazyLoadComponent(Support),
   },
-
-
   {
     path: "/welcome",
-    component: Welcome,
+    component: lazyLoadComponent(Welcome),
   },
   {
     path: "/blank",
-    component: Blank,
+    component: lazyLoadComponent(Blank),
   },
-
   {
     path: "/bank",
-    component: Bank,
+    component: lazyLoadComponent(Bank),
   },
   {
     path: "/profile",
-    component: Profile,
+    component: lazyLoadComponent(Profile),
   },
 ];
 
