@@ -9,8 +9,8 @@ import axios from "axios";
 
 // hooks
 import useUserAuthStore from "./landing/store/authStore";
-import { useCookAuthStore } from "./cooks/stores/authStore"; 
-import { useOwnerAuthStore } from "./owners/stores/authStore"; 
+import { useCookAuthStore } from "./cooks/stores/authStore";
+import { useOwnerAuthStore } from "./owners/stores/authStore";
 
 // routing
 import PublicRoutes from "./landing/routing/publicRoutes";
@@ -33,19 +33,27 @@ const BookingsPage = lazy(() => import("./landing/pages/BookingsPage"));
 const OrderFoodsPage = lazy(() => import("./landing/pages/OrderFoodsPage"));
 const OrderFoodPage = lazy(() => import("./landing/pages/OrderFoodPage"));
 const BookingPage = lazy(() => import("./landing/pages/BookingPage"));
-const SearchResultsPage = lazy(() => import("./landing/pages/SearchResultsPage"));
+const SearchResultsPage = lazy(() =>
+  import("./landing/pages/SearchResultsPage")
+);
 const FavoritesPage = lazy(() => import("./landing/pages/FavoritesPage"));
 const BankPage = lazy(() => import("./landing/pages/BankPage"));
-const NotificationsPage = lazy(() => import("./landing/pages/NotificationsPage"));
+const NotificationsPage = lazy(() =>
+  import("./landing/pages/NotificationsPage")
+);
 const SupportPage = lazy(() => import("./landing/pages/SupportPage"));
 const BookingBus = lazy(() => import("./landing/pages/BookingBus"));
 const OrderFood = lazy(() => import("./landing/pages/OrderFood"));
 const CreateOrderFood = lazy(() => import("./landing/pages/CreateOrderFood"));
 const CartPage = lazy(() => import("./landing/pages/CartPage"));
 const SingleFoodPage = lazy(() => import("./landing/pages/SingleFoodPage"));
-const ConfirmBookingBus = lazy(() => import("./landing/pages/ConfirmBookingBus"));
+const ConfirmBookingBus = lazy(() =>
+  import("./landing/pages/ConfirmBookingBus")
+);
 const BusTicketsPage = lazy(() => import("./landing/pages/BusTicketsPage"));
-const ForgotPasswordPage = lazy(() => import("./landing/pages/ForgotPasswordPage"));
+const ForgotPasswordPage = lazy(() =>
+  import("./landing/pages/ForgotPasswordPage")
+);
 const NotFound = lazy(() => import("./NotFound"));
 
 // Lazy-loaded cook routes
@@ -60,8 +68,21 @@ const CookUpdateAds = lazy(() => import("./cooks/pages/UpdateAds"));
 const OwnersLayout = lazy(() => import("./owners/containers/Layout"));
 const OwnersLogin = lazy(() => import("./owners/pages/Login"));
 const OwnersRegister = lazy(() => import("./owners/pages/Register"));
-const OwnersForgotPassword = lazy(() => import("./owners/pages/ForgotPassword"));
+const OwnersForgotPassword = lazy(() =>
+  import("./owners/pages/ForgotPassword")
+);
 const OwnersResetPassword = lazy(() => import("./owners/pages/ResetPassword"));
+
+// drivers pages
+const DriversLayout = lazy(() => import("./drivers/containers/Layout"));
+const DriversLogin = lazy(() => import("./drivers/pages/Login"));
+const DriversRegister = lazy(() => import("./drivers/pages/Register"));
+const DriversForgotPassword = lazy(() =>
+  import("./drivers/pages/ForgotPassword")
+);
+const DriversResetPassword = lazy(() =>
+  import("./drivers/pages/ResetPassword")
+);
 
 axios.defaults.baseURL = "http://localhost:5000";
 axios.defaults.withCredentials = true;
@@ -85,25 +106,41 @@ function App() {
           <Route
             path="/cooks/login"
             element={
-              isCookAuthenticated ? <Navigate to="/cooks/welcome" /> : <CooksLogin />
+              isCookAuthenticated ? (
+                <Navigate to="/cooks/welcome" />
+              ) : (
+                <CooksLogin />
+              )
             }
           />
           <Route
             path="/cooks/forgot-password"
             element={
-              isCookAuthenticated ? <Navigate to="/cooks/welcome" /> : <CooksForgotPassword />
+              isCookAuthenticated ? (
+                <Navigate to="/cooks/welcome" />
+              ) : (
+                <CooksForgotPassword />
+              )
             }
           />
           <Route
             path="/cooks/reset-password"
             element={
-              isCookAuthenticated ? <Navigate to="/cooks/welcome" /> : <CookResetPassword />
+              isCookAuthenticated ? (
+                <Navigate to="/cooks/welcome" />
+              ) : (
+                <CookResetPassword />
+              )
             }
           />
           <Route
             path="/cooks/register"
             element={
-              isCookAuthenticated ? <Navigate to="/cooks/welcome" /> : <CooksRegister />
+              isCookAuthenticated ? (
+                <Navigate to="/cooks/welcome" />
+              ) : (
+                <CooksRegister />
+              )
             }
           />
           <Route path="/cooks/*" element={<CooksLayout />} />
@@ -112,46 +149,111 @@ function App() {
           <Route
             path="/owners/login"
             element={
-              isOwnerAuthenticated ? <Navigate to="/owners/welcome" /> : <OwnersLogin />
+              isOwnerAuthenticated ? (
+                <Navigate to="/owners/welcome" />
+              ) : (
+                <OwnersLogin />
+              )
             }
           />
           <Route
             path="/owners/forgot-password"
             element={
-              isOwnerAuthenticated ? <Navigate to="/owners/welcome" /> : <OwnersForgotPassword />
+              isOwnerAuthenticated ? (
+                <Navigate to="/owners/welcome" />
+              ) : (
+                <OwnersForgotPassword />
+              )
             }
           />
           <Route
             path="/owners/reset-password"
             element={
-              isOwnerAuthenticated ? <Navigate to="/owners/welcome" /> : <OwnersResetPassword />
+              isOwnerAuthenticated ? (
+                <Navigate to="/owners/welcome" />
+              ) : (
+                <OwnersResetPassword />
+              )
             }
           />
           <Route
             path="/owners/register"
             element={
-              isOwnerAuthenticated ? <Navigate to="/owners/welcome" /> : <OwnersRegister />
+              isOwnerAuthenticated ? (
+                <Navigate to="/owners/welcome" />
+              ) : (
+                <OwnersRegister />
+              )
             }
           />
           <Route path="/owners/*" element={<OwnersLayout />} />
 
-          {/* Users routes */}
+          {/* ******************************** drivers routes ******************************** */}
+          <Route
+            path="/drivers/login"
+            element={
+              isOwnerAuthenticated ? (
+                <Navigate to="/drivers/welcome" />
+              ) : (
+                <DriversLogin />
+              )
+            }
+          />
+          <Route
+            path="/drivers/forgot-password"
+            element={
+              isOwnerAuthenticated ? (
+                <Navigate to="/drivers/welcome" />
+              ) : (
+                <DriversForgotPassword />
+              )
+            }
+          />
+          <Route
+            path="/drivers/reset-password"
+            element={
+              isOwnerAuthenticated ? (
+                <Navigate to="/drivers/welcome" />
+              ) : (
+                <driversResetPassword />
+              )
+            }
+          />
+          <Route
+            path="/drivers/register"
+            element={
+              isOwnerAuthenticated ? (
+                <Navigate to="/drivers/welcome" />
+              ) : (
+                <DriversRegister />
+              )
+            }
+          />
+          <Route path="/drivers/*" element={<DriversLayout />} />
+
+          {/* ******************************** Users routes ******************************** */}
           <Route
             path="/login"
-            element={isAuthenticated ? <Navigate to="/profile" /> : <LoginPage />}
+            element={
+              isAuthenticated ? <Navigate to="/profile" /> : <LoginPage />
+            }
           />
           <Route
             path="/register"
-            element={isAuthenticated ? <Navigate to="/profile" /> : <RegisterPage />}
+            element={
+              isAuthenticated ? <Navigate to="/profile" /> : <RegisterPage />
+            }
           />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          
+
           {/* Main App Routes (With Layout) */}
           <Route element={<IndexLayout />}>
             <Route index element={<IndexPage />} />
             <Route
               path="/profile"
-              element={isAuthenticated ? <ProfilePage /> : <Navigate to="/login" />}
+              element={
+                isAuthenticated ? <ProfilePage /> : <Navigate to="/login" />
+              }
             />
             <Route path="/account/places" element={<HousesPage />} />
             <Route path="/account/places/new" element={<HousesFormPage />} />
@@ -167,11 +269,16 @@ function App() {
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/support" element={<SupportPage />} />
             <Route path="/booking-bus" element={<BookingBus />} />
-            <Route path="/confirm-bus-ticket/:id" element={<ConfirmBookingBus />} />
+            <Route
+              path="/confirm-bus-ticket/:id"
+              element={<ConfirmBookingBus />}
+            />
             <Route path="/bus-tickets" element={<BusTicketsPage />} />
             <Route
               path="/cart"
-              element={isAuthenticated ? <CartPage /> : <Navigate to="/login" />}
+              element={
+                isAuthenticated ? <CartPage /> : <Navigate to="/login" />
+              }
             />
             <Route path="/order-food" element={<OrderFood />} />
             <Route path="/create-order" element={<CreateOrderFood />} />
