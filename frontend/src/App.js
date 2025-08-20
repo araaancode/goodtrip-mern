@@ -84,6 +84,18 @@ const DriversResetPassword = lazy(() =>
   import("./drivers/pages/ResetPassword")
 );
 
+
+// admin private routes
+const AdminsLayout = lazy(() => import("./admin/containers/Layout"));
+const AdminsLogin = lazy(() => import("./admin/pages/Login"));
+const AdminsRegister = lazy(() => import("./admin/pages/Register"));
+// const AdminsForgotPassword = lazy(() =>
+//   import("./admin/pages/ForgotPassword")
+// );
+// const AdminsResetPassword = lazy(() =>
+//   import("./admin/pages/ResetPassword")
+// );
+
 axios.defaults.baseURL = "http://localhost:5000";
 axios.defaults.withCredentials = true;
 
@@ -102,7 +114,50 @@ function App() {
     <Router>
       <Suspense fallback={<div>Loading...</div>}>
         <Routes>
-          {/* Cooks routes */}
+           {/* ******************************** admins routes ******************************** */}
+          <Route
+            path="/admins/login"
+            element={
+              isOwnerAuthenticated ? (
+                <Navigate to="/admins/welcome" />
+              ) : (
+                <AdminsLogin />
+              )
+            }
+          />
+          {/* <Route
+            path="/admins/forgot-password"
+            element={
+              isOwnerAuthenticated ? (
+                <Navigate to="/admins/welcome" />
+              ) : (
+                <AdminsForgotPassword />
+              )
+            }
+          /> */}
+          {/* <Route
+            path="/admins/reset-password"
+            element={
+              isOwnerAuthenticated ? (
+                <Navigate to="/admins/welcome" />
+              ) : (
+                <AdminsResetPassword />
+              )
+            }
+          /> */}
+          <Route
+            path="/admins/register"
+            element={
+              isOwnerAuthenticated ? (
+                <Navigate to="/admins/welcome" />
+              ) : (
+                <AdminsRegister />
+              )
+            }
+          />
+          <Route path="/admins/*" element={<AdminsLayout />} />
+
+          {/* ******************************** Cooks routes ******************************** */}
           <Route
             path="/cooks/login"
             element={
@@ -145,7 +200,7 @@ function App() {
           />
           <Route path="/cooks/*" element={<CooksLayout />} />
 
-          {/* Owners routes */}
+          {/* ******************************** Owners routes ******************************** */}
           <Route
             path="/owners/login"
             element={
