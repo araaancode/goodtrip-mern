@@ -13,11 +13,10 @@ const {
 } = require("@aws-sdk/client-s3");
 const { Upload } = require("@aws-sdk/lib-storage");
 
-
 // S3 Client for Liara
 const s3Client = new S3Client({
-  region: process.env.LIARA_REGION, 
-  endpoint: process.env.LIARA_ENDPOINT, 
+  region: process.env.LIARA_REGION,
+  endpoint: process.env.LIARA_ENDPOINT,
   credentials: {
     accessKeyId: process.env.LIARA_ACCESS_KEY,
     secretAccessKey: process.env.LIARA_SECRET_KEY,
@@ -342,7 +341,7 @@ exports.singleAds = async (req, res) => {
 // # get create driver ads -> POST -> Driver -> PRIVATE
 // @route = /api/drivers/ads
 exports.createAds = async (req, res) => {
-let company = {
+  let company = {
     name: req.body.name,
     phone: req.body.phone,
     address: req.body.address,
@@ -369,7 +368,9 @@ let company = {
     }
 
     // --- Upload cover image ---
-    const coverImageKey = `driverAdsPhotos/photo-${Date.now()}-${coverImageFile.originalname}`;
+    const coverImageKey = `driverAdsPhotos/photo-${Date.now()}-${
+      coverImageFile.originalname
+    }`;
     const coverUpload = new Upload({
       client: s3Client,
       params: {
@@ -384,7 +385,9 @@ let company = {
     // --- Upload additional images ---
     const imageUrls = [];
     for (const file of imageFiles) {
-      const imageKey = `driverAdsPhotos/photos-${Date.now()}-${file.originalname}`;
+      const imageKey = `driverAdsPhotos/photos-${Date.now()}-${
+        file.originalname
+      }`;
       const imageUpload = new Upload({
         client: s3Client,
         params: {
@@ -550,7 +553,7 @@ exports.updateAdsPhoto = async (req, res) => {
 // # update driver ads photos -> PUT -> Driver -> PRIVATE
 // @route = /api/drivers/ads/:adsId/update-photos
 exports.updateAdsPhotos = async (req, res) => {
-   try {
+  try {
     const imagePaths = req.files ? req.files : []; // Ensure req.files is an array
 
     // Upload images to 'driverAdsPhotos/' folder
@@ -706,36 +709,51 @@ exports.supportTicket = async (req, res) => {
 // @route = /api/drivers/support-tickets
 exports.createSupportTicket = async (req, res) => {
   try {
-    let images = [];
-    if (req.files.images) {
-      req.files.images.forEach((e) => {
-        images.push(e.path);
+    const { title, description } = req.body;
+    const imageFiles = req.files.images || [];
+
+    if ((imageFiles.length > 6 || !title, !description)) {
+      return res.status(400).json({
+        error: "title, cover images, and up to 6 images are required",
       });
     }
 
-    await DriverSupportTicket.create({
+    // Upload additional images to 'food/' folder
+    const imageUrls = [];
+    for (const file of imageFiles) {
+      const imageKey = `driverSupportTickets/images-${Date.now()}-${
+        file.originalname
+      }`;
+      await s3Client.send(
+        new PutObjectCommand({
+          Bucket: process.env.LIARA_BUCKET_NAME,
+          Key: imageKey,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+        })
+      );
+      imageUrls.push(
+        `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${imageKey}`
+      );
+    }
+
+    // Save supportTicket to MongoDB
+    const supportTicket = new DriverSupportTicket({
       title: req.body.title,
       description: req.body.description,
       driver: req.driver._id,
       assignedTo: req.driver._id,
-      images,
-    })
-      .then((data) => {
-        res.status(StatusCodes.CREATED).json({
-          status: "success",
-          msg: "تیکت پشتیبانی ساخته شد",
-          data,
-        });
-      })
-      .catch((error) => {
-        console.error(error);
-        res.status(StatusCodes.BAD_REQUEST).json({
-          status: "failure",
-          error,
-        });
-      });
+      images: imageUrls,
+    });
+
+    await supportTicket.save();
+    res.status(StatusCodes.CREATED).json({
+      status: "success",
+      msg: "تیکت پشتیبانی اضافه شد",
+      data: supportTicket,
+    });
   } catch (error) {
-    console.error(error);
+    console.error("Error creating support ticket:", error);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       status: "failure",
       msg: "خطای داخلی سرور",
@@ -932,7 +950,7 @@ exports.addDriverBus = async (req, res) => {
         capacity: req.body.capacity,
         // photo: req.files.photo[0].filename,
         photo: `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${coverPhotoKey}`,
-        photos:photosUrls,
+        photos: photosUrls,
         options: req.body.options,
       }).then((data) => {
         res.status(StatusCodes.CREATED).json({
@@ -1050,7 +1068,7 @@ exports.updateDriverBusPhoto = async (req, res) => {
 // @route = /api/drivers/bus/:busId/update-photos
 exports.updateDriverBusPhotos = async (req, res) => {
   try {
-    const photoPaths = req.files ? req.files : []; 
+    const photoPaths = req.files ? req.files : [];
 
     // Upload images to 'driverBusPhotos/' folder
     const photoUrls = [];
@@ -1085,7 +1103,7 @@ exports.updateDriverBusPhotos = async (req, res) => {
       });
     }
 
-    // Update the bus 
+    // Update the bus
     const updatedBus = await Bus.findByIdAndUpdate(
       req.params.busId,
       { photos: photoUrls },

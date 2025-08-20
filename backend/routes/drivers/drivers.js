@@ -60,8 +60,7 @@ router.delete('/ads/:adsId', authDriver, driverCtrls.deleteAds)
 // support tickets
 router.get('/support-tickets', authDriver, driverCtrls.supportTickets)
 router.get('/support-tickets/:stId', authDriver, driverCtrls.supportTicket)
-// router.post('/support-tickets', authDriver, driverCtrls.createSupportTicket)
-router.post('/support-tickets', authDriver, driverSupportTicketUpload.fields([
+router.post('/support-tickets', authDriver, liaraUpload.fields([
     { name: 'images', maxCount: 6 }
 ]), driverCtrls.createSupportTicket)
 

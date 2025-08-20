@@ -666,43 +666,6 @@ exports.supportTicket = async (req, res) => {
 // # create cooks support ticket -> POST -> Cook -> PRIVATE
 // @route = /api/cooks/support-tickets
 exports.createSupportTicket = async (req, res) => {
-  // try {
-  //   let images = [];
-  //   if (req.files.images) {
-  //     req.files.images.forEach((e) => {
-  //       images.push(e.path);
-  //     });
-  //   }
-
-  //   await CookSupportTicket.create({
-  //     title: req.body.title,
-  //     description: req.body.description,
-  //     cook: req.cook._id,
-  //     assignedTo: req.cook._id,
-  //     images,
-  //   })
-  //     .then((data) => {
-  //       res.status(StatusCodes.CREATED).json({
-  //         status: "success",
-  //         msg: "تیکت پشتیبانی ساخته شد",
-  //         data,
-  //       });
-  //     })
-  //     .catch((error) => {
-  //       console.error(error);
-  //       res.status(StatusCodes.BAD_REQUEST).json({
-  //         status: "failure",
-  //         error,
-  //       });
-  //     });
-  // } catch (error) {
-  //   console.error(error);
-  //   res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-  //     status: "failure",
-  //     msg: "خطای داخلی سرور",
-  //     error,
-  //   });
-  // }
 
   try {
     const { title, description } = req.body;
