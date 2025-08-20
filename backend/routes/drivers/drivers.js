@@ -9,6 +9,23 @@ const authDriver = require("../../middlewares/authDriver")
 const { driverUpload, driverAdsPhotosUpload, driverBusPhotosUpload, driverSupportTicketUpload } = require("../../utils/upload")
 
 
+const multer = require("multer");
+const upload = require("../../utils/upload");
+const storage = multer.memoryStorage();
+const liaraUpload = multer({ storage });
+
+router.post('/ads', authDriver, liaraUpload.fields([
+    {
+        name: "photo",
+        maxCount: 1,
+    },
+    {
+        name: "photos",
+        maxCount: 6,
+    },
+]), driverCtrls.createAds)
+
+
 
 // basic profile api
 router.get('/me', authDriver, driverCtrls.getMe)
@@ -24,7 +41,7 @@ router.put('/notifications/:ntfId/mark-notification', authDriver, driverCtrls.ma
 // advertisments
 router.get('/ads', authDriver, driverCtrls.allAds)
 router.get('/ads/:adsId', authDriver, driverCtrls.singleAds)
-router.post('/ads', authDriver, driverAdsPhotosUpload.fields([
+router.post('/ads', authDriver, liaraUpload.fields([
     {
         name: "photo",
         maxCount: 1,
@@ -36,8 +53,8 @@ router.post('/ads', authDriver, driverAdsPhotosUpload.fields([
 ]), driverCtrls.createAds)
 
 router.put('/ads/:adsId/update-ads', authDriver, driverCtrls.updateAds)
-router.put('/ads/:adsId/update-photo', authDriver, driverAdsPhotosUpload.single("photo"), driverCtrls.updateAdsPhoto)
-router.put('/ads/:adsId/update-photos', authDriver, driverAdsPhotosUpload.array("photos", 4), driverCtrls.updateAdsPhotos)
+router.put('/ads/:adsId/update-photo', authDriver, liaraUpload.single("photo"), driverCtrls.updateAdsPhoto)
+router.put('/ads/:adsId/update-photos', authDriver, liaraUpload.array("photos", 4), driverCtrls.updateAdsPhotos)
 router.delete('/ads/:adsId', authDriver, driverCtrls.deleteAds)
 
 // support tickets
@@ -53,7 +70,7 @@ router.put('/support-tickets/:stId/add-comment', authDriver, driverCtrls.addComm
 
 // bus
 router.get('/bus', authDriver, driverCtrls.getDriverBus)
-router.post('/bus', authDriver, driverBusPhotosUpload.fields([
+router.post('/bus', authDriver, liaraUpload.fields([
     {
         name: "photo",
         maxCount: 1,
@@ -64,8 +81,8 @@ router.post('/bus', authDriver, driverBusPhotosUpload.fields([
     },
 ]), driverCtrls.addDriverBus)
 router.put('/bus/:busId/update-bus', authDriver, driverCtrls.updateDriverBus)
-router.put('/bus/:busId/update-photo', authDriver, driverBusPhotosUpload.single('photo'), driverCtrls.updateDriverBusPhoto)
-router.put('/bus/:busId/update-photos', authDriver, driverBusPhotosUpload.array('photos',6), driverCtrls.updateDriverBusPhotos)
+router.put('/bus/:busId/update-photo', authDriver, liaraUpload.single('photo'), driverCtrls.updateDriverBusPhoto)
+router.put('/bus/:busId/update-photos', authDriver, liaraUpload.array('photos',6), driverCtrls.updateDriverBusPhotos)
 
 router.get('/finance', authDriver, driverCtrls.finance)
 

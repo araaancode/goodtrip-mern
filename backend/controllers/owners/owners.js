@@ -1,9 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
-const {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectsCommand,
-} = require("@aws-sdk/client-s3");
+
 const { Upload } = require("@aws-sdk/lib-storage");
 const crypto = require("crypto");
 const OwnerNotification = require("../../models/OwnerNotification");
@@ -14,6 +10,12 @@ const OwnerSupportTicket = require("../../models/OwnerSupportTicket");
 const Booking = require("../../models/Booking");
 const fs=require("fs")
 
+
+const {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectsCommand,
+} = require("@aws-sdk/client-s3");
 // S3 Client for Liara
 const s3Client = new S3Client({
   region: process.env.LIARA_REGION, // e.g. 'ir-thr-c1'

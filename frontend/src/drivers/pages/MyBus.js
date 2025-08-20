@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-
 import axios from "axios";
-
 import Select from "react-tailwindcss-select";
 import "react-tailwindcss-select/dist/index.css";
 
@@ -19,7 +17,7 @@ import { ToastContainer, toast, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import { Dialog } from "@headlessui/react";
-
+import { useDriverAuthStore } from "../stores/authStore";
 
 // select options
 const typesList = [
@@ -99,6 +97,8 @@ const optionsList = [
 ];
 
 function MyBus() {
+  const { driver, isDriverAuthenticated } = useDriverAuthStore();
+  
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState("");
@@ -116,7 +116,6 @@ function MyBus() {
   const [photo, setPhoto] = useState(null);
   const [photos, setPhotos] = useState([]);
 
-  const [driver, setDriver] = useState("");
   const [adsId, setAdsId] = useState("");
 
   const [btnSpinner1, setBtnSpinner1] = useState(false);
@@ -135,45 +134,6 @@ function MyBus() {
     .map((ext) => `.${ext}`)
     .join(",");
 
-  const handleFileChange = (event) => {
-    const newFilesArray = Array.from(event.target.files);
-    processFiles(newFilesArray);
-  };
-
-  const processFiles = (filesArray) => {
-    const newSelectedFiles = [...selectedFiles];
-    let hasError = false;
-    const fileTypeRegex = new RegExp(acceptedFileExtensions.join("|"), "i");
-    filesArray.forEach((file) => {
-      if (newSelectedFiles.some((f) => f.name === file.name)) {
-        alert("File names must be unique", "error");
-        hasError = true;
-      } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
-        alert(
-          `Only ${acceptedFileExtensions.join(", ")} files are allowed`,
-          "error"
-        );
-        hasError = true;
-      } else {
-        newSelectedFiles.push(file);
-      }
-    });
-
-    if (!hasError) {
-      setSelectedFiles(newSelectedFiles);
-    }
-  };
-
-  const handleCustomButtonClick = () => {
-    fileInputRef.current.click();
-  };
-
-  const handleFileDelete = (index) => {
-    const updatedFiles = [...selectedFiles];
-    updatedFiles.splice(index, 1);
-    setSelectedFiles(updatedFiles);
-  };
-
   // photos vars
   const [selectedFiles2, setSelectedFiles2] = useState([]);
 
@@ -183,45 +143,6 @@ function MyBus() {
   const acceptedFileTypesString2 = acceptedFileExtensions2
     .map((ext) => `.${ext}`)
     .join(",");
-
-  const handleFileChange2 = (event) => {
-    const newFilesArray = Array.from(event.target.files);
-    processFiles2(newFilesArray);
-  };
-
-  const processFiles2 = (filesArray) => {
-    const newSelectedFiles2 = [...selectedFiles2];
-    let hasError = false;
-    const fileTypeRegex = new RegExp(acceptedFileExtensions2.join("|"), "i");
-    filesArray.forEach((file) => {
-      if (newSelectedFiles2.some((f) => f.name === file.name)) {
-        alert("File names must be unique", "error");
-        hasError = true;
-      } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
-        alert(
-          `Only ${acceptedFileExtensions2.join(", ")} files are allowed`,
-          "error"
-        );
-        hasError = true;
-      } else {
-        newSelectedFiles2.push(file);
-      }
-    });
-
-    if (!hasError) {
-      setSelectedFiles2(newSelectedFiles2);
-    }
-  };
-
-  const handleCustomButtonClick2 = () => {
-    fileInputRef2.current.click();
-  };
-
-  const handleFileDelete2 = (index) => {
-    const updatedFiles = [...selectedFiles2];
-    updatedFiles.splice(index, 1);
-    setSelectedFiles2(updatedFiles);
-  };
 
   // error vars
   const [nameError, setNameError] = useState(false);
@@ -271,136 +192,323 @@ function MyBus() {
 
   const [bus, setBus] = useState(null);
 
-  // url
-  let token = localStorage.getItem("userToken");
+  // Create axios instance with credentials and better error handling
+  const apiClient = axios.create({
+    withCredentials: true,
+    timeout: 10000,
+  });
 
-  const modules = {
-    toolbar: [
-      [{ header: [1, 2, false] }],
-      ["bold", "italic", "underline", "strike"],
-      [{ align: ["right"] }], // Align text
-      [{ direction: "rtl" }], // RTL button
-      [{ list: "ordered" }, { list: "bullet" }],
-      ["link", "image"],
-      ["clean"],
-    ],
+  // Add response interceptor for better error handling
+  apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.code === 'ECONNABORTED') {
+        toast.error("اتصال به سرور زمان‌بر شد. لطفاً دوباره تلاش کنید");
+      } else if (error.response) {
+        const status = error.response.status;
+        const message = error.response.data?.msg || error.response.data?.message || "خطای سرور";
+        
+        switch (status) {
+          case 401:
+            toast.error("احراز هویت ناموفق. لطفاً دوباره وارد شوید");
+            break;
+          case 403:
+            toast.error("دسترسی غیرمجاز");
+            break;
+          case 404:
+            toast.error("منبع مورد نظر یافت نشد");
+            break;
+          case 422:
+            toast.error("داده‌های ارسالی نامعتبر هستند");
+            break;
+          case 500:
+            toast.error("خطای سرور داخلی. لطفاً بعداً تلاش کنید");
+            break;
+          default:
+            toast.error(message);
+        }
+      } else if (error.request) {
+        toast.error("اتصال به سرور برقرار نشد. لطفاً اتصال اینترنت خود را بررسی کنید");
+      } else {
+        toast.error("خطای غیرمنتظره رخ داد");
+      }
+      return Promise.reject(error);
+    }
+  );
+
+  const handleFileChange = (event) => {
+    const newFilesArray = Array.from(event.target.files);
+    processFiles(newFilesArray);
+  };
+
+  const processFiles = (filesArray) => {
+    const newSelectedFiles = [...selectedFiles];
+    let hasError = false;
+    const fileTypeRegex = new RegExp(acceptedFileExtensions.join("|"), "i");
+    
+    filesArray.forEach((file) => {
+      if (newSelectedFiles.some((f) => f.name === file.name)) {
+        toast.error("نام فایل باید منحصر به فرد باشد");
+        hasError = true;
+      } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
+        toast.error(`فقط فایل‌های ${acceptedFileExtensions.join(", ")} مجاز هستند`);
+        hasError = true;
+      } else if (file.size > 5 * 1024 * 1024) {
+        toast.error("حجم فایل نباید بیشتر از ۵ مگابایت باشد");
+        hasError = true;
+      } else {
+        newSelectedFiles.push(file);
+      }
+    });
+
+    if (!hasError) {
+      setSelectedFiles(newSelectedFiles);
+    }
+  };
+
+  const handleCustomButtonClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleFileDelete = (index) => {
+    const updatedFiles = [...selectedFiles];
+    updatedFiles.splice(index, 1);
+    setSelectedFiles(updatedFiles);
+  };
+
+  const handleFileChange2 = (event) => {
+    const newFilesArray = Array.from(event.target.files);
+    processFiles2(newFilesArray);
+  };
+
+  const processFiles2 = (filesArray) => {
+    const newSelectedFiles2 = [...selectedFiles2];
+    let hasError = false;
+    const fileTypeRegex = new RegExp(acceptedFileExtensions2.join("|"), "i");
+    
+    filesArray.forEach((file) => {
+      if (newSelectedFiles2.some((f) => f.name === file.name)) {
+        toast.error("نام فایل باید منحصر به فرد باشد");
+        hasError = true;
+      } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
+        toast.error(`فقط فایل‌های ${acceptedFileExtensions2.join(", ")} مجاز هستند`);
+        hasError = true;
+      } else if (file.size > 5 * 1024 * 1024) {
+        toast.error("حجم فایل نباید بیشتر از ۵ مگابایت باشد");
+        hasError = true;
+      } else {
+        newSelectedFiles2.push(file);
+      }
+    });
+
+    if (!hasError) {
+      setSelectedFiles2(newSelectedFiles2);
+    }
+  };
+
+  const handleCustomButtonClick2 = () => {
+    fileInputRef2.current.click();
+  };
+
+  const handleFileDelete2 = (index) => {
+    const updatedFiles = [...selectedFiles2];
+    updatedFiles.splice(index, 1);
+    setSelectedFiles2(updatedFiles);
+  };
+
+  const validateForm = () => {
+    let isValid = true;
+    const errors = {};
+
+    if (!name || name.trim() === "") {
+      errors.name = "* نام اتوبوس باید وارد شود";
+      isValid = false;
+    }
+
+    if (!model || !model.value) {
+      errors.model = "* مدل اتوبوس باید انتخاب شود";
+      isValid = false;
+    }
+
+    if (!color || color.trim() === "") {
+      errors.color = "* رنگ اتوبوس باید وارد شود";
+      isValid = false;
+    }
+
+    if (!type || !type.value) {
+      errors.type = "* نوع اتوبوس باید انتخاب شود";
+      isValid = false;
+    }
+
+    if (!licensePlate || licensePlate.trim() === "") {
+      errors.licensePlate = "* پلاک اتوبوس باید وارد شود";
+      isValid = false;
+    }
+
+    if (!serviceProvider || serviceProvider.trim() === "") {
+      errors.serviceProvider = "* نام ارائه دهنده اتوبوس باید وارد شود";
+      isValid = false;
+    }
+
+    if (!price || price <= 0) {
+      errors.price = "* قیمت بلیط باید معتبر باشد";
+      isValid = false;
+    }
+
+    if (!seats || seats <= 0 || seats > 100) {
+      errors.seats = "* تعداد صندلی‌ها باید بین ۱ تا ۱۰۰ باشد";
+      isValid = false;
+    }
+
+    if (!capacity || capacity <= 0 || capacity > 100) {
+      errors.capacity = "* ظرفیت اتوبوس باید بین ۱ تا ۱۰۰ باشد";
+      isValid = false;
+    }
+
+    if (!options || options.length === 0) {
+      errors.options = "* حداقل یک امکان اضافی باید انتخاب شود";
+      isValid = false;
+    }
+
+    if (!heat || !heat.value) {
+      errors.heat = "* سیستم گرمایشی باید انتخاب شود";
+      isValid = false;
+    }
+
+    if (!coldness || !coldness.value) {
+      errors.coldness = "* سیستم سرمایشی باید انتخاب شود";
+      isValid = false;
+    }
+
+    if (!description || description.trim() === "") {
+      errors.description = "* توضیحات اتوبوس باید وارد شود";
+      isValid = false;
+    }
+
+    // Set error states
+    setNameError(!!errors.name);
+    setNameErrorMsg(errors.name || "");
+    setModelError(!!errors.model);
+    setModelErrorMsg(errors.model || "");
+    setColorError(!!errors.color);
+    setColorErrorMsg(errors.color || "");
+    setTypeError(!!errors.type);
+    setTypeErrorMsg(errors.type || "");
+    setLicensePlateError(!!errors.licensePlate);
+    setLicensePlateErrorMsg(errors.licensePlate || "");
+    setServiceProviderError(!!errors.serviceProvider);
+    setServiceProviderErrorMsg(errors.serviceProvider || "");
+    setPriceError(!!errors.price);
+    setPriceErrorMsg(errors.price || "");
+    setSeatsError(!!errors.seats);
+    setSeatsErrorMsg(errors.seats || "");
+    setCapacityError(!!errors.capacity);
+    setCapacityErrorMsg(errors.capacity || "");
+    setOptionsError(!!errors.options);
+    setOptionsErrorMsg(errors.options || "");
+    setHeatError(!!errors.heat);
+    setHeatErrorMsg(errors.heat || "");
+    setColdnessError(!!errors.coldness);
+    setColdnessErrorMsg(errors.coldness || "");
+    setDescriptionError(!!errors.description);
+    setDescriptionErrorMsg(errors.description || "");
+
+    return isValid;
   };
 
   // get bus
   useEffect(() => {
     const fetchDriverBus = async () => {
-      await axios
-        .get("/api/drivers/bus", {
-          headers: {
-            authorization: `Bearer ${token}`,
-          },
-        })
-        .then((response) => {
-          setBus(response.data.bus);
-          setName(response.data.bus.name);
-          setColor(response.data.bus.color);
-          setLicensePlate(response.data.bus.licensePlate);
-          setServiceProvider(response.data.bus.serviceProvider);
-          setPrice(response.data.bus.price);
-          setSeats(response.data.bus.seats);
-          setCapacity(response.data.bus.capacity);
-          setPhoto(response.data.bus.photo);
-          setPhotos(response.data.bus.photos);
-          setDescription(response.data.bus.description);
-        })
-        .catch((error) => {
-          console.error(error);
-        });
-    };
-    fetchDriverBus();
+      try {
+        const response = await apiClient.get("/api/drivers/bus");
+        const busData = response.data.bus;
 
-    axios
-      .get(`/api/drivers/me`, {
-        headers: {
-          "Content-Type": "application/json",
-          authorization: "Bearer " + token,
-        },
-      })
-      .then((res) => {
-        setDriver(res.data.driver);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+        console.log(busData)
+        
+        setBus(busData);
+        setName(busData.name || "");
+        setColor(busData.color || "");
+        setLicensePlate(busData.licensePlate || "");
+        setServiceProvider(busData.serviceProvider || "");
+        setPrice(busData.price || 0);
+        setSeats(busData.seats || 0);
+        setCapacity(busData.capacity || 0);
+        setPhoto(busData.photo || null);
+        setPhotos(busData.photos || []);
+        setDescription(busData.description || "");
+        
+        // Set select values if they exist
+        if (busData.model) {
+          const modelOption = modelsList.find(m => m.value === busData.model.toLowerCase().replace(/\s+/g, '-'));
+          if (modelOption) setModel(modelOption);
+        }
+        
+        if (busData.type) {
+          const typeOption = typesList.find(t => t.value === busData.type.toLowerCase().replace(/\s+/g, '-'));
+          if (typeOption) setType(typeOption);
+        }
+        
+        if (busData.heat) {
+          const heatOption = heatList.find(h => h.value === busData.heat.toLowerCase().replace(/\s+/g, '-'));
+          if (heatOption) setHeat(heatOption);
+        }
+        
+        if (busData.coldness) {
+          const coldnessOption = coldnessList.find(c => c.value === busData.coldness.toLowerCase().replace(/\s+/g, '-'));
+          if (coldnessOption) setColdness(coldnessOption);
+        }
+        
+        if (busData.options && busData.options.length > 0) {
+          const selectedOptions = optionsList[0].options.filter(opt => 
+            busData.options.some(busOpt => busOpt.includes(opt.label))
+          );
+          setOptions(selectedOptions);
+        }
+      } catch (error) {
+        console.error("Error fetching bus data:", error);
+        if (error.response?.status === 404) {
+          // Bus not found is expected for new drivers
+          setBus(null);
+        } else if (error.response?.status !== 401) {
+          toast.error("خطا در دریافت اطلاعات اتوبوس");
+        }
+      }
+    };
+
+    fetchDriverBus();
   }, []);
 
   // update bus photo -> bus cover
   const updatePhotoFunction = async (e) => {
     e.preventDefault();
 
-    if (
-      !selectedFiles ||
-      selectedFiles === "" ||
-      selectedFiles === undefined ||
-      selectedFiles === null ||
-      selectedFiles.length === 0
-    ) {
+    if (!selectedFiles || selectedFiles.length === 0) {
       setPhotoError(true);
       setPhotoErrorMsg("* تصویر اصلی اتوبوس باید وارد شود");
-    } else {
-      setBtnSpinner2(true);
+      return;
+    }
 
-      const formData = new FormData();
-      formData.append("photo", selectedFiles[0]);
+    setBtnSpinner2(true);
+    setPhotoError(false);
 
-      try {
-        setBtnSpinner2(true);
+    const formData = new FormData();
+    formData.append("photo", selectedFiles[0]);
 
-        await axios
-          .put(`/api/drivers/bus/${bus._id}/update-photo`, formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              authorization: `Bearer ${token}`,
-            },
-          })
-          .then((res) => {
-            setBtnSpinner2(false);
+    try {
+      const response = await apiClient.put(`/api/drivers/bus/${bus._id}/update-photo`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        timeout: 30000,
+      });
 
-            toast.success("تصویر اصلی ویرایش شد", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-            console.log("Response:", res.data.bus);
-            setPhoto(res.data.bus.photo);
-          })
-          .catch((error) => {
-            setBtnSpinner2(false);
-            console.log("error", error);
-            toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-          });
-      } catch (error) {
-        setBtnSpinner2(false);
-        console.log("error", error);
-        toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-          position: "top-left",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-      } finally {
-        setBtnSpinner2(false);
-      }
+      toast.success("تصویر اصلی با موفقیت ویرایش شد");
+      setPhoto(response.data.bus.photo);
+      setSelectedFiles([]);
+    } catch (error) {
+      console.error("Error updating photo:", error);
+    } finally {
+      setBtnSpinner2(false);
     }
   };
 
@@ -408,77 +516,35 @@ function MyBus() {
   const updatePhotosFunction = async (e) => {
     e.preventDefault();
 
-    if (
-      !selectedFiles2 ||
-      selectedFiles2 === "" ||
-      selectedFiles2 === undefined ||
-      selectedFiles2 === null ||
-      selectedFiles2.length === 0
-    ) {
+    if (!selectedFiles2 || selectedFiles2.length === 0) {
       setPhotosError(true);
-      setPhotosErrorMsg("* تصاویر اتوبوس باید وارد شوند");
-    } else {
-      setBtnSpinner3(true);
+      setPhotosErrorMsg("* حداقل یک تصویر باید انتخاب شود");
+      return;
+    }
 
-      const formData = new FormData();
+    setBtnSpinner3(true);
+    setPhotosError(false);
 
-      selectedFiles2.forEach((img) => {
-        formData.append("photos", img);
+    const formData = new FormData();
+    selectedFiles2.forEach((img) => {
+      formData.append("photos", img);
+    });
+
+    try {
+      const response = await apiClient.put(`/api/drivers/bus/${bus._id}/update-photos`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        timeout: 30000,
       });
 
-      try {
-        setBtnSpinner3(true);
-
-        await axios
-          .put(`/api/drivers/bus/${bus._id}/update-photos`, formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              authorization: `Bearer ${token}`,
-            },
-          })
-          .then((res) => {
-            setBtnSpinner3(false);
-
-            toast.success("تصاویر اتوبوس ویرایش شدند", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-            console.log("Response:", res.data.bus);
-            setPhoto(res.data.bus.photo);
-          })
-          .catch((error) => {
-            setBtnSpinner3(false);
-            console.log("error", error);
-            toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-              position: "top-left",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            });
-          });
-      } catch (error) {
-        setBtnSpinner3(false);
-        console.log("error", error);
-        toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-          position: "top-left",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-      } finally {
-        setBtnSpinner3(false);
-      }
+      toast.success("تصاویر اتوبوس با موفقیت ویرایش شدند");
+      setPhotos(response.data.bus.photos);
+      setSelectedFiles2([]);
+    } catch (error) {
+      console.error("Error updating photos:", error);
+    } finally {
+      setBtnSpinner3(false);
     }
   };
 
@@ -486,215 +552,45 @@ function MyBus() {
   const updateBusHandler = (e) => {
     e.preventDefault();
 
-    if (!name || name === "" || name === undefined || name === null) {
-      setNameError(true);
-      setNameErrorMsg("* نام اتوبوس باید وارد شود");
+    if (!validateForm()) {
+      toast.error("لطفاً تمام فیلدهای ضروری را به درستی پر کنید");
+      return;
     }
 
-    if (!model || model === "" || model === undefined || model === null) {
-      setModelError(true);
-      setModelErrorMsg("* مدل اتوبوس باید وارد شود");
-    }
-
-    if (!color || color === "" || color === undefined || color === null) {
-      setColorError(true);
-      setColorErrorMsg("* رنگ اتوبوس باید وارد شود");
-    }
-
-    if (!type || type === "" || type === undefined || type === null) {
-      setTypeError(true);
-      setTypeErrorMsg("* نوع اتوبوس باید وارد شود");
-    }
-
-    if (
-      !licensePlate ||
-      licensePlate === "" ||
-      licensePlate === undefined ||
-      licensePlate === null
-    ) {
-      setLicensePlateError(true);
-      setLicensePlateErrorMsg("* پلاک اتوبوس باید وارد شود");
-    }
-
-    if (
-      !serviceProvider ||
-      serviceProvider === "" ||
-      serviceProvider === undefined ||
-      serviceProvider === null
-    ) {
-      setServiceProviderError(true);
-      setServiceProviderErrorMsg("* نام ارائه دهنده اتوبوس باید وارد شود");
-    }
-
-    if (!price || price === "" || price === undefined || price === null) {
-      setPriceError(true);
-      setPriceErrorMsg("* قیمت بلیط اتوبوس باید وارد شود");
-    }
-
-    if (!seats || seats === "" || seats === undefined || seats === null) {
-      setSeatsError(true);
-      setSeatsErrorMsg("* تعداد صندلی های اتوبوس باید وارد شود");
-    }
-
-    if (
-      !capacity ||
-      capacity === "" ||
-      capacity === undefined ||
-      capacity === null
-    ) {
-      setCapacityError(true);
-      setCapacityErrorMsg("* ظرفیت اتوبوس باید وارد شود");
-    }
-
-    if (
-      !options ||
-      options === "" ||
-      options === undefined ||
-      options === null
-    ) {
-      setOptionsError(true);
-      setOptionsErrorMsg("* امکانات اضافی اتوبوس باید وارد شود");
-    }
-
-    if (!heat || heat === "" || heat === undefined || heat === null) {
-      setHeatError(true);
-      setHeatErrorMsg("* سیستم سرمایشی اتوبوس باید وارد شود");
-    }
-
-    if (
-      !coldness ||
-      coldness === "" ||
-      coldness === undefined ||
-      coldness === null
-    ) {
-      setColdnessError(true);
-      setColdnessErrorMsg("* سیستم گرمایشی اتوبوس باید وارد شود");
-    }
-
-    if (
-      !description ||
-      description === "" ||
-      description === undefined ||
-      description === null
-    ) {
-      setDescriptionError(true);
-      setDescriptionErrorMsg("* توضیحات اتوبوس باید وارد شود");
-    }
-
-    if (model.length === 0) {
-      setModelError(true);
-      setModelErrorMsg("* مدل اتوبوس باید وارد شود");
-    }
-
-    if (type.length === 0) {
-      setTypeError(true);
-      setTypeErrorMsg("* نوع اتوبوس باید وارد شود");
-    }
-
-    if (heat.length === 0) {
-      setHeatError(true);
-      setHeatErrorMsg("* امکانات گرمایشی اتوبوس باید وارد شود");
-    }
-
-    if (coldness.length === 0) {
-      setColdnessError(true);
-      setColdnessErrorMsg("* امکانات سرمایشی اتوبوس باید وارد شود");
-    } else {
-      setBtnSpinner1(true);
-      setIsOpen(true);
-
-      // toast(
-      //   ({ closeToast }) => (
-      //     <div style={styles.toastBox}>
-      //       <p style={styles.message}>آیا از ویرایش اتوبوس اطمینان دارید؟</p>
-      //       <div style={styles.buttonRow}>
-      //         <button
-      //           onClick={handleCancel}
-      //           style={{ ...styles.button, ...styles.cancel }}
-      //         >
-      //           لغو
-      //         </button>
-      //         <button
-      //           onClick={handleConfirm}
-      //           style={{ ...styles.button, ...styles.confirm }}
-      //         >
-      //           تایید
-      //         </button>
-      //       </div>
-      //     </div>
-      //   ),
-      //   {
-      //     autoClose: false,
-      //     closeOnClick: false,
-      //     closeButton: false,
-      //     position: "top-left",
-      //     draggable: false,
-      //     transition: Slide,
-      //     style: { width: "300px" },
-      //   }
-      // );
-    }
+    setBtnSpinner1(true);
+    setIsOpen(true);
   };
 
-  const sendUpdateRequest = () => {
+  const sendUpdateRequest = async () => {
     setIsOpen(false);
 
-    let newOptions = [];
-
-    options.forEach((opt) => {
-      newOptions.push(opt.label);
-    });
-
     try {
-      axios
-        .put(
-          `/api/drivers/bus/${bus._id}/update-bus`,
-          {
-            name,
-            model: model.label,
-            color,
-            type: type.label,
-            licensePlate,
-            serviceProvider,
-            price,
-            seats,
-            capacity,
-            options: newOptions,
-            heat: heat.label,
-            coldness: coldness.label,
-            description,
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              authorization: "Bearer " + token,
-            },
-          }
-        )
-        .then((res) => {
-          setBtnSpinner1(false);
-          toast.success("اتوبوس ویرایش شد", {
-            position: "top-left",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-          });
-        });
+      const newOptions = options.map(opt => opt.label);
+
+      await apiClient.put(
+        `/api/drivers/bus/${bus._id}/update-bus`,
+        {
+          name,
+          model: model.label,
+          color,
+          type: type.label,
+          licensePlate,
+          serviceProvider,
+          price,
+          seats,
+          capacity,
+          options: newOptions,
+          heat: heat.label,
+          coldness: coldness.label,
+          description,
+        }
+      );
+
+      toast.success("اطلاعات اتوبوس با موفقیت ویرایش شد");
     } catch (error) {
+      console.error("Error updating bus:", error);
+    } finally {
       setBtnSpinner1(false);
-      console.log("error", error);
-      toast.error("خطایی وجود دارد. دوباره امتحان کنید !", {
-        position: "top-left",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
     }
   };
 
@@ -722,14 +618,16 @@ function MyBus() {
             <div className="flex items-center justify-center">
               <button
                 className="mt-4 rounded bg-blue-900 px-8 py-2 mx-2 text-white"
-                onClick={() => sendUpdateRequest()}
+                onClick={sendUpdateRequest}
+                disabled={btnSpinner1}
               >
-                تایید
+                {btnSpinner1 ? "در حال ارسال..." : "تایید"}
               </button>
 
               <button
                 className="mt-4 rounded bg-gray-300 px-8 py-2 mx-2"
                 onClick={() => setIsOpen(false)}
+                disabled={btnSpinner1}
               >
                 لغو
               </button>
@@ -740,6 +638,30 @@ function MyBus() {
 
       {bus ? (
         <div className="flex flex-col gap-6 p-4 rtl text-right w-full">
+          {/* Error summary display */}
+          {(nameError || modelError || typeError || colorError || licensePlateError || 
+           serviceProviderError || priceError || seatsError || capacityError || 
+           optionsError || heatError || coldnessError || descriptionError) && (
+            <div className="border border-red-300 bg-red-50 rounded-lg p-4 mb-4">
+              <h3 className="text-red-800 font-bold mb-2">خطاهای موجود:</h3>
+              <ul className="text-red-600 text-sm list-disc pr-5">
+                {nameError && <li>{nameErrorMsg}</li>}
+                {modelError && <li>{modelErrorMsg}</li>}
+                {typeError && <li>{typeErrorMsg}</li>}
+                {colorError && <li>{colorErrorMsg}</li>}
+                {licensePlateError && <li>{licensePlateErrorMsg}</li>}
+                {serviceProviderError && <li>{serviceProviderErrorMsg}</li>}
+                {priceError && <li>{priceErrorMsg}</li>}
+                {seatsError && <li>{seatsErrorMsg}</li>}
+                {capacityError && <li>{capacityErrorMsg}</li>}
+                {optionsError && <li>{optionsErrorMsg}</li>}
+                {heatError && <li>{heatErrorMsg}</li>}
+                {coldnessError && <li>{coldnessErrorMsg}</li>}
+                {descriptionError && <li>{descriptionErrorMsg}</li>}
+              </ul>
+            </div>
+          )}
+
           {/* First Card */}
           <div className="border rounded-xl shadow-lg py-4 px-8 w-full bg-white">
             <div className="flex items-center justify-between gap-4 mt-4">
@@ -747,13 +669,9 @@ function MyBus() {
                 <h2 className="text-lg font-bold">{bus.name}</h2>
                 <p className="text-sm text-gray-600 my-2">{bus.description}</p>
                 <ul className="list-disc pr-5 mt-2 text-sm text-gray-700">
-                  {/* {bus.options.map((opt) => (
-                                        <li>{opt.replace(",", " ")}</li>
-                                    ))} */}
-
-                  {/* {bus.options.map((item, index) => (
-                                       <li key={index}>{item.replace(","," ")}</li>
-                                    ))} */}
+                  {bus.options && bus.options.map((opt, index) => (
+                    <li key={index}>{opt.replace(/,/g, "، ")}</li>
+                  ))}
                 </ul>
               </div>
               <img
@@ -763,10 +681,10 @@ function MyBus() {
               />
             </div>
             <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mt-6">
-              {bus.photos.map((item, index) => (
+              {bus.photos && bus.photos.map((item, index) => (
                 <img
                   key={index}
-                  src={item[index]}
+                  src={item}
                   alt="Bus Gallery"
                   className="w-full h-20 object-cover rounded-lg"
                 />
@@ -790,11 +708,6 @@ function MyBus() {
                   >
                     تصویر اصلی اتوبوس{" "}
                   </label>
-
-                  {/* <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                                    <PiImage className="w-6 h-6 text-gray-400" />
-                                </div> */}
-                  {/* <input type="file" onChange={(e) => setPhoto(e.target.files[0])} name="photo" id="photo" className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800" /> */}
                   <div className="grid grid-cols-1 md:grid-cols-3 border border-gray-300 rounded-md py-2 focus:outline-none focus:border-blue-800">
                     <div className="flex items-center">
                       <button
@@ -860,13 +773,18 @@ function MyBus() {
                       )}
                     </div>
                   </div>
-                  <span className="text-red-500 relative text-sm">
-                    {photoError ? photoErrorMsg : ""}
-                  </span>
+                  {photoError && (
+                    <span className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {photoErrorMsg}
+                    </span>
+                  )}
                   <div className="mt-6">
                     <img
                       className="rounded-md"
-                      src={`../../../../uploads/cookAdsDir/${photo}`}
+                      src={photo}
                       style={{ width: "50px", height: "50px" }}
                       alt="تصویر اصلی اتوبوس"
                     />
@@ -874,6 +792,7 @@ function MyBus() {
                   <button
                     className="app-btn-blue mt-4"
                     onClick={updatePhotoFunction}
+                    disabled={btnSpinner2}
                   >
                     {btnSpinner2 ? (
                       <div className="px-10 py-1 flex items-center justify-center">
@@ -933,11 +852,6 @@ function MyBus() {
                               className="flex justify-between items-center border-b py-2"
                             >
                               <div className="flex items-center">
-                                {/* <img
-                                                            src={window.location.origin + file.name}
-                                                            alt="File"
-                                                            className="w-10 h-10 mr-2"
-                                                        /> */}
                                 <span className="text-base mx-2">
                                   {file.name}
                                 </span>
@@ -972,9 +886,14 @@ function MyBus() {
                       )}
                     </div>
                   </div>
-                  <span className="text-red-500 relative text-sm">
-                    {photosError ? photosErrorMsg : ""}
-                  </span>
+                  {photosError && (
+                    <span className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {photosErrorMsg}
+                    </span>
+                  )}
                   <div className="mt-6 flex justify-start">
                     {photos.map((file, index) => (
                       <img
@@ -982,7 +901,7 @@ function MyBus() {
                         key={index + 1}
                         src={file}
                         style={{ width: "50px", height: "50px" }}
-                        alt="تصویر اصلی اتوبوس"
+                        alt="تصویر اتوبوس"
                       />
                     ))}
                   </div>
@@ -990,6 +909,7 @@ function MyBus() {
                   <button
                     className="app-btn-blue mt-4"
                     onClick={updatePhotosFunction}
+                    disabled={btnSpinner3}
                   >
                     {btnSpinner3 ? (
                       <div className="px-10 py-1 flex items-center justify-center">
@@ -1023,14 +943,27 @@ function MyBus() {
                       style={{ borderRadius: "5px" }}
                       type="text"
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                      onChange={(e) => {
+                        setName(e.target.value);
+                        if (nameError) {
+                          setNameError(false);
+                          setNameErrorMsg("");
+                        }
+                      }}
+                      className={`text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border w-full py-2 focus:outline-none ${
+                        nameError ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-blue-800"
+                      }`}
                       placeholder="نام اتوبوس"
                     />
                   </div>
-                  <span className="text-red-500 relative text-sm">
-                    {nameError ? nameErrorMsg : ""}
-                  </span>
+                  {nameError && (
+                    <span className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {nameErrorMsg}
+                    </span>
+                  )}
                 </div>
 
                 {/* models */}
@@ -1050,15 +983,26 @@ function MyBus() {
                     </div>
                     <Select
                       value={model}
-                      onChange={(e) => setModel(e)}
+                      onChange={(e) => {
+                        setModel(e);
+                        if (modelError) {
+                          setModelError(false);
+                          setModelErrorMsg("");
+                        }
+                      }}
                       options={modelsList}
                       placeholder="انتخاب مدل اتوبوس"
-                      classNames={`placholder-gray-400`}
+                      classNames={`placholder-gray-400 ${modelError ? "border-red-500" : ""}`}
                     />
                   </div>
-                  <span className="text-red-500 relative text-sm">
-                    {modelError ? modelErrorMsg : ""}
-                  </span>
+                  {modelError && (
+                    <span className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {modelErrorMsg}
+                    </span>
+                  )}
                 </div>
 
                 {/* color */}
@@ -1077,14 +1021,27 @@ function MyBus() {
                       style={{ borderRadius: "5px" }}
                       type="text"
                       value={color}
-                      onChange={(e) => setColor(e.target.value)}
-                      className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                      onChange={(e) => {
+                        setColor(e.target.value);
+                        if (colorError) {
+                          setColorError(false);
+                          setColorErrorMsg("");
+                        }
+                      }}
+                      className={`text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border w-full py-2 focus:outline-none ${
+                        colorError ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-blue-800"
+                      }`}
                       placeholder="رنگ وسیله"
                     />
                   </div>
-                  <span className="text-red-500 relative text-sm">
-                    {colorError ? colorErrorMsg : ""}
-                  </span>
+                  {colorError && (
+                    <span className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {colorErrorMsg}
+                    </span>
+                  )}
                 </div>
 
                 {/* type */}
@@ -1105,15 +1062,26 @@ function MyBus() {
                     </div>
                     <Select
                       value={type}
-                      onChange={(e) => setType(e)}
+                      onChange={(e) => {
+                        setType(e);
+                        if (typeError) {
+                          setTypeError(false);
+                          setTypeErrorMsg("");
+                        }
+                      }}
                       options={typesList}
                       placeholder="انتخاب نوع اتوبوس"
-                      classNames={`placholder-gray-400`}
+                      classNames={`placholder-gray-400 ${typeError ? "border-red-500" : ""}`}
                     />
                   </div>
-                  <span className="text-red-500 relative text-sm">
-                    {typeError ? typeErrorMsg : ""}
-                  </span>
+                  {typeError && (
+                    <span className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {typeErrorMsg}
+                    </span>
+                  )}
                 </div>
 
                 {/* pelak -> licensePlate */}
@@ -1132,14 +1100,27 @@ function MyBus() {
                       style={{ borderRadius: "5px" }}
                       type="text"
                       value={licensePlate}
-                      onChange={(e) => setLicensePlate(e.target.value)}
-                      className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                      onChange={(e) => {
+                        setLicensePlate(e.target.value);
+                        if (licensePlateError) {
+                          setLicensePlateError(false);
+                          setLicensePlateErrorMsg("");
+                        }
+                      }}
+                      className={`text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border w-full py-2 focus:outline-none ${
+                        licensePlateError ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-blue-800"
+                      }`}
                       placeholder="پلاک "
                     />
                   </div>
-                  <span className="text-red-500 relative text-sm">
-                    {licensePlateError ? licensePlateErrorMsg : ""}
-                  </span>
+                  {licensePlateError && (
+                    <span className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {licensePlateErrorMsg}
+                    </span>
+                  )}
                 </div>
 
                 {/* service name provider */}
@@ -1158,14 +1139,27 @@ function MyBus() {
                       style={{ borderRadius: "5px" }}
                       type="text"
                       value={serviceProvider}
-                      onChange={(e) => setServiceProvider(e.target.value)}
-                      className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                      onChange={(e) => {
+                        setServiceProvider(e.target.value);
+                        if (serviceProviderError) {
+                          setServiceProviderError(false);
+                          setServiceProviderErrorMsg("");
+                        }
+                      }}
+                      className={`text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border w-full py-2 focus:outline-none ${
+                        serviceProviderError ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-blue-800"
+                      }`}
                       placeholder="نام ارائه دهنده سرویس"
                     />
                   </div>
-                  <span className="text-red-500 relative text-sm">
-                    {serviceProviderError ? serviceProviderErrorMsg : ""}
-                  </span>
+                  {serviceProviderError && (
+                    <span className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {serviceProviderErrorMsg}
+                    </span>
+                  )}
                 </div>
 
                 {/* price */}
@@ -1183,16 +1177,29 @@ function MyBus() {
                     </div>
                     <input
                       style={{ borderRadius: "5px" }}
-                      type="text"
+                      type="number"
                       value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                      onChange={(e) => {
+                        setPrice(e.target.value);
+                        if (priceError) {
+                          setPriceError(false);
+                          setPriceErrorMsg("");
+                        }
+                      }}
+                      className={`text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border w-full py-2 focus:outline-none ${
+                        priceError ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-blue-800"
+                      }`}
                       placeholder=" قیمت به ازای هر نفر"
                     />
                   </div>
-                  <span className="text-red-500 relative text-sm">
-                    {priceError ? priceErrorMsg : ""}
-                  </span>
+                  {priceError && (
+                    <span className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {priceErrorMsg}
+                    </span>
+                  )}
                 </div>
 
                 {/* seats */}
@@ -1211,16 +1218,29 @@ function MyBus() {
                       style={{ borderRadius: "5px" }}
                       type="number"
                       value={seats}
-                      min={0}
-                      max={50}
-                      onChange={(e) => setSeats(e.target.value)}
-                      className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                      min={1}
+                      max={100}
+                      onChange={(e) => {
+                        setSeats(e.target.value);
+                        if (seatsError) {
+                          setSeatsError(false);
+                          setSeatsErrorMsg("");
+                        }
+                      }}
+                      className={`text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border w-full py-2 focus:outline-none ${
+                        seatsError ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-blue-800"
+                      }`}
                       placeholder="تعداد صندلی ها"
                     />
                   </div>
-                  <span className="text-red-500 relative text-sm">
-                    {seatsError ? seatsErrorMsg : ""}
-                  </span>
+                  {seatsError && (
+                    <span className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {seatsErrorMsg}
+                    </span>
+                  )}
                 </div>
 
                 {/* capacity */}
@@ -1239,16 +1259,29 @@ function MyBus() {
                       style={{ borderRadius: "5px" }}
                       type="number"
                       value={capacity}
-                      min={0}
-                      max={50}
-                      onChange={(e) => setCapacity(e.target.value)}
-                      className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                      min={1}
+                      max={100}
+                      onChange={(e) => {
+                        setCapacity(e.target.value);
+                        if (capacityError) {
+                          setCapacityError(false);
+                          setCapacityErrorMsg("");
+                        }
+                      }}
+                      className={`text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border w-full py-2 focus:outline-none ${
+                        capacityError ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-blue-800"
+                      }`}
                       placeholder="ظرفیت اتوبوس "
                     />
                   </div>
-                  <span className="text-red-500 relative text-sm">
-                    {capacityError ? capacityErrorMsg : ""}
-                  </span>
+                  {capacityError && (
+                    <span className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {capacityErrorMsg}
+                    </span>
+                  )}
                 </div>
 
                 {/* options */}
@@ -1259,8 +1292,8 @@ function MyBus() {
                   >
                     امکانات اضافی
                   </label>
-                  {bus.options.map((opt) => (
-                    <small className="my-2 font-sm text-gray-500">
+                  {bus.options && bus.options.map((opt, index) => (
+                    <small key={index} className="my-2 font-sm text-gray-500">
                       امکانات انتخاب شده: * {opt.replace(/,/g, "، ")}
                     </small>
                   ))}
@@ -1270,10 +1303,17 @@ function MyBus() {
                     </div>
                     <Select
                       value={options}
-                      onChange={(e) => setOptions(e)}
+                      onChange={(e) => {
+                        setOptions(e);
+                        if (optionsError) {
+                          setOptionsError(false);
+                          setOptionsErrorMsg("");
+                        }
+                      }}
                       options={optionsList}
                       isMultiple={true}
                       placeholder="انتخاب امکانات اضافی"
+                      classNames={`${optionsError ? "border-red-500" : ""}`}
                       formatGroupLabel={(data) => (
                         <div
                           className={`py-2 text-xs flex items-center justify-between`}
@@ -1286,9 +1326,14 @@ function MyBus() {
                       )}
                     />
                   </div>
-                  <span className="text-red-500 relative text-sm">
-                    {optionsError ? optionsErrorMsg : ""}
-                  </span>
+                  {optionsError && (
+                    <span className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {optionsErrorMsg}
+                    </span>
+                  )}
                 </div>
 
                 {/* heat */}
@@ -1309,15 +1354,26 @@ function MyBus() {
                     </div>
                     <Select
                       value={heat}
-                      onChange={(e) => setHeat(e)}
+                      onChange={(e) => {
+                        setHeat(e);
+                        if (heatError) {
+                          setHeatError(false);
+                          setHeatErrorMsg("");
+                        }
+                      }}
                       options={heatList}
                       placeholder="انتخاب سیستم گرمایشی"
-                      classNames={`placholder-gray-400`}
+                      classNames={`placholder-gray-400 ${heatError ? "border-red-500" : ""}`}
                     />
                   </div>
-                  <span className="text-red-500 relative text-sm">
-                    {heatError ? heatErrorMsg : ""}
-                  </span>
+                  {heatError && (
+                    <span className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {heatErrorMsg}
+                    </span>
+                  )}
                 </div>
 
                 {/* coldness */}
@@ -1338,15 +1394,26 @@ function MyBus() {
                     </div>
                     <Select
                       value={coldness}
-                      onChange={(e) => setColdness(e)}
+                      onChange={(e) => {
+                        setColdness(e);
+                        if (coldnessError) {
+                          setColdnessError(false);
+                          setColdnessErrorMsg("");
+                        }
+                      }}
                       options={coldnessList}
                       placeholder="انتخاب سیستم سرمایشی"
-                      classNames={`placholder-gray-400`}
+                      classNames={`placholder-gray-400 ${coldnessError ? "border-red-500" : ""}`}
                     />
                   </div>
-                  <span className="text-red-500 relative text-sm">
-                    {coldnessError ? coldnessErrorMsg : ""}
-                  </span>
+                  {coldnessError && (
+                    <span className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {coldnessErrorMsg}
+                    </span>
+                  )}
                 </div>
 
                 {/*  description */}
@@ -1368,20 +1435,34 @@ function MyBus() {
                       style={{ borderRadius: "5px", resize: "none" }}
                       type="text"
                       value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                      onChange={(e) => {
+                        setDescription(e.target.value);
+                        if (descriptionError) {
+                          setDescriptionError(false);
+                          setDescriptionErrorMsg("");
+                        }
+                      }}
+                      className={`text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border w-full py-2 focus:outline-none ${
+                        descriptionError ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-blue-800"
+                      }`}
                       placeholder="توضیحات "
+                      rows={4}
                     ></textarea>
                   </div>
-                  <span className="text-red-500 relative text-sm">
-                    {descriptionError ? descriptionErrorMsg : ""}
-                  </span>
+                  {descriptionError && (
+                    <span className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {descriptionErrorMsg}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
 
             <div className="mt-2 p-4">
-              <button className="app-btn-blue" onClick={updateBusHandler}>
+              <button className="app-btn-blue" onClick={updateBusHandler} disabled={btnSpinner1}>
                 {btnSpinner1 ? (
                   <div className="px-10 py-1 flex items-center justify-center">
                     <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
@@ -1395,12 +1476,22 @@ function MyBus() {
         </div>
       ) : (
         <div className="flex flex-col gap-6 p-4 rtl text-right w-full ">
-          <div className="border rounded-xl shadow-lg py-4 px-8 w-full bg-white h-screen">
-            <h1 className="mt-4">اتوبوس هنوز اضافه نشده است ...</h1>
+          <div className="border rounded-xl shadow-lg py-4 px-8 w-full bg-white h-screen flex items-center justify-center">
+            <h1 className="text-gray-500">اتوبوس هنوز اضافه نشده است ...</h1>
           </div>
         </div>
       )}
-      <ToastContainer />
+      <ToastContainer
+        position="top-left"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={true}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </>
   );
 }

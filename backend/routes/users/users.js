@@ -9,8 +9,6 @@ const protect = require("../../middlewares/authUser");
 const { userUpload } = require("../../utils/upload");
 
 // bus tickets
-
-
 router.get('/test_cook',userCtrls.findTestCook)
 router.get('/test_owner',userCtrls.findTestOwner)
 router.get('/test_house',userCtrls.findTestHosue)

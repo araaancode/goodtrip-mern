@@ -6,6 +6,25 @@ const Bus = require("../../models/Bus");
 const BusTicket = require("../../models/BusTicket");
 const StatusCodes = require("http-status-codes");
 
+const {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectsCommand,
+} = require("@aws-sdk/client-s3");
+const { Upload } = require("@aws-sdk/lib-storage");
+
+
+// S3 Client for Liara
+const s3Client = new S3Client({
+  region: process.env.LIARA_REGION, 
+  endpoint: process.env.LIARA_ENDPOINT, 
+  credentials: {
+    accessKeyId: process.env.LIARA_ACCESS_KEY,
+    secretAccessKey: process.env.LIARA_SECRET_KEY,
+  },
+  forcePathStyle: true,
+});
+
 // # description -> HTTP VERB -> Accesss -> Access Type
 // # get driver profile -> GET -> Driver -> PRIVATE
 // @route = /api/drivers/me
@@ -323,37 +342,84 @@ exports.singleAds = async (req, res) => {
 // # get create driver ads -> POST -> Driver -> PRIVATE
 // @route = /api/drivers/ads
 exports.createAds = async (req, res) => {
-  let photos = [];
-  if (req.files.photos) {
-    req.files.photos.forEach((element) => {
-      photos.push(element.filename);
-    });
-  }
-
-  let company = {};
-
-  company.name = req.body.name;
-  company.phone = req.body.phone;
-  company.address = req.body.address;
+let company = {
+    name: req.body.name,
+    phone: req.body.phone,
+    address: req.body.address,
+  };
 
   try {
-    await DriverAds.create({
-      driver: req.driver._id,
-      company: company,
-      title: req.body.title,
-      description: req.body.description,
-      price: req.body.price,
-      photo: req.files.photo[0].filename,
-      photos,
-    }).then((data) => {
-      res.status(StatusCodes.CREATED).json({
-        status: "success",
-        msg: "آگهی ساخته شد",
-        data,
+    const { title, description, price, name, phone, address } = req.body;
+    const coverImageFile = req.files.photo && req.files.photo[0];
+    const imageFiles = req.files.photos || [];
+
+    if (
+      !title ||
+      !coverImageFile ||
+      imageFiles.length > 6 ||
+      !description ||
+      !price ||
+      !name ||
+      !phone ||
+      !address
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Title, cover image, and up to 6 images are required" });
+    }
+
+    // --- Upload cover image ---
+    const coverImageKey = `driverAdsPhotos/photo-${Date.now()}-${coverImageFile.originalname}`;
+    const coverUpload = new Upload({
+      client: s3Client,
+      params: {
+        Bucket: process.env.LIARA_BUCKET_NAME,
+        Key: coverImageKey,
+        Body: coverImageFile.buffer, // یا استریم
+        ContentType: coverImageFile.mimetype,
+      },
+    });
+    await coverUpload.done();
+
+    // --- Upload additional images ---
+    const imageUrls = [];
+    for (const file of imageFiles) {
+      const imageKey = `driverAdsPhotos/photos-${Date.now()}-${file.originalname}`;
+      const imageUpload = new Upload({
+        client: s3Client,
+        params: {
+          Bucket: process.env.LIARA_BUCKET_NAME,
+          Key: imageKey,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+        },
       });
+      await imageUpload.done();
+
+      imageUrls.push(
+        `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${imageKey}`
+      );
+    }
+
+    // --- Save ads to MongoDB ---
+    const ads = new DriverAds({
+      title,
+      description,
+      price,
+      driver: req.driver._id,
+      company,
+      photo: `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${coverImageKey}`,
+      photos: imageUrls,
+    });
+
+    await ads.save();
+    res.status(StatusCodes.CREATED).json({
+      status: "success",
+      msg: "آگهی ساخته شد",
+      data: ads,
     });
   } catch (error) {
-    console.error(error.message);
+    console.error("Error creating ads:", error);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       status: "failure",
       msg: "خطای داخلی سرور",
@@ -439,8 +505,23 @@ exports.updateAds = async (req, res) => {
 // @route = /api/drivers/ads/:adsId/update-photo
 exports.updateAdsPhoto = async (req, res) => {
   try {
+    const coverImageFile = req.file ? req.file : null;
+
+    // Upload cover image to Liara in 'ads/' folder
+    const coverImageKey = `driverAdsPhotos/photo-${Date.now()}-${
+      coverImageFile.originalname
+    }`;
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: process.env.LIARA_BUCKET_NAME,
+        Key: coverImageKey,
+        Body: coverImageFile.buffer,
+        ContentType: coverImageFile.mimetype,
+      })
+    );
+
     await DriverAds.findByIdAndUpdate(req.params.adsId, {
-      photo: req.file ? req.file.filename : null,
+      photo: `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${coverImageKey}`,
     }).then((ads) => {
       if (ads) {
         return res.status(StatusCodes.OK).json({
@@ -469,37 +550,67 @@ exports.updateAdsPhoto = async (req, res) => {
 // # update driver ads photos -> PUT -> Driver -> PRIVATE
 // @route = /api/drivers/ads/:adsId/update-photos
 exports.updateAdsPhotos = async (req, res) => {
-  try {
-    const imagePaths = req.files.map((file) => file.path);
+   try {
+    const imagePaths = req.files ? req.files : []; // Ensure req.files is an array
 
-    if (imagePaths.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "حداقل یک تصویر باید وارد کنید..!" });
+    // Upload images to 'driverAdsPhotos/' folder
+    const imageUrls = [];
+    for (const file of imagePaths) {
+      const imageKey = `driverAdsPhotos/photos-${Date.now()}-${
+        file.originalname
+      }`;
+
+      // Use Upload from @aws-sdk/lib-storage
+      const upload = new Upload({
+        client: s3Client,
+        params: {
+          Bucket: process.env.LIARA_BUCKET_NAME,
+          Key: imageKey,
+          Body: file.buffer, // Buffer from multer
+          ContentType: file.mimetype,
+        },
+      });
+
+      // Execute the upload
+      await upload.done();
+
+      // Construct the public URL
+      imageUrls.push(
+        `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${imageKey}`
+      );
     }
 
-    await DriverAds.findByIdAndUpdate(req.params.adsId, {
-      photos: imagePaths,
-    }).then((ads) => {
-      if (ads) {
-        return res.status(StatusCodes.OK).json({
-          status: "success",
-          msg: "تصاویر آگهی ویرایش شدند",
-          ads,
-        });
-      } else {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-          status: "failure",
-          msg: "تصاویر آگهی ویرایش نشدند",
-        });
-      }
-    });
+    if (imageUrls.length === 0) {
+      return res.status(400).json({
+        error: "حداقل یک تصویر باید وارد کنید..!",
+      });
+    }
+
+    // Update the driverAds document
+    const updatedAds = await DriverAds.findByIdAndUpdate(
+      req.params.adsId,
+      { photos: imageUrls },
+      { new: true } // Return the updated document
+    );
+
+    if (updatedAds) {
+      return res.status(StatusCodes.OK).json({
+        status: "success",
+        msg: "تصاویر آگهی ویرایش شدند",
+        ads: updatedAds,
+      });
+    } else {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        status: "failure",
+        msg: "تصاویر آگهی ویرایش نشدند",
+      });
+    }
   } catch (error) {
-    console.error(error.message);
+    console.error("Error:", error.message);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       status: "failure",
       msg: "خطای داخلی سرور",
-      error,
+      error: error.message,
     });
   }
 };
@@ -753,8 +864,6 @@ exports.getDriverBus = async (req, res) => {
 // # add driver bus -> POST -> Driver -> PRIVATE
 // @route = /api/drivers/bus
 exports.addDriverBus = async (req, res) => {
-  
-
   let findBus = await Bus.findOne({ driver: req.driver._id });
 
   if (findBus) {
@@ -763,12 +872,48 @@ exports.addDriverBus = async (req, res) => {
       msg: "شما قبلا اتوبوس خود را اضافه کردید",
     });
   } else {
-    var photos = [];
-    if (req.files.photos) {
-      req.files.photos.forEach((element) => {
-        photos.push(element.filename);
+    // Get files from request
+    const coverPhotoFile = req.files?.photo?.[0];
+    const photosFiles = req.files?.photos || [];
+
+    // / Validate required files
+    if (!coverPhotoFile) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        status: "failure",
+        msg: "تصویر اصلی الزامی است",
       });
     }
+
+    // Upload cover image to S3
+    const coverPhotoKey = `driverBusPhotos/coverPhoto-${Date.now()}-${
+      coverPhotoFile.originalname
+    }`;
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: process.env.LIARA_BUCKET_NAME,
+        Key: coverPhotoKey,
+        Body: coverPhotoFile.buffer,
+        ContentType: coverPhotoFile.mimetype,
+      })
+    );
+
+    // Upload additional photos
+    const photosUrls = await Promise.all(
+      photosFiles.map(async (file) => {
+        const photoKey = `driverBusPhotos/photos-${Date.now()}-${
+          file.originalname
+        }`;
+        await s3Client.send(
+          new PutObjectCommand({
+            Bucket: process.env.LIARA_BUCKET_NAME,
+            Key: photoKey,
+            Body: file.buffer,
+            ContentType: file.mimetype,
+          })
+        );
+        return `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${photoKey}`;
+      })
+    );
 
     try {
       await Bus.create({
@@ -785,8 +930,9 @@ exports.addDriverBus = async (req, res) => {
         price: req.body.price,
         seats: req.body.seats,
         capacity: req.body.capacity,
-        photo: req.files.photo[0].filename,
-        photos,
+        // photo: req.files.photo[0].filename,
+        photo: `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${coverPhotoKey}`,
+        photos:photosUrls,
         options: req.body.options,
       }).then((data) => {
         res.status(StatusCodes.CREATED).json({
@@ -824,9 +970,9 @@ exports.updateDriverBus = async (req, res) => {
         price: req.body.price,
         seats: req.body.seats,
         capacity: req.body.capacity,
-        options:req.body.options,
-        heat:req.body.heat,
-        coldness:req.body.coldness,
+        options: req.body.options,
+        heat: req.body.heat,
+        coldness: req.body.coldness,
       },
       { new: true }
     ).then((bus) => {
@@ -858,14 +1004,29 @@ exports.updateDriverBus = async (req, res) => {
 // @route = /api/drivers/bus/:busId/update-photo
 exports.updateDriverBusPhoto = async (req, res) => {
   try {
+    const coverPhotoFile = req.file ? req.file : null;
+
+    // Upload cover image to Liara in 'ads/' folder
+    const coverPhotoKey = `driverBusPhotos/photo-${Date.now()}-${
+      coverPhotoFile.originalname
+    }`;
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: process.env.LIARA_BUCKET_NAME,
+        Key: coverPhotoKey,
+        Body: coverPhotoFile.buffer,
+        ContentType: coverPhotoFile.mimetype,
+      })
+    );
+
     await Bus.findByIdAndUpdate(req.params.busId, {
-      photo: req.file.filename,
-    }).then((bus) => {
-      if (bus) {
+      photo: `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${coverPhotoKey}`,
+    }).then((ads) => {
+      if (ads) {
         return res.status(StatusCodes.OK).json({
           status: "success",
           msg: "تصویر اصلی اتوبوس ویرایش شد",
-          bus,
+          ads,
         });
       } else {
         return res.status(StatusCodes.BAD_REQUEST).json({
@@ -888,63 +1049,67 @@ exports.updateDriverBusPhoto = async (req, res) => {
 // # update driver bus cover photo -> PUT -> Driver -> PRIVATE
 // @route = /api/drivers/bus/:busId/update-photos
 exports.updateDriverBusPhotos = async (req, res) => {
-  // try {
-  //     await Bus.findByIdAndUpdate(req.params.busId, {
-  //         photos: req.file.filename,
-  //     }).then((ads) => {
-  //         if (ads) {
-  //             return res.status(StatusCodes.OK).json({
-  //                 status: 'success',
-  //                 msg: "تصاویر اتوبوس ویرایش شدند",
-  //                 ads
-  //             })
-  //         } else {
-  //             return res.status(StatusCodes.BAD_REQUEST).json({
-  //                 status: 'failure',
-  //                 msg: "تصاویر اتوبوس ویرایش نشدند",
-  //             })
-  //         }
-  //     });
-  // } catch (error) {
-  //     console.error(error.message);
-  //     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-  //         status: 'failure',
-  //         msg: "خطای داخلی سرور",
-  //         error
-  //     });
-  // }
-
   try {
-    const imagePaths = req.files.map((file) => file.path);
+    const photoPaths = req.files ? req.files : []; 
 
-    if (imagePaths.length === 0) {
-      return res
-        .status(400)
-        .json({ msg: "حداقل یک تصویر باید وارد کنید..!" });
+    // Upload images to 'driverBusPhotos/' folder
+    const photoUrls = [];
+    for (const file of photoPaths) {
+      const imageKey = `driverBusPhotos/photos-${Date.now()}-${
+        file.originalname
+      }`;
+
+      // Use Upload from @aws-sdk/lib-storage
+      const upload = new Upload({
+        client: s3Client,
+        params: {
+          Bucket: process.env.LIARA_BUCKET_NAME,
+          Key: imageKey,
+          Body: file.buffer, // Buffer from multer
+          ContentType: file.mimetype,
+        },
+      });
+
+      // Execute the upload
+      await upload.done();
+
+      // Construct the public URL
+      photoUrls.push(
+        `${process.env.LIARA_ENDPOINT}/${process.env.LIARA_BUCKET_NAME}/${imageKey}`
+      );
     }
 
-    await Bus.findByIdAndUpdate(req.params.busId, {
-      photos: imagePaths,
-    }).then((bus) => {
-      if (bus) {
-        return res.status(StatusCodes.OK).json({
-          status: "success",
-          msg: "تصاویر آگهی ویرایش شدند",
-          bus,
-        });
-      } else {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-          status: "failure",
-          msg: "تصاویر آگهی ویرایش نشدند",
-        });
-      }
-    });
+    if (photoUrls.length === 0) {
+      return res.status(400).json({
+        error: "حداقل یک تصویر باید وارد کنید..!",
+      });
+    }
+
+    // Update the bus 
+    const updatedBus = await Bus.findByIdAndUpdate(
+      req.params.busId,
+      { photos: photoUrls },
+      { new: true } // Return the updated
+    );
+
+    if (updatedBus) {
+      return res.status(StatusCodes.OK).json({
+        status: "success",
+        msg: "تصاویر اتوبوس ویرایش شدند",
+        ads: updatedBus,
+      });
+    } else {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        status: "failure",
+        msg: "تصاویر اتوبوس ویرایش نشدند",
+      });
+    }
   } catch (error) {
-    console.error(error.message);
+    console.error("Error:", error.message);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       status: "failure",
       msg: "خطای داخلی سرور",
-      error,
+      error: error.message,
     });
   }
 };

@@ -1,744 +1,604 @@
-import { useState, useRef, useEffect } from "react"
-import TitleCard from "../components/Cards/TitleCard"
-
-import Select from "react-tailwindcss-select";
-import 'react-tailwindcss-select/dist/index.css'
-
-import Swal from 'sweetalert2'
-import axios from "axios"
-
-// icons
-import { IoPricetagOutline } from "react-icons/io5";
+import { useState, useRef, useEffect, useMemo } from "react";
+import TitleCard from "../components/Cards/TitleCard";
+import "react-tailwindcss-select/dist/index.css";
+import Swal from "sweetalert2";
+import axios from "axios";
 import { IoIosInformationCircleOutline } from "react-icons/io";
+import { IoPricetagOutline } from "react-icons/io5";
 import { CiUser } from "react-icons/ci";
+import { RiPriceTag3Line } from "react-icons/ri";
 import { BsTelephone } from "react-icons/bs";
 import { TbClipboardText } from "react-icons/tb";
 import { HiOutlineMapPin } from "react-icons/hi2";
-
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-
-
+import { CiCircleQuestion } from "react-icons/ci";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { Dialog } from "@headlessui/react";
+import { useDriverAuthStore } from "../stores/authStore";
 
 function UpdateAds() {
-    const [name, setName] = useState("")
-    const [phone, setPhone] = useState("")
-    const [address, setAddress] = useState("")
-    const [title, setTitle] = useState("")
-    const [description, setDescription] = useState("")
-    const [price, setPrice] = useState(0)
-    const [photo, setPhoto] = useState(null)
-    const [photos, setPhotos] = useState([])
-    const [ads, setAds] = useState({})
+  const { isDriverAuthenticated } = useDriverAuthStore();
 
-    const [btnSpinner, setBtnSpinner] = useState(false)
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    title: "",
+    description: "",
+    price: 0,
+  });
 
-    let token = localStorage.getItem("userToken")
-    let adsId = window.location.href.split('/advertisments/')[1].split('/update')[0]
+  const [media, setMedia] = useState({
+    photo: null,
+    photos: [],
+  });
 
-    // photo vars
-    const [selectedFiles, setSelectedFiles] = useState([]);
+  const [btnSpinner, setBtnSpinner] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [selectedFiles, setSelectedFiles] = useState({
+    photo: [],
+    photos: [],
+  });
 
+  const fileInputRefs = {
+    photo: useRef(null),
+    photos: useRef(null),
+  };
 
-    const fileInputRef = useRef(null);
-    const acceptedFileExtensions = ["jpg", "png", "jpeg"];
+  const acceptedFileTypes = ["jpg", "png", "jpeg"];
+  const acceptedFileTypesString = acceptedFileTypes
+    .map((ext) => `.${ext}`)
+    .join(",");
+  const fallbackImage = "https://via.placeholder.com/150?text=بدون+تصویر";
 
-    const acceptedFileTypesString = acceptedFileExtensions
-        .map((ext) => `.${ext}`)
-        .join(",");
+  const adsId = useMemo(() => {
+    return window.location.href.split("/advertisments/")[1].split("/update")[0];
+  }, []);
 
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
 
+  const handleFileChange = (type, event) => {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
 
-    const handleFileChange = (event) => {
-        const newFilesArray = Array.from(event.target.files);
-        processFiles(newFilesArray);
-    };
+    const updatedFiles = [...selectedFiles[type]];
+    let hasError = false;
 
+    files.forEach((file) => {
+      const extension = file.name.split(".").pop().toLowerCase();
+      if (!acceptedFileTypes.includes(extension)) {
+        toast.error(`فقط فایل‌های ${acceptedFileTypes.join("، ")} مجاز هستند`);
+        hasError = true;
+      } else if (updatedFiles.some((f) => f.name === file.name)) {
+        toast.error("نام فایل‌ها باید منحصر به فرد باشد");
+        hasError = true;
+      } else {
+        updatedFiles.push(file);
+      }
+    });
 
-    const processFiles = (filesArray) => {
-        const newSelectedFiles = [...selectedFiles];
-        let hasError = false;
-        const fileTypeRegex = new RegExp(acceptedFileExtensions.join("|"), "i");
-        filesArray.forEach((file) => {
-            if (newSelectedFiles.some((f) => f.name === file.name)) {
-                alert("File names must be unique", "error");
-                hasError = true;
-            } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
-                alert(`Only ${acceptedFileExtensions.join(", ")} files are allowed`, "error");
-                hasError = true;
-            } else {
-                newSelectedFiles.push(file);
-            }
+    if (!hasError) {
+      setSelectedFiles((prev) => ({ ...prev, [type]: updatedFiles }));
+    }
+  };
+
+  const handleFileDelete = (type, index) => {
+    const updatedFiles = [...selectedFiles[type]];
+    updatedFiles.splice(index, 1);
+    setSelectedFiles((prev) => ({ ...prev, [type]: updatedFiles }));
+  };
+
+  useEffect(() => {
+    // if (!isDriverAuthenticated) {
+    //   toast.error("لطفاً ابتدا وارد شوید");
+    //   return;
+    // }
+
+    const fetchAdData = async () => {
+      try {
+        const response = await axios.get(`/api/drivers/ads/${adsId}`, {
+          withCredentials: true,
+        });
+        const { company, ...adData } = response.data.ads;
+
+        setFormData({
+          name: company.name,
+          phone: company.phone,
+          address: company.address,
+          title: adData.title,
+          description: adData.description,
+          price: adData.price,
         });
 
-        if (!hasError) {
-            setSelectedFiles(newSelectedFiles);
-        }
-    };
-
-    const handleCustomButtonClick = () => {
-        fileInputRef.current.click();
-    };
-
-    const handleFileDelete = (index) => {
-        const updatedFiles = [...selectedFiles];
-        updatedFiles.splice(index, 1);
-        setSelectedFiles(updatedFiles);
-    };
-
-    // photos vars
-    const [selectedFiles2, setSelectedFiles2] = useState([]);
-
-    const fileInputRef2 = useRef(null);
-    const acceptedFileExtensions2 = ["jpg", "png", "jpeg"];
-
-    const acceptedFileTypesString2 = acceptedFileExtensions2
-        .map((ext) => `.${ext}`)
-        .join(",");
-
-
-
-    const handleFileChange2 = (event) => {
-        const newFilesArray = Array.from(event.target.files);
-        processFiles2(newFilesArray);
-    };
-
-
-    const processFiles2 = (filesArray) => {
-        const newSelectedFiles2 = [...selectedFiles2];
-        let hasError = false;
-        const fileTypeRegex = new RegExp(acceptedFileExtensions2.join("|"), "i");
-        filesArray.forEach((file) => {
-            if (newSelectedFiles2.some((f) => f.name === file.name)) {
-                alert("File names must be unique", "error");
-                hasError = true;
-            } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
-                alert(`Only ${acceptedFileExtensions2.join(", ")} files are allowed`, "error");
-                hasError = true;
-            } else {
-                newSelectedFiles2.push(file);
-            }
+        setMedia({
+          photo: adData.photo,
+          photos: adData.photos || [],
         });
-
-        if (!hasError) {
-            setSelectedFiles2(newSelectedFiles2);
-        }
+      } catch (error) {
+        toast.error(error.response?.data?.message || "خطا در بارگذاری آگهی");
+      }
     };
 
-    const handleCustomButtonClick2 = () => {
-        fileInputRef2.current.click();
-    };
+    fetchAdData();
+  }, [adsId, isDriverAuthenticated]);
 
-    const handleFileDelete2 = (index) => {
-        const updatedFiles = [...selectedFiles2];
-        updatedFiles.splice(index, 1);
-        setSelectedFiles2(updatedFiles);
-    };
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.name) newErrors.name = "* نام مشتری الزامی است";
+    if (!formData.phone) newErrors.phone = "* شماره تلفن الزامی است";
+    if (!formData.address) newErrors.address = "* آدرس الزامی است";
+    if (!formData.title) newErrors.title = "* عنوان آگهی الزامی است";
+    if (!formData.description) newErrors.description = "* توضیحات الزامی است";
 
-    // error variables
-    const [nameError, setNameError] = useState(false)
-    const [nameErrorMsg, setNameErrorMsg] = useState("")
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-    const [phoneError, setPhoneError] = useState(false)
-    const [phoneErrorMsg, setPhoneErrorMsg] = useState("")
+  const updateAdsHandle = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
 
-    const [addressError, setAddressError] = useState(false)
-    const [addressErrorMsg, setAddressErrorMsg] = useState("")
+    setBtnSpinner(true);
+    setIsOpen(true);
+  };
 
-    const [titleError, setTitleError] = useState(false)
-    const [titleErrorMsg, setTitleErrorMsg] = useState("")
+  const sendUpdateRequest = async () => {
+    setIsOpen(false);
+    setBtnSpinner(true);
 
-    const [priceError, setPriceError] = useState(false)
-    const [priceErrorMsg, setPriceErrorMsg] = useState("")
+    try {
+      await axios.put(`/api/drivers/ads/${adsId}/update-ads`, formData, {
+        withCredentials: true,
+      });
+      toast.success("آگهی با موفقیت به‌روزرسانی شد");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "خطا در به‌روزرسانی آگهی");
+    } finally {
+      setBtnSpinner(false);
+    }
+  };
 
-    const [descriptionError, setDescriptionError] = useState(false)
-    const [descriptionErrorMsg, setDescriptionErrorMsg] = useState("")
-
-
-    const [photoError, setPhotoError] = useState(false)
-    const [photoErrorMsg, setPhotoErrorMsg] = useState("")
-
-    const [photosError, setPhotosError] = useState(false)
-    const [photosErrorMsg, setPhotosErrorMsg] = useState("")
-
-
-
-
-    // get single ads
-    useEffect(() => {
-        axios.get(`/api/drivers/ads/${adsId}`, {
-            headers: {
-                authorization: `Bearer ${token}`,
-            },
-        })
-            .then((res) => {
-                setName(res.data.ads.company.name)
-                setPhone(res.data.ads.company.phone)
-                setAddress(res.data.ads.company.address)
-                setTitle(res.data.ads.title)
-                setDescription(res.data.ads.description)
-                setPrice(res.data.ads.price)
-                setPhoto(res.data.ads.photo)
-                setPhotos(res.data.ads.photos)
-            })
-            .catch((error) => {
-                console.error(error);
-            });
-    }, [])
-
-
-    // update ads
-    const updateAdsHandle = (e) => {
-        e.preventDefault();
-
-        // name error
-        if (!name || name === "" || name === undefined || name === null) {
-            setNameError(true)
-            setNameErrorMsg("* نام و نام خانوادگی مشتری باید وارد شود")
-        }
-
-        if (!phone || phone === "" || phone === undefined || phone === null) {
-            setPhoneError(true)
-            setPhoneErrorMsg("*  شماره مشتری باید وارد شود")
-        }
-
-        if (!address || address === "" || address === undefined || address === null) {
-            setAddressError(true)
-            setAddressErrorMsg("*  آدرس مشتری باید وارد شود")
-        }
-
-        if (!title || title === "" || title === undefined || title === null) {
-            setTitleError(true)
-            setTitleErrorMsg("*  عنوان أگهی باید وارد شود")
-        }
-
-
-        if (!description || description === "" || description === undefined || description === null) {
-            setDescriptionError(true)
-            setDescriptionErrorMsg("* توضیحات أگهی باید وارد شود")
-        }
-
-
-        // if (!selectedFiles || selectedFiles === "" || selectedFiles === undefined || selectedFiles === null || selectedFiles.length === 0) {
-        //     setPhotoError(true)
-        //     setPhotoErrorMsg("* تصویر اصلی أگهی باید وارد شود")
-        // }
-        // if (!selectedFiles2 || selectedFiles2 === "" || selectedFiles2 === undefined || selectedFiles2 === null || selectedFiles2.length === 0) {
-        //     setPhotosError(true)
-        //     setPhotosErrorMsg("* تصاویر أگهی باید وارد شوند")
-        // }
-
-
-        else {
-            setBtnSpinner(true)
-
-            Swal.fire({
-                title: "<small>آیا از ویرایش آگهی اطمینان دارید؟</small>",
-                showDenyButton: true,
-                confirmButtonText: "بله",
-                denyButtonText: `خیر`
-            }).then((result) => {
-                if (result.isConfirmed) {
-
-                    try {
-                        axios.put(`/api/drivers/ads/${adsId}/update-ads`, { name, phone, address, title, description, price }, {
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'authorization': 'Bearer ' + token
-                            },
-                        }).then((res) => {
-
-                            setBtnSpinner(false)
-
-                            toast.success('آگهی ویرایش شد', {
-                                position: "top-left",
-                                autoClose: 5000,
-                                hideProgressBar: false,
-                                closeOnClick: true,
-                                pauseOnHover: true,
-                                draggable: true,
-                                progress: undefined,
-                            })
-                        })
-
-                    } catch (error) {
-                        setBtnSpinner(false)
-                        console.log('error', error)
-                        toast.error('خطایی وجود دارد. دوباره امتحان کنید !', {
-                            position: "top-left",
-                            autoClose: 5000,
-                            hideProgressBar: false,
-                            closeOnClick: true,
-                            pauseOnHover: true,
-                            draggable: true,
-                            progress: undefined,
-                        })
-                    }
-                } else if (result.isDenied) {
-                    setBtnSpinner(false)
-                    toast.info('تغییرات ذخیره نشد..!', {
-                        position: "top-left",
-                        autoClose: 5000,
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
-                    })
-                }
-            });
-
-        }
+  const updateMedia = async (type) => {
+    if (!selectedFiles[type].length) {
+      setErrors((prev) => ({
+        ...prev,
+        [type]: `* ${type === "photo" ? "تصویر اصلی" : "تصاویر"} الزامی است`,
+      }));
+      return;
     }
 
+    setBtnSpinner(true);
+    const formData = new FormData();
+    selectedFiles[type].forEach((file) => formData.append(type, file));
 
-
-    const updatePhotoFunction = async (e) => {
-        e.preventDefault();
-
-        if (!selectedFiles || selectedFiles === "" || selectedFiles === undefined || selectedFiles === null || selectedFiles.length === 0) {
-            setPhotoError(true)
-            setPhotoErrorMsg("* تصویر اصلی آگهی باید وارد شود")
-        } else {
-            setBtnSpinner(true)
-
-            const formData = new FormData();
-            formData.append('photo', selectedFiles[0]);
-
-
-            console.log(formData);
-
-
-            try {
-                setBtnSpinner(true);
-
-                await axios.put(
-                    `/api/drivers/ads/${adsId}/update-photo`,
-                    formData,
-                    {
-                        headers: {
-                            'Content-Type': 'multipart/form-data',
-                            authorization: `Bearer ${token}`,
-                        },
-                    }
-                ).then((res) => {
-
-                    setBtnSpinner(false)
-
-                    toast.success('تصویر اصلی ویرایش شد', {
-                        position: "top-left",
-                        autoClose: 5000,
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
-                    })
-                    console.log('Response:', res.data.ads);
-                    setPhoto(res.data.ads.photo)
-                }).catch((error) => {
-                    setBtnSpinner(false)
-                    console.log('error', error)
-                    toast.error('خطایی وجود دارد. دوباره امتحان کنید !', {
-                        position: "top-left",
-                        autoClose: 5000,
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
-                    })
-                })
-
-            } catch (error) {
-                setBtnSpinner(false)
-                console.log('error', error)
-                toast.error('خطایی وجود دارد. دوباره امتحان کنید !', {
-                    position: "top-left",
-                    autoClose: 5000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    progress: undefined,
-                })
-            } finally {
-                setBtnSpinner(false);
-            }
+    try {
+      const response = await axios.put(
+        `/api/drivers/ads/${adsId}/update-${type}`,
+        formData,
+        {
+          withCredentials: true,
+          headers: { "Content-Type": "multipart/form-data" },
         }
+      );
+
+      setMedia((prev) => ({
+        ...prev,
+        [type]: response.data.ads[type],
+      }));
+
+      setSelectedFiles((prev) => ({ ...prev, [type]: [] }));
+      toast.success(
+        `${type === "photo" ? "تصویر اصلی" : "تصاویر"} با موفقیت آپلود شد`
+      );
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          `خطا در آپلود ${type === "photo" ? "تصویر اصلی" : "تصاویر"}`
+      );
+    } finally {
+      setBtnSpinner(false);
     }
+  };
 
+  const isValidImageUrl = (url) => {
+    if (!url) return false;
+    const img = new Image();
+    img.src = url;
+    return img.complete || img.width + img.height > 0;
+  };
 
-    const updatePhotosFunction = async (e) => {
-        e.preventDefault();
+  const Spinner = () => (
+    <div className="px-10 py-1 flex items-center justify-center">
+      <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+    </div>
+  );
 
-        if (!selectedFiles2 || selectedFiles2 === "" || selectedFiles2 === undefined || selectedFiles2 === null || selectedFiles2.length === 0) {
-            setPhotosError(true)
-            setPhotosErrorMsg("* تصاویر آگهی باید وارد شوند")
-        } else {
-            setBtnSpinner(true)
-
-            const formData = new FormData();
-
-
-            selectedFiles2.forEach((img) => {
-                formData.append('photos', img);
-            })
-
-            try {
-                setBtnSpinner(true);
-
-                await axios.put(
-                    `/api/drivers/ads/${adsId}/update-photos`,
-                    formData,
-                    {
-                        headers: {
-                            'Content-Type': 'multipart/form-data',
-                            authorization: `Bearer ${token}`,
-                        },
-                    }
-                ).then((res) => {
-
-                    setBtnSpinner(false)
-
-                    toast.success('تصاویر أگهی ویرایش شدند', {
-                        position: "top-left",
-                        autoClose: 5000,
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
-                    })
-                    console.log('Response:', res.data.ads);
-                    setPhoto(res.data.ads.photo)
-                }).catch((error) => {
-                    setBtnSpinner(false)
-                    console.log('error', error)
-                    toast.error('خطایی وجود دارد. دوباره امتحان کنید !', {
-                        position: "top-left",
-                        autoClose: 5000,
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
-                    })
-                })
-
-            } catch (error) {
-                setBtnSpinner(false)
-                console.log('error', error)
-                toast.error('خطایی وجود دارد. دوباره امتحان کنید !', {
-                    position: "top-left",
-                    autoClose: 5000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    progress: undefined,
-                })
-            } finally {
-                setBtnSpinner(false);
-            }
-        }
-    }
-
-
-
-
-
-    return (
-        <>
-            <TitleCard title="ویرایش آگهی" topMargin="mt-2">
-                {/* update ads main photo */}
-                <div className="mx-auto">
-                    {/*  ads photo  */}
-                    <div className="flex flex-col mb-6">
-                        <h4 className="font-bold text-gray-600">ویرایش عکس اصلی آگهی</h4>
-                        <label htmlFor="photo" className="mb-2 text-xs sm:text-sm tracking-wide text-gray-600 mt-6">تصویر اصلی آگهی </label>
-
-                        {/* <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                                    <PiImage className="w-6 h-6 text-gray-400" />
-                                </div> */}
-                        {/* <input type="file" onChange={(e) => setPhoto(e.target.files[0])} name="photo" id="photo" className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800" /> */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 border border-gray-300 rounded-md py-2 focus:outline-none focus:border-blue-800">
-                            <div className="flex items-center">
-
-                                <button className="app-btn-gray" onClick={handleCustomButtonClick}>
-                                    انتخاب تصویر اصلی
-                                </button>
-
-                                <input
-                                    type="file"
-                                    id="photo"
-                                    name="photo"
-                                    accept={acceptedFileTypesString}
-                                    ref={fileInputRef}
-                                    className="hidden"
-                                    onChange={handleFileChange}
-                                    onClick={(event) => {
-                                        event.target.value = null;
-                                    }}
-                                />
-                            </div>
-                            <div className="rounded-3xl py-4 max-h-[23rem] overflow-auto">
-                                {selectedFiles.length > 0 ? (
-                                    <ul className="px-4">
-                                        {selectedFiles.map((file, index) => (
-
-                                            <li
-                                                key={file.name}
-                                                className="flex justify-between items-center border-b py-2"
-                                            >
-                                                <div className="flex items-center">
-
-                                                    <span className="text-base mx-2">{file.name}</span>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleFileDelete(index)}
-                                                    className="text-red-500 hover:text-red-700 focus:outline-none"
-                                                >
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        viewBox="0 0 20 20"
-                                                        fill="none"
-                                                        className="w-6 h-6"
-                                                    >
-                                                        <path
-                                                            stroke="currentColor"
-                                                            strokeWidth="2"
-                                                            d="M6 4l8 8M14 4l-8 8"
-                                                        />
-                                                    </svg>
-                                                </button>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <div className="h-full flex justify-center items-center">
-                                        <p className="text-center text-gray-500 text-sm">
-                                            هنوز تصویری آپلود نشده است...
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-
-                        </div>
-                        <div className="mt-6">
-                            <img className="rounded-md" src={`../../../../uploads/cookAdsDir/${photo}`} style={{ width: '50px', height: '50px' }} alt="تصویر اصلی آگهی" />
-                        </div>
-                        <button className="app-btn-blue mt-4" onClick={updatePhotoFunction}>
-                            {btnSpinner ? (
-                                <div className="px-10 py-1 flex items-center justify-center">
-                                    <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
-                                </div>
-                            ) : (
-                                <span>ویرایش تصویر اصلی</span>
-                            )}
-                        </button>
-                        <span className='text-red-500 relative text-sm'>{photoError ? photoErrorMsg : ""}</span>
-                    </div>
+  const FileUploadSection = ({ type, label }) => (
+    <div className="mx-auto mb-8">
+      <h4 className="font-semibold text-lg text-gray-700 mb-4">
+        به‌روزرسانی {label}
+      </h4>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
+        <div className="flex items-center">
+          <button
+            className="app-btn-gray"
+            onClick={() => fileInputRefs[type].current.click()}
+          >
+            انتخاب {label}
+          </button>
+          <input
+            type="file"
+            ref={fileInputRefs[type]}
+            className="hidden"
+            accept={acceptedFileTypesString}
+            onChange={(e) => handleFileChange(type, e)}
+            onClick={(e) => (e.target.value = null)}
+            {...(type === "photos" && { multiple: true })}
+          />
+        </div>
+        <div className="rounded-xl max-h-96 overflow-auto bg-white p-4 shadow-sm">
+          {selectedFiles[type].length > 0 ? (
+            <ul>
+              {selectedFiles[type].map((file, index) => (
+                <li
+                  key={`${file.name}-${index}`}
+                  className="flex justify-between items-center py-2 border-b"
+                >
+                  <span className="text-sm text-gray-700">{file.name}</span>
+                  <button
+                    onClick={() => handleFileDelete(type, index)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    حذف
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-center text-gray-500 text-sm">
+              هنوز فایلی انتخاب نشده است...
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="my-4 flex flex-wrap gap-2">
+        {type === "photo" ? (
+          media.photo ? (
+            isValidImageUrl(media.photo) ? (
+              <img
+                src={media.photo}
+                alt="تصویر اصلی آگهی"
+                className="w-20 h-20 object-cover rounded-md shadow-sm"
+                onError={(e) => (e.target.src = fallbackImage)}
+              />
+            ) : (
+              <div className="w-20 h-20 bg-gray-100 rounded-md flex items-center justify-center">
+                <p className="text-gray-500 text-xs">تصویر نامعتبر</p>
+              </div>
+            )
+          ) : (
+            <div className="w-20 h-20 bg-gray-100 rounded-md flex items-center justify-center">
+              <p className="text-gray-500 text-xs">تصویری وجود ندارد</p>
+            </div>
+          )
+        ) : media.photos.length > 0 ? (
+          media.photos.map((file, index) => (
+            <div key={`photo-${index}`} className="relative">
+              {isValidImageUrl(file) ? (
+                <img
+                  src={file}
+                  alt={`تصویر آگهی ${index + 1}`}
+                  className="w-20 h-20 object-cover rounded-md shadow-sm"
+                  onError={(e) => (e.target.src = fallbackImage)}
+                />
+              ) : (
+                <div className="w-20 h-20 bg-gray-100 rounded-md flex items-center justify-center">
+                  <p className="text-gray-500 text-xs">نامعتبر</p>
                 </div>
-                <hr className="my-4" />
-                {/* update ads photos */}
-                <div className="mx-auto">
-                    {/* ads photos */}
-                    <div className="flex flex-col mb-6">
-                        <h4 className="font-bold text-gray-600">ویرایش تصاویر آگهی</h4>
+              )}
+            </div>
+          ))
+        ) : (
+          <div className="w-full py-4 text-center">
+            <p className="text-gray-500">تصویری وجود ندارد</p>
+          </div>
+        )}
+      </div>
+      <button className="app-btn-blue mt-4" onClick={() => updateMedia(type)}>
+        {btnSpinner ? <Spinner /> : `به‌روزرسانی ${label}`}
+      </button>
+      {errors[type] && (
+        <span className="text-red-500 text-sm mt-2 block">{errors[type]}</span>
+      )}
+    </div>
+  );
 
-                        <label htmlFor="photo" className="mb-2 text-xs sm:text-sm text-gray-600 mt-4">تصاویر آگهی </label>
-                        <div className="grid grid-cols-1 md:grid-cols-3 border border-gray-300 rounded-md py-2 focus:outline-none focus:border-blue-800">
-                            <div className="flex items-center">
-                                <button
-                                    type="button"
-                                    onClick={handleCustomButtonClick2}
-                                    className="app-btn-gray"
-                                >
+  console.log(formData);
 
-                                    انتخاب تصاویر آگهی
-                                </button>
-                                <input
-                                    type="file"
-                                    id="photos"
-                                    name="photos"
-                                    multiple
-                                    accept={acceptedFileTypesString2}
-                                    ref={fileInputRef2}
-                                    className="hidden"
-                                    onChange={handleFileChange2}
-                                    onClick={(event) => {
-                                        event.target.value = null;
-                                    }}
-                                />
-                            </div>
+  return (
+    <>
+      <Dialog
+        open={isOpen}
+        onClose={() => setIsOpen(false)}
+        className="relative z-50"
+      >
+        <div className="fixed inset-0" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="mx-auto max-w-sm rounded-lg border border-gray-300 bg-white p-6 shadow-xl">
+            <Dialog.Title className="text-lg font-semibold text-gray-800">
+              تأیید به‌روزرسانی آگهی
+            </Dialog.Title>
+            <Dialog.Description className="my-2 text-sm text-gray-500">
+              آیا از به‌روزرسانی این آگهی اطمینان دارید؟
+            </Dialog.Description>
+            <CiCircleQuestion className="my-2 flex justify-center items-center w-20 h-20 text-blue-900 mx-auto" />
+            <div className="flex items-center justify-center">
+              <button
+                className="mt-4 rounded bg-blue-900 px-8 py-2 mx-2 text-white"
+                onClick={sendUpdateRequest}
+              >
+                تأیید
+              </button>
+              <button
+                className="mt-4 rounded bg-gray-300 px-8 py-2 mx-2"
+                onClick={() => setIsOpen(false)}
+              >
+                انصراف
+              </button>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
 
-                            <div className="rounded-3xl py-4 max-h-[23rem] overflow-auto">
-                                {selectedFiles2.length > 0 ? (
-                                    <ul className="px-4">
-                                        {selectedFiles2.map((file, index) => (
+      <div className="p-4 sm:p-6">
+        {/* پیش‌نمایش آگهی */}
+        <div className="bg-white shadow-2xl rounded-2xl overflow-hidden mb-10 transform transition-all duration-500">
+          <div className="p-8 md:p-10">
+            <div className="flex flex-col md:flex-row gap-8 mb-8">
+              <div className="flex-1 space-y-4 text-right">
+                <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                  {formData.title || "—"}
+                </h2>
+                <p className="text-gray-700 flex items-center gap-2">
+                  <CiUser className="w-5 h-5 font-bold" />
+                  <span className="font-bold">نام مشتری: </span>
+                  {formData.name || "نام مشتری"}
+                </p>
+                <p className="text-gray-700 flex items-center gap-2">
+                  <BsTelephone className="w-5 h-5 font-bold" />
+                  <span className="font-bold">تلفن: </span>
+                  {formData.phone || "_"}
+                </p>
+                <p className="text-gray-700 flex items-center gap-2">
+                  <RiPriceTag3Line className="w-5 h-5 font-bold" />
+                  <span className="font-bold">قیمت: </span>
+                  <span className="text-indigo-500 font-bold">
+                    {formData.price
+                      ? `${formData.price.toLocaleString()} تومان`
+                      : "_"}
+                  </span>
+                </p>
+                <p className="text-gray-700 items-center text-justify gap-2">
+                  <span className="font-bold">توضیحات: </span>
+                  {formData.description || "_"}
+                </p>
+              </div>
+              <div className="flex-1">
+                {media.photo && isValidImageUrl(media.photo) ? (
+                  <img
+                    src={media.photo}
+                    alt="تصویر اصلی آگهی"
+                    className="w-full h-[500px] object-cover rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"
+                    onError={(e) => (e.target.src = fallbackImage)}
+                  />
+                ) : (
+                  <div className="w-full h-[320px] bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
+                    <span className="text-gray-400 font-medium">
+                      تصویر اصلی
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-wrap justify-start gap-4">
+              {media.photos.length > 0 ? (
+                media.photos.map(
+                  (file, index) =>
+                    isValidImageUrl(file) && (
+                      <img
+                        key={`additional-${index}`}
+                        src={file}
+                        alt={`تصویر آگهی ${index + 1}`}
+                        className="w-24 h-24 object-cover rounded-md shadow-sm hover:scale-105 transition-transform duration-200"
+                        onError={(e) => (e.target.src = fallbackImage)}
+                      />
+                    )
+                )
+              ) : (
+                <p className="text-gray-500">
+                  تصویر اضافه‌ای بارگذاری نشده است.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
 
-                                            <li
-                                                key={file.name}
-                                                className="flex justify-between items-center border-b py-2"
-                                            >
-                                                <div className="flex items-center">
-                                                    {/* <img
-                                                            src={window.location.origin + file.name}
-                                                            alt="File"
-                                                            className="w-10 h-10 mr-2"
-                                                        /> */}
-                                                    <span className="text-base mx-2">{file.name}</span>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleFileDelete2(index)}
-                                                    className="text-red-500 hover:text-red-700 focus:outline-none"
-                                                >
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        viewBox="0 0 20 20"
-                                                        fill="none"
-                                                        className="w-6 h-6"
-                                                    >
-                                                        <path
-                                                            stroke="currentColor"
-                                                            strokeWidth="2"
-                                                            d="M6 4l8 8M14 4l-8 8"
-                                                        />
-                                                    </svg>
-                                                </button>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <div className="h-full flex justify-center items-center">
-                                        <p className="text-center text-gray-500 text-sm">
-                                            هنوز تصویری آپلود نشده است...
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        <div className="mt-6 flex justify-start">
-                            {photos.map((file, index) => (
-                                <img className="rounded-md ml-4" key={index + 1} src={file} style={{ width: '50px', height: '50px' }} alt="تصویر اصلی آگهی" />
-                            ))}
-                        </div>
-                        <button className="app-btn-blue mt-4" onClick={updatePhotosFunction}>ویرایش تصاویر آگهی</button>
-                        <span className='text-red-500 relative text-sm'>{photosError ? photosErrorMsg : ""}</span>
-                    </div>
+        <TitleCard title="به‌روزرسانی آگهی" topMargin="mt-2">
+          {/* به‌روزرسانی عکس اصلی */}
+          <FileUploadSection type="photo" label="تصویر اصلی" />
+
+          <hr className="my-6 border-gray-200" />
+
+          {/* به‌روزرسانی تصاویر اضافی */}
+          <FileUploadSection type="photos" label="تصاویر اضافی" />
+
+          <hr className="my-6 border-gray-200" />
+
+          {/* ویرایش اطلاعات آگهی */}
+          <div className="mx-auto">
+            <h4 className="font-semibold text-lg text-gray-700 mb-6">
+              ویرایش اطلاعات آگهی
+            </h4>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* نام مشتری */}
+              <div className="flex flex-col">
+                <label htmlFor="name" className="text-sm text-gray-600 mb-1">
+                  نام مشتری
+                </label>
+                <div className="relative">
+                  <CiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-6 h-6" />
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                    placeholder="نام مشتری"
+                  />
                 </div>
-                <hr className="my-4" />
+                {errors.name && (
+                  <span className="text-red-500 text-sm mt-1">
+                    {errors.name}
+                  </span>
+                )}
+              </div>
 
-                {/* update ads */}
-                <div className="mx-auto">
-                    {/*  company name  */}
-                    <div className="flex flex-col mb-6">
-                        <label htmlFor="name" className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">نام و نام خانوادگی مشتری</label>
-                        <div className="relative">
-                            <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                                <CiUser className="w-6 h-6 text-gray-400" />
-                            </div>
-                            <input style={{ borderRadius: '5px' }} type="text" value={name}
-                                onChange={(e) => setName(e.target.value)} className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800" placeholder="نام و  نام خانوادگی مشتری" />
-                        </div>
-                        <span className='text-red-500 relative text-sm'>{nameError ? nameErrorMsg : ""}</span>
-                    </div>
-
-                    {/*  phone  */}
-                    <div className="flex flex-col mb-6">
-                        <label htmlFor="phone" className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">شماره مشتری</label>
-                        <div className="relative">
-                            <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                                <BsTelephone className="w-6 h-6 text-gray-400" />
-                            </div>
-                            <input style={{ borderRadius: '5px' }} type="number" min={11} max={11} value={phone}
-                                onChange={(e) => setPhone(e.target.value)} className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800" placeholder="شماره مشتری" />
-                        </div>
-                        <span className='text-red-500 relative text-sm'>{phoneError ? phoneErrorMsg : ""}</span>
-                    </div>
-
-
-                    {/*  title  */}
-                    <div className="flex flex-col mb-6">
-                        <label htmlFor="title" className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">عنوان آگهی</label>
-                        <div className="relative">
-                            <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                                <TbClipboardText className="w-6 h-6 text-gray-400" />
-                            </div>
-                            <input style={{ borderRadius: '5px' }} type="text" value={title}
-                                onChange={(e) => setTitle(e.target.value)} className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800" placeholder="عنوان آگهی " />
-                        </div>
-                        <span className='text-red-500 relative text-sm'>{titleError ? titleErrorMsg : ""}</span>
-                    </div>
-
-
-                    {/*  price  */}
-                    <div className="flex flex-col mb-6">
-                        <label htmlFor="price" className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">قیمت أگهی </label>
-                        <div className="relative">
-                            <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                                <IoPricetagOutline className="w-6 h-6 text-gray-400" />
-                            </div>
-                            <input style={{ borderRadius: '5px' }} type="number" value={price}
-                                onChange={(e) => setPrice(e.target.value)} className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800" placeholder="قیمت آگهی " />
-                        </div>
-                        {/* <span className='text-red-500 relative text-sm'>{errorPhoneMessage ? errorPhoneMessage : ""}</span> */}
-                        <span className='text-red-500 relative text-sm'>{priceError ? priceErrorMsg : ""}</span>
-
-                    </div>
-
-
-
-                    {/*  description */}
-                    <div className="flex flex-col mb-2">
-                        <label htmlFor="description" className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">توضیحات </label>
-                        <div className="relative">
-                            <div className="inline-flex items-center justify-center absolute left-0 h-full w-10 text-gray-400" style={{ bottom: "52px" }}>
-                                <IoIosInformationCircleOutline className="w-6 h-6 text-gray-400" />
-                            </div>
-                            <textarea style={{ borderRadius: '5px', resize: 'none' }} type="text" value={description}
-                                onChange={(e) => setDescription(e.target.value)} className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800" placeholder="توضیحات "></textarea>
-                        </div>
-                        <span className='text-red-500 relative text-sm'>{descriptionError ? descriptionErrorMsg : ""}</span>
-                    </div>
-
-
-                    {/*  address */}
-                    <div className="flex flex-col mb-2">
-                        <label htmlFor="address" className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">آدرس </label>
-                        <div className="relative">
-                            <div className="inline-flex items-center justify-center absolute left-0 h-full w-10 text-gray-400" style={{ bottom: "52px" }}>
-                                <HiOutlineMapPin className="w-6 h-6 text-gray-400" />
-                            </div>
-                            <textarea style={{ borderRadius: '5px', resize: 'none' }} type="text" value={address}
-                                onChange={(e) => setAddress(e.target.value)} className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800" placeholder="آدرس "></textarea>
-                        </div>
-                        <span className='text-red-500 relative text-sm'>{addressError ? addressErrorMsg : ""}</span>
-                    </div>
-
-                    {/* add button */}
-                    <div className="mt-4">
-                        <button className="app-btn-blue" onClick={updateAdsHandle}>
-                            {btnSpinner ? (
-                                <div className="px-10 py-1 flex items-center justify-center">
-                                    <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
-                                </div>
-                            ) : (
-                                <span>ویرایش آگهی</span>
-                            )}
-                        </button>
-                    </div>
+              {/* تلفن */}
+              <div className="flex flex-col">
+                <label htmlFor="phone" className="text-sm text-gray-600 mb-1">
+                  شماره تلفن
+                </label>
+                <div className="relative">
+                  <BsTelephone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-6 h-6" />
+                  <input
+                    type="number"
+                    min={11}
+                    max={11}
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                    placeholder="شماره تلفن"
+                  />
                 </div>
+                {errors.phone && (
+                  <span className="text-red-500 text-sm mt-1">
+                    {errors.phone}
+                  </span>
+                )}
+              </div>
 
-                <ToastContainer />
+              {/* عنوان آگهی */}
+              <div className="flex flex-col">
+                <label htmlFor="title" className="text-sm text-gray-600 mb-1">
+                  عنوان آگهی
+                </label>
+                <div className="relative">
+                  <TbClipboardText className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-6 h-6" />
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => handleInputChange("title", e.target.value)}
+                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                    placeholder="عنوان آگهی"
+                  />
+                </div>
+                {errors.title && (
+                  <span className="text-red-500 text-sm mt-1">
+                    {errors.title}
+                  </span>
+                )}
+              </div>
 
-            </TitleCard>
-        </>
-    )
+              {/* قیمت */}
+              <div className="flex flex-col">
+                <label htmlFor="price" className="text-sm text-gray-600 mb-1">
+                  قیمت (تومان)
+                </label>
+                <div className="relative">
+                  <IoPricetagOutline className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-6 h-6" />
+                  <input
+                    type="number"
+                    value={formData.price}
+                    onChange={(e) => handleInputChange("price", e.target.value)}
+                    className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                    placeholder="قیمت"
+                  />
+                </div>
+                {errors.price && (
+                  <span className="text-red-500 text-sm mt-1">
+                    {errors.price}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* توضیحات */}
+            <div className="flex flex-col mt-6">
+              <label
+                htmlFor="description"
+                className="text-sm text-gray-600 mb-1"
+              >
+                توضیحات
+              </label>
+              <div className="relative">
+                <IoIosInformationCircleOutline className="absolute left-3 top-4 text-gray-400 w-6 h-6" />
+                <textarea
+                  value={formData.description}
+                  onChange={(e) =>
+                    handleInputChange("description", e.target.value)
+                  }
+                  className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                  placeholder="توضیحات آگهی"
+                  rows={4}
+                />
+              </div>
+              {errors.description && (
+                <span className="text-red-500 text-sm mt-1">
+                  {errors.description}
+                </span>
+              )}
+            </div>
+
+            {/* آدرس */}
+            <div className="flex flex-col mt-6">
+              <label htmlFor="address" className="text-sm text-gray-600 mb-1">
+                آدرس
+              </label>
+              <div className="relative">
+                <HiOutlineMapPin className="absolute left-3 top-4 text-gray-400 w-6 h-6" />
+                <textarea
+                  value={formData.address}
+                  onChange={(e) => handleInputChange("address", e.target.value)}
+                  className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
+                  placeholder="آدرس دقیق"
+                  rows={4}
+                />
+              </div>
+              {errors.address && (
+                <span className="text-red-500 text-sm mt-1">
+                  {errors.address}
+                </span>
+              )}
+            </div>
+
+            {/* دکمه ارسال */}
+            <div className="mt-6">
+              <button className="app-btn-blue" onClick={updateAdsHandle}>
+                {btnSpinner ? <Spinner /> : "به‌روزرسانی آگهی"}
+              </button>
+            </div>
+          </div>
+          <ToastContainer rtl />
+        </TitleCard>
+      </div>
+    </>
+  );
 }
 
-
-export default UpdateAds
+export default UpdateAds;
