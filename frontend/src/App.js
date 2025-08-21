@@ -1,4 +1,4 @@
-import React, { useState,useEffect, Suspense, lazy } from "react";
+import React, { useState, useEffect, Suspense, lazy } from "react";
 import {
   BrowserRouter as Router,
   Route,
@@ -14,6 +14,8 @@ import HouseLoader from "./Loader/Loader";
 import useUserAuthStore from "./landing/store/authStore";
 import { useCookAuthStore } from "./cooks/stores/authStore";
 import { useOwnerAuthStore } from "./owners/stores/authStore";
+import { useDriverAuthStore } from "./drivers/stores/authStore";
+import { useAdminAuthStore } from "./admin/stores/authStore";
 
 // routing
 import PublicRoutes from "./landing/routing/publicRoutes";
@@ -105,22 +107,25 @@ function App() {
   const { isAuthenticated, checkAuth } = useUserAuthStore();
   const { isCookAuthenticated, checkAuthCook } = useCookAuthStore();
   const { isOwnerAuthenticated, checkAuthOwner } = useOwnerAuthStore();
+  const { isDriverAuthenticated, checkAuthDriver } = useDriverAuthStore();
+  const { isAdminAuthenticated, checkAuthAdmin } = useAdminAuthStore();
 
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
+ 
   useEffect(() => {
     checkAuth();
     checkAuthCook();
     checkAuthOwner();
-  }, [checkAuth, checkAuthCook, checkAuthOwner]);
+    checkAuthAdmin();
+    checkAuthDriver();
+  }, [
+    checkAuth,
+    checkAuthCook,
+    checkAuthOwner,
+    checkAuthDriver,
+    checkAuthAdmin,
+  ]);
 
   return (
     <Router>

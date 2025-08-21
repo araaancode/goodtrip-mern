@@ -1,9 +1,6 @@
-import moment from "moment"
 import { useEffect, useState } from "react"
-import { useDispatch, useSelector } from "react-redux"
 import TitleCard from "../components/Cards/TitleCard"
 import { showNotification } from '../features/common/headerSlice'
-import MomentJalali from "moment-jalaali"
 import { CONFIRMATION_MODAL_CLOSE_TYPES, MODAL_BODY_TYPES } from '../utils/globalConstantUtil'
 import { openModal } from "../features/common/modalSlice"
 import Swal from 'sweetalert2'
@@ -11,117 +8,155 @@ import withReactContent from 'sweetalert2-react-content'
 import { setPageTitle } from '../features/common/headerSlice'
 import axios from "axios"
 import { RiUser3Line } from "@remixicon/react"
+import { useAdminAuthStore } from '../stores/authStore' 
+import {useDispatch} from "react-redux"
 
 // load icons
 import DeleteIcon from '@iconscout/react-unicons/icons/uil-trash-alt'
 import EditIcon from '@iconscout/react-unicons/icons/uil-edit-alt'
-
 import UpdateAdmin from "../features/admins/UpdateAdmin"
 
+const MySwal = withReactContent(Swal)
 
 const TopSideButtons = () => {
-
     const dispatch = useDispatch()
 
     const createNewUser = () => {
-        // dispatch(showNotification({ message: "Add New Member clicked", status: 1 }))
-        dispatch(openModal({ title: "ایجاد ادمین جدید", bodyType: MODAL_BODY_TYPES.ADD_NEW_ADMIN }))
+        dispatch(openModal({ 
+            title: "ایجاد ادمین جدید", 
+            bodyType: MODAL_BODY_TYPES.ADD_NEW_ADMIN 
+        }))
     }
 
-
-
-    // return (
-    //     <div className="inline-block float-right">
-    //         <button className="btn px-6 btn-sm normal-case btn-primary" onClick={() => createNewUser()}>ایجاد کاربر جدید</button>
-    //     </div>
-    // )
+    return (
+        <div className="inline-block float-right">
+            <button className="btn px-6 btn-sm normal-case btn-primary" onClick={createNewUser}>
+                ایجاد کاربر جدید
+            </button>
+        </div>
+    )
 }
-
-
-const updateUser = (isActiveState, userId) => {
-    let token = localStorage.getItem("userToken")
-
-    if (isActiveState) {
-        axios.put(`/api/admins/users/${userId}/deactive`, {}, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token
-            },
-        })
-            .then((response) => {
-                console.log('response', response.data)
-                Swal.fire({
-                    title: "<small>آیا از غیر فعال کردن کاربر اطمینان دارید؟</small>",
-                    showDenyButton: true,
-                    confirmButtonText: "بله",
-                    denyButtonText: `خیر`
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        Swal.fire("<small>کاربر ویرایش شد!</small>", "", "success");
-                    } else if (result.isDenied) {
-                        Swal.fire("<small>تغییرات ذخیره نشد</small>", "", "info");
-                    }
-                });
-            })
-            .catch((error) => {
-                console.log('error', error)
-                Swal.fire("<small>تغییرات ذخیره نشد</small>", "", "danger");
-            })
-    } else {
-        axios.put(`/api/admins/users/${userId}/active`, {}, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token
-            },
-        })
-            .then((response) => {
-                console.log('response', response.data)
-                Swal.fire({
-                    title: "<small>آیا از فعال کردن کاربر اطمینان دارید؟</small>",
-                    showDenyButton: true,
-                    confirmButtonText: "بله",
-                    denyButtonText: `خیر`
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        Swal.fire("<small>کاربر ویرایش شد!</small>", "", "success");
-                    } else if (result.isDenied) {
-                        Swal.fire("<small>تغییرات ذخیره نشد</small>", "", "info");
-                    }
-                });
-            })
-            .catch((error) => {
-                console.log('error', error)
-                Swal.fire("تغییرات ذخیره نشد", "", "danger");
-            })
-
-
-
-    }
-
-}
-
-
 
 const Users = () => {
     const [users, setUsers] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
+    const { token, isAdminAuthenticated, admin } = useAdminAuthStore()
+
+    const fetchUsers = async () => {
+        try {
+            setLoading(true)
+            setError(null)
+            
+            const response = await axios.get('/api/admins/users', {
+                withCredentials: true
+            })
+            
+            setUsers(response.data.data)
+        } catch (error) {
+            console.error('Error fetching users:', error)
+            setError(error.response?.data?.msg || 'خطا در دریافت اطلاعات کاربران')
+            MySwal.fire({
+                title: "<small>خطا</small>",
+                text: error.response?.data?.msg || 'خطا در دریافت اطلاعات کاربران',
+                icon: "error"
+            })
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const updateUserStatus = async (isActiveState, userId) => {
+        try {
+            const confirmationResult = await MySwal.fire({
+                title: "<small>آیا از تغییر وضعیت کاربر اطمینان دارید؟</small>",
+                showDenyButton: true,
+                confirmButtonText: "بله",
+                denyButtonText: `خیر`,
+                icon: "question"
+            })
+
+            if (!confirmationResult.isConfirmed) {
+                MySwal.fire("<small>تغییرات لغو شد</small>", "", "info")
+                return
+            }
+
+            const endpoint = `/api/admins/users/${userId}/${isActiveState ? 'deactive' : 'active'}`
+            
+            await axios.put(endpoint, {}, {
+                withCredentials: true
+            })
+
+            // Update local state instead of refetching all users
+            setUsers(prevUsers => 
+                prevUsers.map(user => 
+                    user._id === userId 
+                        ? { ...user, isActive: !isActiveState }
+                        : user
+                )
+            )
+
+            MySwal.fire({
+                title: "<small>موفقیت آمیز</small>",
+                text: "وضعیت کاربر با موفقیت تغییر کرد",
+                icon: "success"
+            })
+
+        } catch (error) {
+            console.error('Error updating user status:', error)
+            MySwal.fire({
+                title: "<small>خطا</small>",
+                text: error.response?.data?.msg || 'خطا در تغییر وضعیت کاربر',
+                icon: "error"
+            })
+        }
+    }
 
     useEffect(() => {
-        let token = localStorage.getItem("userToken")
-        const AuthStr = 'Bearer '.concat(token);
-        axios.get('/api/admins/users', { headers: { authorization: AuthStr } })
-            .then(response => {
-                setUsers(response.data.data)
-            })
-            .catch((error) => {
-                console.log('error ' + error);
-            });
+        fetchUsers()
     }, [])
 
+    const formatDate = (dateString) => {
+        try {
+            return new Date(dateString).toLocaleDateString('fa-IR')
+        } catch (error) {
+            return dateString
+        }
+    }
+
+    if (loading) {
+        return (
+            <TitleCard title="کاربران" topMargin="mt-2">
+                <div className="flex justify-center items-center h-32">
+                    <div className="loading loading-spinner loading-lg"></div>
+                </div>
+            </TitleCard>
+        )
+    }
+
+    if (error) {
+        return (
+            <TitleCard title="کاربران" topMargin="mt-2">
+                <div className="alert alert-error">
+                    <span>{error}</span>
+                    <button 
+                        className="btn btn-sm btn-ghost"
+                        onClick={fetchUsers}
+                    >
+                        تلاش مجدد
+                    </button>
+                </div>
+            </TitleCard>
+        )
+    }
 
     return (
         <>
-
-            <TitleCard title="کاربران" topMargin="mt-2" TopSideButtons={<TopSideButtons />}>
+            <TitleCard 
+                title="کاربران" 
+                topMargin="mt-2" 
+                TopSideButtons={<TopSideButtons />}
+            >
                 {users.length > 0 ? (
                     <div className="overflow-x-auto w-full">
                         <table className="table w-full">
@@ -136,34 +171,45 @@ const Users = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {
-                                    users.map((l, k) => {
-                                        return (
-                                            <tr key={k}>
-                                                <td>
-                                                    <div className="flex items-center space-x-3">
-                                                        <div className="avatar">
-                                                            <RiUser3Line />
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-bold mr-3">{l.name}</div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>{l.phone}</td>
-                                                <td>{l.email}</td>
-                                                <td>{new Date(l.createdAt).toLocaleDateString('fa')}</td>
-                                                <td>{l.isActive ? 'فعال' : 'غیرفعال'}</td>
-                                                <td><button onClick={() => updateUser(l.isActive, l._id)}><EditIcon /></button></td>
-                                            </tr>
-                                        )
-                                    })
-                                }
+                                {users.map((user, index) => (
+                                    <tr key={user._id || index}>
+                                        <td>
+                                            <div className="flex items-center space-x-3">
+                                                <div className="avatar">
+                                                    <RiUser3Line />
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold mr-3">{user.name}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{user.phone}</td>
+                                        <td>{user.email}</td>
+                                        <td>{formatDate(user.createdAt)}</td>
+                                        <td>
+                                            <span className={`badge ${user.isActive ? 'badge-success' : 'badge-error'}`}>
+                                                {user.isActive ? 'فعال' : 'غیرفعال'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button 
+                                                className="btn btn-ghost btn-sm"
+                                                onClick={() => updateUserStatus(user.isActive, user._id)}
+                                                disabled={loading}
+                                            >
+                                                <EditIcon />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
-                ) : (<h3>هنوز کاربری وجود ندارد...</h3>)}
-
+                ) : (
+                    <div className="text-center py-8">
+                        <h3 className="text-gray-500">هنوز کاربری وجود ندارد...</h3>
+                    </div>
+                )}
             </TitleCard>
         </>
     )
