@@ -12,7 +12,7 @@ const Loader = () => {
           y: [0, 30, 0], // only vertical movement
         }}
         transition={{
-          duration: 2,
+          duration: 3,
           repeat: Infinity,
           ease: "easeInOut",
         }}

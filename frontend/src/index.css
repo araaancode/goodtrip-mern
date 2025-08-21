@@ -2,16 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://cdn.jsdelivr.net/gh/rastikerdar/iransans/WebFonts/css/fontiran.css');
-
-
-body{
-  font-family: 'IRANSansWeb', sans-serif;
+@font-face {
+  font-family: "IranianSans";
+  src: url("../public/fonts/IranianSans.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
 }
 
-.font-iran {
-  font-family: 'IRANSansWeb', sans-serif;
+.font-iransans {
+  font-family: "IranianSans", sans-serif;
 }
+
+body {
+  direction: rtl;
+  font-family: "IranianSans", sans-serif;
+}
+
 
 .loading-indicator:before {
   content: "";

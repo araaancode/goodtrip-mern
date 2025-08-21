@@ -10,9 +10,7 @@ module.exports = {
       colors: {
         primary: '#4756b3',
       },
-      fontFamily: {
-        iran: ['IRANSansWeb', 'sans-serif'], 
-      },
+  
     },
   },
   plugins: [require("@tailwindcss/typography"), require("daisyui")],
@@ -20,8 +18,7 @@ module.exports = {
     themes: ["light"],
   },
 
-  
-  
+
 }
 
 
