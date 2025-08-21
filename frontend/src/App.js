@@ -1,4 +1,4 @@
-import React, { useEffect, Suspense, lazy } from "react";
+import React, { useState,useEffect, Suspense, lazy } from "react";
 import {
   BrowserRouter as Router,
   Route,
@@ -6,6 +6,9 @@ import {
   Navigate,
 } from "react-router-dom";
 import axios from "axios";
+
+// Loader
+import HouseLoader from "./Loader/Loader";
 
 // hooks
 import useUserAuthStore from "./landing/store/authStore";
@@ -84,7 +87,6 @@ const DriversResetPassword = lazy(() =>
   import("./drivers/pages/ResetPassword")
 );
 
-
 // admin private routes
 const AdminsLayout = lazy(() => import("./admin/containers/Layout"));
 const AdminsLogin = lazy(() => import("./admin/pages/Login"));
@@ -104,6 +106,16 @@ function App() {
   const { isCookAuthenticated, checkAuthCook } = useCookAuthStore();
   const { isOwnerAuthenticated, checkAuthOwner } = useOwnerAuthStore();
 
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     checkAuth();
     checkAuthCook();
@@ -112,9 +124,15 @@ function App() {
 
   return (
     <Router>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense
+        fallback={
+          <div>
+            <HouseLoader />
+          </div>
+        }
+      >
         <Routes>
-           {/* ******************************** admins routes ******************************** */}
+          {/* ******************************** admins routes ******************************** */}
           <Route
             path="/admins/login"
             element={

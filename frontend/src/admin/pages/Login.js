@@ -1,18 +1,12 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-
-import { RiEye2Line, RiEyeCloseLine, RiPhoneLine, RiUserSmileLine, RiUser2Line, RiMailLine, RiLoader2Fill, RiUser5Line } from "@remixicon/react"
-
+import { Link, useNavigate } from 'react-router-dom'
+import { RiEye2Line, RiEyeCloseLine, RiPhoneLine } from "@remixicon/react"
 import { MdOutlineSms } from "react-icons/md";
-
-import axios from "axios"
-import { ToastContainer, toast } from 'react-toastify';
+import { toast,ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useNavigate } from 'react-router-dom'
-
+import { useAdminAuthStore } from '../stores/authStore'; 
 
 function Login() {
-
     const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
     const [passwordVisible, setPasswordVisible] = useState(false);
@@ -20,19 +14,13 @@ function Login() {
     const [isLogin, setIsLogin] = useState(false);
 
     const navigate = useNavigate()
+    const { login, sendOtp, verifyOtp, isLoading, error } = useAdminAuthStore();
 
-
-    // error
+    // error states
     const [phoneError, setPhoneError] = useState(false)
     const [phoneErrorMsg, setPhoneErrorMsg] = useState("")
-
     const [passwordError, setPasswordError] = useState(false)
     const [passwordErrorMsg, setPasswordErrorMsg] = useState("")
-
-
-
-    // btn spinner
-    const [btnSpinner, setBtnSpinner] = useState(false)
 
     const togglePasswordVisibility = () => {
         setPasswordVisible(!passwordVisible);
@@ -42,58 +30,10 @@ function Login() {
         setPassword(e.target.value);
     };
 
-
-
-
-    const login = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault()
 
-        
-
-        if (phone && password) {
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            }
-
-
-            axios.post('/api/admins/auth/login', { phone, password }, config).then((data) => {
-
-                localStorage.setItem("userId", data.data._id)
-
-                if (data) {
-                    axios.post('/api/admins/auth/send-otp', { phone }, config).then((otpData) => {
-                        toast.info('!کد یکبار مصرف ارسال شده را در زیر وارد کنید', {
-                            position: "top-right",
-                            autoClose: 5000,
-                            hideProgressBar: false,
-                            closeOnClick: true,
-                            pauseOnHover: true,
-                            draggable: true,
-                            progress: undefined,
-                        })
-                        setIsLogin(true)
-                    })
-
-                }
-            }).catch((error) => {
-                console.log(error);
-                setBtnSpinner(false)
-
-                toast.error(error.response.data.msg || error.name, {
-                    position: "top-right",
-                    autoClose: 5000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    progress: undefined,
-                });
-            })
-
-
-        } else {
+        if (!phone || !password) {
             toast.error('!!لطفا همه فیلدها را وارد کنید', {
                 position: "top-right",
                 autoClose: 5000,
@@ -103,45 +43,28 @@ function Login() {
                 draggable: true,
                 progress: undefined,
             });
+            return;
         }
 
+        try {
+            // First login to get user data
+            await login({ phone, password });
+            
+            // If login successful, send OTP
+            await sendOtp(phone);
+            
+            setIsLogin(true);
+            
+        } catch (error) {
+            // Error handling is already done in the store
+            console.log('Login error:', error);
+        }
     }
 
-
-    const verify = (e) => {
+    const handleVerify = async (e) => {
         e.preventDefault()
 
-        const config = {
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        }
-
-        if (code) {
-
-            axios.post('/api/admins/auth/verify-otp', { phone, code }, config).then((data) => {
-
-                if (data) {
-                    const token = data.data.token
-                    localStorage.setItem("userToken", token)
-                    navigate('/admins/welcome')
-                }
-
-            }).catch((error) => {
-                console.log(error);
-
-                toast.error(error.response.data.msg || error.name, {
-                    position: "top-right",
-                    autoClose: 5000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    progress: undefined,
-                });
-            })
-        } else {
-
+        if (!code) {
             toast.error('!!لطفا کد تایید را وارد کنید', {
                 position: "top-right",
                 autoClose: 5000,
@@ -151,10 +74,20 @@ function Login() {
                 draggable: true,
                 progress: undefined,
             });
+            return;
+        }
+
+        try {
+            await verifyOtp({ phone, code });
+            
+            // If verification successful, navigate to welcome page
+            navigate('/admins/welcome');
+            
+        } catch (error) {
+            // Error handling is already done in the store
+            console.log('Verification error:', error);
         }
     }
-
-
 
     return (
         <>
@@ -182,7 +115,7 @@ function Login() {
                                         <span className="bg-white px-4 text-xs text-gray-500 uppercase">تایید کد </span>
                                     </div>
                                 </div>
-                                <form className="" onSubmit={verify}>
+                                <form onSubmit={handleVerify}>
                                     <p className='text-gray-500 mt-6 mb-10'>کد ارسال شده را در زیر وارد کنید. </p>
                                     <div className="flex flex-col mb-2">
                                         <label htmlFor="phone" className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">کد یکبار مصرف</label>
@@ -190,16 +123,26 @@ function Login() {
                                             <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
                                                 <MdOutlineSms className='w-6 h-6 text-gray-400' />
                                             </div>
-                                            <input style={{ borderRadius: '5px' }} type="text" name='code'
+                                            <input 
+                                                style={{ borderRadius: '5px' }} 
+                                                type="text" 
+                                                name='code'
                                                 value={code}
-                                                onChange={(e) => setCode(e.target.value)} className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800" placeholder="کد یکبار مصرف" />
+                                                onChange={(e) => setCode(e.target.value)} 
+                                                className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800" 
+                                                placeholder="کد یکبار مصرف" 
+                                            />
                                         </div>
                                         <span className='text-red-500 relative text-sm'>{phoneError ? phoneErrorMsg : ""}</span>
                                     </div>
                                     {/* verify user */}
                                     <div className="mt-4 w-full">
-                                        <button className="app-btn-blue w-full" onClick={verify}>
-                                            {btnSpinner ? (
+                                        <button 
+                                            type="submit"
+                                            className="app-btn-blue w-full" 
+                                            disabled={isLoading}
+                                        >
+                                            {isLoading ? (
                                                 <div className="px-10 py-1 flex items-center justify-center">
                                                     <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
                                                 </div>
@@ -231,8 +174,14 @@ function Login() {
                                                     <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
                                                         <RiPhoneLine />
                                                     </div>
-                                                    <input style={{ borderRadius: '5px' }} type="text" value={phone}
-                                                        onChange={(e) => setPhone(e.target.value)} className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800" placeholder="شماره تلفن" />
+                                                    <input 
+                                                        style={{ borderRadius: '5px' }} 
+                                                        type="text" 
+                                                        value={phone}
+                                                        onChange={(e) => setPhone(e.target.value)} 
+                                                        className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800" 
+                                                        placeholder="شماره تلفن" 
+                                                    />
                                                 </div>
                                                 <span className='text-red-500 relative text-sm'>{phoneError ? phoneErrorMsg : ""}</span>
                                             </div>
@@ -272,13 +221,15 @@ function Login() {
                                                 </div>
                                             </div>
 
-
-
-
                                             {/* login user */}
                                             <div className="my-2 w-full">
-                                                <button className="app-btn-blue w-full" onClick={login}>
-                                                    {btnSpinner ? (
+                                                <button 
+                                                    type="button"
+                                                    className="app-btn-blue w-full" 
+                                                    onClick={handleLogin}
+                                                    disabled={isLoading}
+                                                >
+                                                    {isLoading ? (
                                                         <div className="px-10 py-1 flex items-center justify-center">
                                                             <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
                                                         </div>
@@ -289,13 +240,10 @@ function Login() {
                                             </div>
                                             <p className='text-sm text-gray-800'>حساب ندارید؟ <Link to='/admins/register' className='hover:text-blue-900 hover:cursor-pointer'>ثبت نام </Link></p>
                                         </div>
-
                                     </form>
                                 </div>
                             </div>
                         )}
-
-
                     </div>
                 </div>
             </div>
