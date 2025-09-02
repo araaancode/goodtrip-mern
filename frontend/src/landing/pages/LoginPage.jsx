@@ -396,7 +396,6 @@ const LoginPage = () => {
                     boxShadow: '0 5px 15px rgba(102, 126, 234, 0.4)',
                     transition: 'transform 0.3s ease'
                   }}>
-                    <MdOutlineSms style={{ fontSize: isMobile ? '25px' : '30px', color: 'white' }} />
                   </div>
                   <h2 style={{ fontSize: isMobile ? '1.5rem' : '1.8rem', color: '#2d3748', marginBottom: '10px' }}>تایید کد</h2>
                   <p style={{ color: '#718096', fontSize: isMobile ? '0.9rem' : '1rem' }}>کد ارسال شده به شماره {formData.phone} را وارد کنید</p>

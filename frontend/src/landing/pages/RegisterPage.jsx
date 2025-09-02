@@ -224,30 +224,30 @@ const RegisterPage = () => {
             margin: '0 auto'
           }}>
             <div style={{ textAlign: 'center', marginBottom: isMobile ? '25px' : '35px' }}>
-              <h2 style={{ 
-                fontSize: isMobile ? '1.5rem' : '2rem', 
-                color: '#2d3748', 
-                marginBottom: isMobile ? '8px' : '12px' 
+              <h2 style={{
+                fontSize: isMobile ? '1.5rem' : '2rem',
+                color: '#2d3748',
+                marginBottom: isMobile ? '8px' : '12px'
               }}>
                 ثبت نام در سایت
               </h2>
-              <p style={{ 
-                color: '#718096', 
-                fontSize: isMobile ? '0.9rem' : '1.1rem' 
+              <p style={{
+                color: '#718096',
+                fontSize: isMobile ? '0.9rem' : '1.1rem'
               }}>
                 برای ثبت نام اطلاعات خود را وارد کنید
               </p>
             </div>
 
-            <form onSubmit={register} style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              gap: isMobile ? '20px' : '25px' 
+            <form onSubmit={register} style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: isMobile ? '20px' : '25px'
             }}>
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', 
-                gap: isMobile ? '15px' : '20px' 
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(1, 1fr)',
+                gap: isMobile ? '15px' : '20px'
               }}>
                 {/* Name Field */}
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -271,9 +271,9 @@ const RegisterPage = () => {
                       zIndex: 10,
                       color: '#a0aec0'
                     }}>
-                      <RiUser2Line style={{ 
-                        width: isMobile ? '1.1rem' : '1.4rem', 
-                        height: isMobile ? '1.1rem' : '1.4rem' 
+                      <RiUser2Line style={{
+                        width: isMobile ? '1.1rem' : '1.4rem',
+                        height: isMobile ? '1.1rem' : '1.4rem'
                       }} />
                     </div>
                     <input
@@ -325,9 +325,9 @@ const RegisterPage = () => {
                       zIndex: 10,
                       color: '#a0aec0'
                     }}>
-                      <RiUser5Line style={{ 
-                        width: isMobile ? '1.1rem' : '1.4rem', 
-                        height: isMobile ? '1.1rem' : '1.4rem' 
+                      <RiUser5Line style={{
+                        width: isMobile ? '1.1rem' : '1.4rem',
+                        height: isMobile ? '1.1rem' : '1.4rem'
                       }} />
                     </div>
                     <input
@@ -379,9 +379,9 @@ const RegisterPage = () => {
                       zIndex: 10,
                       color: '#a0aec0'
                     }}>
-                      <RiPhoneLine style={{ 
-                        width: isMobile ? '1.1rem' : '1.4rem', 
-                        height: isMobile ? '1.1rem' : '1.4rem' 
+                      <RiPhoneLine style={{
+                        width: isMobile ? '1.1rem' : '1.4rem',
+                        height: isMobile ? '1.1rem' : '1.4rem'
                       }} />
                     </div>
                     <input
@@ -416,15 +416,15 @@ const RegisterPage = () => {
                   }}>شماره تلفن همراه خود را با پیش‌شماره 09 وارد کنید</div>
                 </div>
 
-                {/* Email Field */}
+                {/* Password Field */}
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label htmlFor="email" style={{
+                  <label htmlFor="password" style={{
                     fontSize: isMobile ? '0.9rem' : '1rem',
                     fontWeight: '500',
                     color: '#4a5568',
                     marginBottom: isMobile ? '8px' : '10px'
                   }}>
-                    ایمیل
+                    گذرواژه
                   </label>
                   <div style={{ position: 'relative' }}>
                     <div style={{
@@ -434,52 +434,65 @@ const RegisterPage = () => {
                       left: isMobile ? '12px' : '18px',
                       display: 'flex',
                       alignItems: 'center',
-                      pointerEvents: 'none',
                       zIndex: 10,
-                      color: '#a0aec0'
-                    }}>
-                      <RiMailLine style={{ 
-                        width: isMobile ? '1.1rem' : '1.4rem', 
-                        height: isMobile ? '1.1rem' : '1.4rem' 
-                      }} />
+                      color: '#a0aec0',
+                      cursor: 'pointer'
+                    }} onClick={togglePasswordVisibility}>
+                      {passwordVisible ? (
+                        <RiEye2Line style={{
+                          width: isMobile ? '1.1rem' : '1.4rem',
+                          height: isMobile ? '1.1rem' : '1.4rem'
+                        }} />
+                      ) : (
+                        <RiEyeCloseLine style={{
+                          width: isMobile ? '1.1rem' : '1.4rem',
+                          height: isMobile ? '1.1rem' : '1.4rem'
+                        }} />
+                      )}
                     </div>
                     <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={email}
+                      id="password"
+                      name="password"
+                      type={passwordVisible ? "text" : "password"}
+                      value={password}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       style={{
                         width: '100%',
                         padding: isMobile ? '12px 12px 12px 40px' : '18px 18px 18px 55px',
-                        border: `1px solid ${errors.email ? '#fc8181' : '#e2e8f0'}`,
-                        backgroundColor: errors.email ? '#fff5f5' : '#f7fafc',
+                        border: `1px solid ${errors.password ? '#fc8181' : '#e2e8f0'}`,
+                        backgroundColor: errors.password ? '#fff5f5' : '#f7fafc',
                         borderRadius: '12px',
                         fontSize: isMobile ? '0.9rem' : '1.1rem',
                         transition: 'all 0.3s ease',
                         height: isMobile ? '48px' : '56px'
                       }}
-                      placeholder="example@domain.com"
+                      placeholder="••••••••"
                     />
                   </div>
-                  {errors.email && <p style={{
+                  {errors.password && <p style={{
                     marginTop: isMobile ? '6px' : '8px',
                     fontSize: isMobile ? '0.8rem' : '0.9rem',
                     color: '#e53e3e'
-                  }}>{errors.email}</p>}
+                  }}>{errors.password}</p>}
+                  <div style={{
+                    marginTop: isMobile ? '6px' : '8px',
+                    fontSize: isMobile ? '0.75rem' : '0.85rem',
+                    color: '#718096'
+                  }}>حداقل 8 کاراکتر و شامل حروف بزرگ، کوچک و اعداد</div>
                 </div>
               </div>
 
-              {/* Password Field */}
+
+              {/* Email Field */}
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label htmlFor="password" style={{
+                <label htmlFor="email" style={{
                   fontSize: isMobile ? '0.9rem' : '1rem',
                   fontWeight: '500',
                   color: '#4a5568',
                   marginBottom: isMobile ? '8px' : '10px'
                 }}>
-                  گذرواژه
+                  ایمیل
                 </label>
                 <div style={{ position: 'relative' }}>
                   <div style={{
@@ -489,53 +502,42 @@ const RegisterPage = () => {
                     left: isMobile ? '12px' : '18px',
                     display: 'flex',
                     alignItems: 'center',
+                    pointerEvents: 'none',
                     zIndex: 10,
-                    color: '#a0aec0',
-                    cursor: 'pointer'
-                  }} onClick={togglePasswordVisibility}>
-                    {passwordVisible ? (
-                      <RiEye2Line style={{ 
-                        width: isMobile ? '1.1rem' : '1.4rem', 
-                        height: isMobile ? '1.1rem' : '1.4rem' 
-                      }} /> 
-                    ) : (
-                      <RiEyeCloseLine style={{ 
-                        width: isMobile ? '1.1rem' : '1.4rem', 
-                        height: isMobile ? '1.1rem' : '1.4rem' 
-                      }} /> 
-                    )}
+                    color: '#a0aec0'
+                  }}>
+                    <RiMailLine style={{
+                      width: isMobile ? '1.1rem' : '1.4rem',
+                      height: isMobile ? '1.1rem' : '1.4rem'
+                    }} />
                   </div>
                   <input
-                    id="password"
-                    name="password"
-                    type={passwordVisible ? "text" : "password"}
-                    value={password}
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={email}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     style={{
                       width: '100%',
                       padding: isMobile ? '12px 12px 12px 40px' : '18px 18px 18px 55px',
-                      border: `1px solid ${errors.password ? '#fc8181' : '#e2e8f0'}`,
-                      backgroundColor: errors.password ? '#fff5f5' : '#f7fafc',
+                      border: `1px solid ${errors.email ? '#fc8181' : '#e2e8f0'}`,
+                      backgroundColor: errors.email ? '#fff5f5' : '#f7fafc',
                       borderRadius: '12px',
                       fontSize: isMobile ? '0.9rem' : '1.1rem',
                       transition: 'all 0.3s ease',
                       height: isMobile ? '48px' : '56px'
                     }}
-                    placeholder="••••••••"
+                    placeholder="example@domain.com"
                   />
                 </div>
-                {errors.password && <p style={{
+                {errors.email && <p style={{
                   marginTop: isMobile ? '6px' : '8px',
                   fontSize: isMobile ? '0.8rem' : '0.9rem',
                   color: '#e53e3e'
-                }}>{errors.password}</p>}
-                <div style={{
-                  marginTop: isMobile ? '6px' : '8px',
-                  fontSize: isMobile ? '0.75rem' : '0.85rem',
-                  color: '#718096'
-                }}>حداقل 8 کاراکتر و شامل حروف بزرگ، کوچک و اعداد</div>
+                }}>{errors.email}</p>}
               </div>
+
 
               <div style={{ marginTop: isMobile ? '1rem' : '1.5rem' }}>
                 <button
@@ -562,10 +564,10 @@ const RegisterPage = () => {
                     height: isMobile ? '50px' : '60px'
                   }}
                 >
-                  {loading ? <RiLoader2Fill style={{ 
-                    animation: 'spin 1s linear infinite', 
-                    height: isMobile ? '1.2rem' : '1.5rem', 
-                    width: isMobile ? '1.2rem' : '1.5rem' 
+                  {loading ? <RiLoader2Fill style={{
+                    animation: 'spin 1s linear infinite',
+                    height: isMobile ? '1.2rem' : '1.5rem',
+                    width: isMobile ? '1.2rem' : '1.5rem'
                   }} /> : 'ثبت نام'}
                 </button>
               </div>
@@ -576,9 +578,9 @@ const RegisterPage = () => {
                 paddingTop: isMobile ? '1.5rem' : '1.8rem',
                 borderTop: '1px solid #e2e8f0'
               }}>
-                <p style={{ 
-                  fontSize: isMobile ? '0.9rem' : '1rem', 
-                  color: '#718096' 
+                <p style={{
+                  fontSize: isMobile ? '0.9rem' : '1rem',
+                  color: '#718096'
                 }}>
                   حساب دارید؟{' '}
                   <a href="/login" style={{
@@ -621,16 +623,16 @@ const RegisterPage = () => {
               color: 'white'
             }}>
               <div>
-                <h1 style={{ 
-                  fontSize: '2.5rem', 
-                  marginBottom: '25px', 
-                  textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)' 
+                <h1 style={{
+                  fontSize: '2.5rem',
+                  marginBottom: '25px',
+                  textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)'
                 }}>
                   به گودتریپ بپیوندید
                 </h1>
-                <p style={{ 
-                  fontSize: '1.3rem', 
-                  opacity: 0.9 
+                <p style={{
+                  fontSize: '1.3rem',
+                  opacity: 0.9
                 }}>
                   با ثبت نام از تمامی امکانات سایت بهره‌مند شوید
                 </p>
