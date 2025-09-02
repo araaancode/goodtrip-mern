@@ -56,17 +56,17 @@ export default function HousePage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Left Column - Content */}
           <div className="lg:w-3/5">
             <div dir="rtl" className="mb-6">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{currentHouse.name}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{currentHouse.name}</h1>
               <AddressLink />
             </div>
 
             {/* Tabs Navigation */}
-            <div dir="rtl" className="border-b border-gray-200 mb-6">
-              <nav className="-mb-px flex space-x-8">
+            <div dir="rtl" className="border-b border-gray-200 mb-6 overflow-x-auto">
+              <nav className="-mb-px flex min-w-max sm:min-w-0">
                 {[
                   { id: 'description', label: 'توضیحات' },
                   { id: 'amenities', label: 'امکانات' },
@@ -76,17 +76,17 @@ export default function HousePage() {
                     <button
                       onClick={() => setActiveTab(tab.id)}
                       className={`
-            whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
-            ${activeTab === tab.id
+                        whitespace-nowrap py-4 px-3 sm:px-4 border-b-2 font-medium text-sm
+                        ${activeTab === tab.id
                           ? 'border-primary-500 text-primary-600'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                         }
-          `}
+                      `}
                     >
                       {tab.label}
                     </button>
                     {index < 2 && (
-                      <span className="mx-2 text-gray-300">|</span>
+                      <span className="mx-1 sm:mx-2 text-gray-300">|</span>
                     )}
                   </div>
                 ))}
@@ -96,17 +96,17 @@ export default function HousePage() {
             {/* Tab Content */}
             <div dir="rtl">
               {activeTab === 'description' && (
-                <div className="prose prose-lg text-gray-700 max-w-none">
-                  <h2 className="text-xl font-semibold mb-4">درباره اقامتگاه</h2>
+                <div className="prose prose-sm sm:prose-lg text-gray-700 max-w-none">
+                  <h2 className="text-lg sm:text-xl font-semibold mb-4">درباره اقامتگاه</h2>
                   <p>{currentHouse.description || 'توضیحاتی برای این اقامتگاه ثبت نشده است.'}</p>
                 </div>
               )}
 
               {activeTab === 'amenities' && (
-                <div className="space-y-8">
+                <div className="space-y-6 sm:space-y-8">
                   <div>
-                    <h3 className="text-lg font-semibold mb-4">امکانات رفاهی</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <h3 className="text-base sm:text-lg font-semibold mb-4">امکانات رفاهی</h3>
+                    <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                       {currentHouse.options?.map((option, index) => (
                         <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                           <span className="text-gray-700">
@@ -121,10 +121,10 @@ export default function HousePage() {
               )}
 
               {activeTab === 'rules' && (
-                <div className="space-y-8">
+                <div className="space-y-6 sm:space-y-8">
                   <div>
-                    <h3 className="text-lg font-semibold mb-4">قوانین صاحبخانه</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <h3 className="text-base sm:text-lg font-semibold mb-4">قوانین صاحبخانه</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       {currentHouse.houseRoles?.map((rule, index) => (
                         <div key={index} className="p-3 bg-gray-50 rounded-lg">
                           <span className="text-gray-700 text-sm font-medium">{rule}</span>
@@ -138,9 +138,9 @@ export default function HousePage() {
           </div>
 
           {/* Right Column - Booking Widget */}
-          <div className="lg:w-2/5">
-            <div className="sticky top-4">
-              <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+          <div className="lg:w-2/5 mt-6 lg:mt-0">
+            <div className="lg:sticky lg:top-4">
+              <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg border border-gray-200">
                 <BookingWidget house={currentHouse} id={id} />
               </div>
             </div>
@@ -149,10 +149,10 @@ export default function HousePage() {
       </div>
 
       {/* Map Section */}
-      <div className="bg-white border-t border-gray-200 py-8 mt-8">
+      <div className="bg-white border-t border-gray-200 py-6 sm:py-8 mt-6 sm:mt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-xl font-semibold mb-4 text-center">موقعیت مکانی</h2>
-          <div className="h-96 rounded-xl overflow-hidden">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-center">موقعیت مکانی</h2>
+          <div className="h-64 sm:h-80 md:h-96 rounded-xl overflow-hidden">
             <MapPage currentHouse={currentHouse} />
           </div>
         </div>
@@ -164,13 +164,13 @@ export default function HousePage() {
 // Helper function to get icons for amenities
 function getAmenityIcon(amenity) {
   const icons = {
-    'تلویزیون': <PiTelevision className="w-6 h-6" />,
-    'پارکینگ': <LuCircleParking className="w-6 h-6" />,
-    'رادیو': <HiOutlineRadio className="w-6 h-6" />,
-    'جاروبرقی': <GiVacuumCleaner className="w-6 h-6" />,
-    'بالکن': <PiSolarRoof className="w-6 h-6" />,
-    'آلاچیق': <LiaWarehouseSolid className="w-6 h-6" />
+    'تلویزیون': <PiTelevision className="w-5 h-5 sm:w-6 sm:h-6" />,
+    'پارکینگ': <LuCircleParking className="w-5 h-5 sm:w-6 sm:h-6" />,
+    'رادیو': <HiOutlineRadio className="w-5 h-5 sm:w-6 sm:h-6" />,
+    'جاروبرقی': <GiVacuumCleaner className="w-5 h-5 sm:w-6 sm:h-6" />,
+    'بالکن': <PiSolarRoof className="w-5 h-5 sm:w-6 sm:h-6" />,
+    'آلاچیق': <LiaWarehouseSolid className="w-5 h-5 sm:w-6 sm:h-6" />
   };
 
-  return icons[amenity] || <PiTelevision className="w-6 h-6" />;
+  return icons[amenity] || <PiTelevision className="w-5 h-5 sm:w-6 sm:h-6" />;
 }

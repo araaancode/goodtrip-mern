@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { RiLoader2Fill, RiEye2Line, RiEyeCloseLine, RiPhoneLine } from '@remixicon/react';
 import { useNavigate } from 'react-router-dom';
 import Spinner from "../components/Spinner";
@@ -8,13 +8,13 @@ import { MdOutlineSms } from "react-icons/md";
 import useUserAuthStore from '../store/authStore';
 
 const LoginPage = () => {
-  const { login, verify, sendOtp, isAuthenticated, msg, error } = useUserAuthStore();
+  const { login, verify, sendOtp, isAuthenticated, msg, error, clearError } = useUserAuthStore();
   const [loading, setLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(false);
   const [formData, setFormData] = useState({
     phone: '',
     password: '',
-    code: ''
+    code: Array(5).fill('')
   });
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [errors, setErrors] = useState({
@@ -22,41 +22,167 @@ const LoginPage = () => {
     password: '',
     code: ''
   });
+  const [touched, setTouched] = useState({
+    phone: false,
+    password: false,
+    code: false
+  });
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+  const inputRefs = useRef([]);
   const navigate = useNavigate();
 
-  // Validation functions remain the same
+  // Check screen size on resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Effect to handle store errors
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        position: isMobile ? "top-center" : "top-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+      clearError();
+    }
+
+    if (msg) {
+      toast.info(msg, {
+        position: isMobile ? "top-center" : "top-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+    }
+  }, [error, msg, clearError, isMobile]);
+
+  // Validation functions
   const validatePhone = (phone) => {
     if (!phone) return 'شماره تلفن الزامی است';
-    if (!/^(\+98|0)?9\d{9}$/.test(phone)) return 'شماره تلفن معتبر نیست';
+    if (!/^(\+98|0)?9\d{9}$/.test(phone)) return 'شماره تلفن معتبر نیست (مثال: 09123456789)';
     return '';
   };
 
   const validatePassword = (password) => {
     if (!password) return 'گذرواژه الزامی است';
     if (password.length < 8) return 'گذرواژه باید حداقل 8 کاراکتر باشد';
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      return 'گذرواژه باید شامل حروف بزرگ، کوچک و اعداد باشد';
+    }
     return '';
   };
 
   const validateCode = (code) => {
-    if (!code) return 'کد تایید الزامی است';
-    if (code.length !== 5) return 'کد تایید باید 5 رقمی باشد';
+    const codeString = code.join('');
+    if (!codeString) return 'کد تایید الزامی است';
+    if (codeString.length !== 5) return 'کد تایید باید 5 رقمی باشد';
+    if (!/^\d+$/.test(codeString)) return 'کد تایید باید فقط شامل اعداد باشد';
     return '';
+  };
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+
+    // Validate the field on blur
+    if (name === 'phone') {
+      setErrors(prev => ({ ...prev, phone: validatePhone(formData.phone) }));
+    } else if (name === 'password') {
+      setErrors(prev => ({ ...prev, password: validatePassword(formData.password) }));
+    } else if (name === 'code') {
+      setErrors(prev => ({ ...prev, code: validateCode(formData.code) }));
+    }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    if (name === 'phone' || name === 'password') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+
+      // Real-time validation for touched fields
+      if (touched[name]) {
+        if (name === 'phone') {
+          setErrors(prev => ({ ...prev, phone: validatePhone(value) }));
+        } else if (name === 'password') {
+          setErrors(prev => ({ ...prev, password: validatePassword(value) }));
+        }
+      }
+    }
+  };
+
+  // Handle OTP input change
+  const handleOtpChange = (index, value) => {
+    // Only allow numbers
+    if (!/^\d*$/.test(value)) return;
+    
+    const newCode = [...formData.code];
+    newCode[index] = value;
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      code: newCode
     }));
+    
+    // Validate code when all fields are filled
+    if (value && index === 4) {
+      setErrors(prev => ({ ...prev, code: validateCode(newCode) }));
+    }
+    
+    // Auto focus to next input (left to right)
+    if (value && index < 4) {
+      inputRefs.current[index + 1].focus();
+    }
+  };
 
-    if (name === 'phone') {
-      setErrors(prev => ({ ...prev, phone: validatePhone(value) }));
-    } else if (name === 'password') {
-      setErrors(prev => ({ ...prev, password: validatePassword(value) }));
-    } else if (name === 'code') {
-      setErrors(prev => ({ ...prev, code: validateCode(value) }));
+  // Handle backspace in OTP inputs
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !formData.code[index] && index > 0) {
+      inputRefs.current[index - 1].focus();
+    }
+  };
+
+  // Paste OTP code
+  const handleOtpPaste = (e) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData('text').slice(0, 5);
+    if (/^\d+$/.test(pasteData)) {
+      const newCode = pasteData.split('');
+      const updatedCode = [...formData.code];
+      
+      for (let i = 0; i < newCode.length && i < 5; i++) {
+        updatedCode[i] = newCode[i];
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        code: updatedCode
+      }));
+      
+      // Focus on the last input with data
+      const lastFilledIndex = Math.min(4, newCode.length - 1);
+      if (lastFilledIndex < 4) {
+        inputRefs.current[lastFilledIndex + 1].focus();
+      } else {
+        inputRefs.current[4].focus();
+      }
     }
   };
 
@@ -70,10 +196,19 @@ const LoginPage = () => {
       password: validatePassword(formData.password)
     };
     setErrors(newErrors);
+    setTouched({ phone: true, password: true, code: false });
     return !newErrors.phone && !newErrors.password;
   };
 
-  // handleLogin and handleVerify functions remain the same
+  const validateVerificationForm = () => {
+    const newErrors = {
+      code: validateCode(formData.code)
+    };
+    setErrors(prev => ({ ...prev, ...newErrors }));
+    setTouched(prev => ({ ...prev, code: true }));
+    return !newErrors.code;
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -84,7 +219,7 @@ const LoginPage = () => {
 
       if (loginResult?.status === "success") {
         toast.info('کد یکبار مصرف ارسال شد', {
-          position: "top-left",
+          position: isMobile ? "top-center" : "top-left",
           autoClose: 5000,
           hideProgressBar: false,
           closeOnClick: true,
@@ -94,9 +229,16 @@ const LoginPage = () => {
         });
         setIsLogin(true);
         await sendOtp(loginResult.phone);
+        
+        // Focus on first OTP input after transition
+        setTimeout(() => {
+          if (inputRefs.current[0]) {
+            inputRefs.current[0].focus();
+          }
+        }, 300);
       } else {
         toast.error(loginResult?.msg || 'خطایی وجود دارد', {
-          position: "top-left",
+          position: isMobile ? "top-center" : "top-left",
           autoClose: 5000,
           hideProgressBar: false,
           closeOnClick: true,
@@ -107,7 +249,7 @@ const LoginPage = () => {
       }
     } catch (error) {
       toast.error(error.message || 'خطا در ورود. لطفا مجددا تلاش کنید', {
-        position: "top-left",
+        position: isMobile ? "top-center" : "top-left",
         autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: true,
@@ -122,18 +264,57 @@ const LoginPage = () => {
 
   const handleVerify = async (e) => {
     e.preventDefault();
-    const codeError = validateCode(formData.code);
-    if (codeError) {
-      setErrors(prev => ({ ...prev, code: codeError }));
-      return;
-    }
+    if (!validateVerificationForm()) return;
 
     try {
       setLoading(true);
-      await verify(formData.phone, formData.code);
+      const codeString = formData.code.join('');
+      const verifyResult = await verify(formData.phone, codeString);
 
-      toast.success('ورود با موفقیت انجام شد', {
-        position: "top-left",
+      if (verifyResult?.status === "success") {
+        toast.success('ورود با موفقیت انجام شد', {
+          position: isMobile ? "top-center" : "top-left",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
+
+        navigate('/');
+      } else {
+        toast.error(verifyResult?.msg || 'خطا در تایید کد. لطفا مجددا تلاش کنید', {
+          position: isMobile ? "top-center" : "top-left",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
+      }
+    } catch (error) {
+      toast.error(error.message || 'خطا در تایید کد. لطفا مجددا تلاش کنید', {
+        position: isMobile ? "top-center" : "top-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    try {
+      setLoading(true);
+      await sendOtp(formData.phone);
+      toast.info('کد جدید ارسال شد', {
+        position: isMobile ? "top-center" : "top-left",
         autoClose: 3000,
         hideProgressBar: false,
         closeOnClick: true,
@@ -141,11 +322,19 @@ const LoginPage = () => {
         draggable: true,
         progress: undefined,
       });
-
-      navigate('/');
+      
+      // Clear OTP inputs and focus on first one
+      setFormData(prev => ({
+        ...prev,
+        code: Array(5).fill('')
+      }));
+      
+      if (inputRefs.current[0]) {
+        inputRefs.current[0].focus();
+      }
     } catch (error) {
-      toast.error(error.message || 'خطا در تایید کد. لطفا مجددا تلاش کنید', {
-        position: "top-left",
+      toast.error('خطا در ارسال کد. لطفا مجددا تلاش کنید', {
+        position: isMobile ? "top-center" : "top-left",
         autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: true,
@@ -159,161 +348,415 @@ const LoginPage = () => {
   };
 
   return (
-    <div dir="rtl" className="min-h-screen flex items-center justify-center bg-gray-50">
-      {/* Background Image Section */}
-      <div className="hidden lg:block lg:w-1/2 bg-cover bg-center h-screen" 
-           style={{ backgroundImage: 'url(https://images.pexels.com/photos/147411/italy-mountains-dawn-daybreak-147411.jpeg)' }}>
-        <div className="h-full bg-black bg-opacity-40 flex items-center justify-center">
-          <div className="text-center p-8 text-white">
-            <h1 className="text-4xl font-bold mb-4">به پنل کاربری خوش آمدید</h1>
-            <p className="text-xl">لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از صنعت چاپ</p>
-          </div>
-        </div>
-      </div>
-      
-      {/* Login Form Section */}
-      <div className="w-full lg:w-1/2 p-8">
-        <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
-          {isLogin ? (
-            <div className="p-8">
-              <div className="text-center mb-6">
-                <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                  <MdOutlineSms className="w-8 h-8 text-blue-900" />
-                </div>
-                <h2 className="mt-4 text-2xl font-bold text-gray-800">تایید کد</h2>
-                <p className="mt-2 text-gray-600">کد ارسال شده به شماره {formData.phone} را وارد کنید</p>
-              </div>
-              
-              <form className="space-y-6">
-                <div>
-                  <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1">
-                    کد یکبار مصرف
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <MdOutlineSms className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="code"
-                      name="code"
-                      type="text"
-                      value={formData.code}
-                      onChange={handleChange}
-                      className={`block w-full pl-10 pr-3 py-2 border ${errors.code ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                      placeholder="12345"
-                    />
+    <div dir="rtl" style={{
+      background: '#fff',
+      minHeight: '100vh',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: isMobile ? '10px' : '20px'
+    }}>
+      <div style={{
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        width: '100%',
+        maxWidth: isMobile ? '100%' : '1000px',
+        minHeight: isMobile ? 'auto' : '600px',
+        background: 'rgba(255, 255, 255, 0.95)',
+        borderRadius: '20px',
+        overflow: 'hidden',
+        boxShadow: '0 15px 40px rgba(0, 0, 0, 0.2)',
+        animation: 'fadeIn 0.8s ease-out'
+      }}>
+        {/* Login Form Section */}
+        <div style={{
+          flex: 1,
+          padding: isMobile ? '25px 20px' : '40px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center'
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: '400px',
+            margin: '0 auto'
+          }}>
+            {isLogin ? (
+              <div style={{ padding: '20px 0' }}>
+                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                  <div style={{
+                    margin: '0 auto 15px',
+                    width: isMobile ? '60px' : '70px',
+                    height: isMobile ? '60px' : '70px',
+                    background: 'linear-gradient(135deg, #2b6cb0 0%, #0D47A1 100%)',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 5px 15px rgba(102, 126, 234, 0.4)',
+                    transition: 'transform 0.3s ease'
+                  }}>
+                    <MdOutlineSms style={{ fontSize: isMobile ? '25px' : '30px', color: 'white' }} />
                   </div>
-                  {errors.code && <p className="mt-1 text-sm text-red-600">{errors.code}</p>}
-                </div>
-
-                <div>
+                  <h2 style={{ fontSize: isMobile ? '1.5rem' : '1.8rem', color: '#2d3748', marginBottom: '10px' }}>تایید کد</h2>
+                  <p style={{ color: '#718096', fontSize: isMobile ? '0.9rem' : '1rem' }}>کد ارسال شده به شماره {formData.phone} را وارد کنید</p>
                   <button
                     type="button"
-                    onClick={handleVerify}
+                    onClick={handleResendCode}
                     disabled={loading}
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-900  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                    style={{
+                      marginTop: '1rem',
+                      background: 'none',
+                      border: 'none',
+                      color: '#2b6cb0',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      textDecoration: 'underline'
+                    }}
                   >
-                    {loading ? <Spinner /> : 'تایید کد'}
+                    ارسال مجدد کد
                   </button>
                 </div>
-              </form>
-            </div>
-          ) : (
-            <div className="p-8">
-              <div className="text-center mb-8">
-                <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                  <svg
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    fill="currentColor"
-                    className="w-8 h-8 text-blue-900"
-                  >
-                    <path d="M22.1034 19L12.8659 3.00017C12.7782 2.84815 12.6519 2.72191 12.4999 2.63414C12.0216 2.358 11.41 2.52187 11.1339 3.00017L1.89638 19H1V21C8.33333 21 15.6667 21 23 21V19H22.1034ZM7.59991 19.0002H4.20568L11.9999 5.50017L19.7941 19.0002H16.4001L12 11L7.59991 19.0002ZM12 15.1501L14.1175 19H9.88254L12 15.1501Z"></path>
-                  </svg>
-                </div>
-                <h2 className="mt-4 text-2xl font-bold text-gray-800">ورود به حساب کاربری</h2>
-                <p className="mt-2 text-gray-600">لطفا اطلاعات خود را وارد کنید</p>
+
+                <form style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <label style={{
+                      fontSize: '0.95rem',
+                      fontWeight: '500',
+                      color: '#4a5568',
+                      marginBottom: '15px',
+                      textAlign: 'center'
+                    }}>
+                      کد یکبار مصرف
+                    </label>
+                    
+                    {/* OTP Inputs Container */}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      gap: isMobile ? '8px' : '12px',
+                      marginBottom: '15px',
+                      direction: 'ltr'
+                    }}>
+                      {formData.code.map((digit, index) => (
+                        <input
+                          key={index}
+                          ref={el => inputRefs.current[index] = el}
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={1}
+                          value={digit}
+                          onChange={(e) => handleOtpChange(index, e.target.value)}
+                          onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                          onPaste={handleOtpPaste}
+                          style={{
+                            width: isMobile ? '45px' : '55px',
+                            height: isMobile ? '45px' : '55px',
+                            textAlign: 'center',
+                            fontSize: isMobile ? '1.4rem' : '1.6rem',
+                            fontWeight: 'bold',
+                            border: `2px solid ${errors.code ? '#fc8181' : '#e2e8f0'}`,
+                            backgroundColor: errors.code ? '#fff5f5' : '#f7fafc',
+                            borderRadius: '12px',
+                            transition: 'all 0.3s ease',
+                            boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)'
+                          }}
+                          onFocus={(e) => {
+                            e.target.style.borderColor = '#2b6cb0';
+                            e.target.style.backgroundColor = '#fff';
+                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.2)';
+                          }}
+                          onBlur={(e) => {
+                            e.target.style.borderColor = errors.code ? '#fc8181' : '#e2e8f0';
+                            e.target.style.backgroundColor = errors.code ? '#fff5f5' : '#f7fafc';
+                            e.target.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.1)';
+                          }}
+                        />
+                      ))}
+                    </div>
+                    
+                    {errors.code && <p style={{
+                      marginTop: '5px',
+                      fontSize: '0.85rem',
+                      color: '#e53e3e',
+                      textAlign: 'center'
+                    }}>{errors.code}</p>}
+                    <div style={{
+                      marginTop: '5px',
+                      fontSize: '0.8rem',
+                      color: '#718096',
+                      textAlign: 'center'
+                    }}>کد 5 رقمی ارسال شده به تلفن همراه خود را وارد کنید</div>
+                  </div>
+
+                  <div style={{ marginTop: '1.5rem' }}>
+                    <button
+                      type="button"
+                      onClick={handleVerify}
+                      disabled={loading}
+                      style={{
+                        display: 'flex',
+                        width: '100%',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        padding: isMobile ? '0.8rem 1.2rem' : '1rem 1.5rem',
+                        border: 'none',
+                        borderRadius: '10px',
+                        boxShadow: '0 4px 6px rgba(102, 126, 234, 0.3)',
+                        fontSize: '1rem',
+                        fontWeight: '600',
+                        color: 'white',
+                        background: 'linear-gradient(135deg, #2b6cb0 0%, #0D47A1 100%)',
+                        outline: 'none',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        position: 'relative',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      {loading ? <Spinner /> : 'تایید کد'}
+                    </button>
+                  </div>
+                </form>
               </div>
-
-              <form className="space-y-6">
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                    شماره تلفن
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <RiPhoneLine className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="text"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className={`block w-full pl-10 pr-3 py-2 border ${errors.phone ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                      placeholder="09123456789"
-                    />
-                  </div>
-                  {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+            ) : (
+              <div style={{ padding: '20px 0' }}>
+                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                  <h2 style={{ fontSize: isMobile ? '1.5rem' : '1.8rem', color: '#2d3748', marginBottom: '10px' }}>ورود به حساب کاربری</h2>
+                  <p style={{ color: '#718096', fontSize: isMobile ? '0.9rem' : '1rem' }}>لطفا اطلاعات خود را وارد کنید</p>
                 </div>
 
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                    گذرواژه
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      {passwordVisible ? (
-                        <RiEye2Line className="h-5 w-5 text-gray-400 cursor-pointer" onClick={togglePasswordVisibility} />
-                      ) : (
-                        <RiEyeCloseLine className="h-5 w-5 text-gray-400 cursor-pointer" onClick={togglePasswordVisibility} />
-                      )}
+                <form style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <label htmlFor="phone" style={{
+                      fontSize: '0.95rem',
+                      fontWeight: '500',
+                      color: '#4a5568',
+                      marginBottom: '8px'
+                    }}>
+                      شماره تلفن
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        bottom: 0,
+                        left: '15px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        pointerEvents: 'none',
+                        zIndex: 10,
+                        color: '#a0aec0'
+                      }}>
+                        <RiPhoneLine style={{ width: isMobile ? '1rem' : '1.25rem', height: isMobile ? '1rem' : '1.25rem' }} />
+                      </div>
+                      <input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        style={{
+                          width: '100%',
+                          padding: isMobile ? '12px 12px 12px 45px' : '15px 15px 15px 50px',
+                          border: `1px solid ${errors.phone ? '#fc8181' : '#e2e8f0'}`,
+                          backgroundColor: errors.phone ? '#fff5f5' : '#f7fafc',
+                          borderRadius: '10px',
+                          fontSize: isMobile ? '0.9rem' : '1rem',
+                          transition: 'all 0.3s ease',
+                          textAlign:'right'
+                        }}
+                        placeholder="09123456789"
+                      />
                     </div>
-                    <input
-                      id="password"
-                      name="password"
-                      type={passwordVisible ? "text" : "password"}
-                      value={formData.password}
-                      onChange={handleChange}
-                      className={`block w-full pl-10 pr-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                      placeholder="••••••••"
-                    />
+                    {errors.phone && <p style={{
+                      marginTop: '5px',
+                      fontSize: '0.85rem',
+                      color: '#e53e3e'
+                    }}>{errors.phone}</p>}
+                    <div style={{
+                      marginTop: '5px',
+                      fontSize: '0.8rem',
+                      color: '#718096'
+                    }}>شماره تلفن همراه خود را با پیش‌شماره 09 وارد کنید</div>
                   </div>
-                  {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
-                  <div className="flex justify-end mt-2">
-                    <a href="/forgot-password" className="text-sm text-blue-900 ">
+
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <label htmlFor="password" style={{
+                      fontSize: '0.95rem',
+                      fontWeight: '500',
+                      color: '#4a5568',
+                      marginBottom: '8px'
+                    }}>
+                      گذرواژه
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        bottom: 0,
+                        left: '15px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        zIndex: 10,
+                        color: '#a0aec0',
+                        cursor: 'pointer'
+                      }} onClick={togglePasswordVisibility}>
+                        {passwordVisible ? (
+                          <RiEye2Line style={{ width: isMobile ? '1rem' : '1.25rem', height: isMobile ? '1rem' : '1.25rem' }} />
+                        ) : (
+                          <RiEyeCloseLine style={{ width: isMobile ? '1rem' : '1.25rem', height: isMobile ? '1rem' : '1.25rem' }} />
+                        )}
+                      </div>
+                      <input
+                        id="password"
+                        name="password"
+                        type={passwordVisible ? "text" : "password"}
+                        value={formData.password}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        style={{
+                          width: '100%',
+                          padding: isMobile ? '12px 12px 12px 45px' : '15px 15px 15px 50px',
+                          border: `1px solid ${errors.password ? '#fc8181' : '#e2e8f0'}`,
+                          backgroundColor: errors.password ? '#fff5f5' : '#f7fafc',
+                          borderRadius: '10px',
+                          fontSize: isMobile ? '0.9rem' : '1rem',
+                          transition: 'all 0.3s ease'
+                        }}
+                        placeholder="••••••••"
+                      />
+                    </div>
+                    {errors.password && <p style={{
+                      marginTop: '5px',
+                      fontSize: '0.85rem',
+                      color: '#e53e3e'
+                    }}>{errors.password}</p>}
+                    <div style={{
+                      marginTop: '5px',
+                      fontSize: '0.8rem',
+                      color: '#718096'
+                    }}>حداقل 8 کاراکتر و شامل حروف بزرگ، کوچک و اعداد</div>
+                  </div>
+
+                  <div style={{ marginTop: '1rem' }}>
+                    <button
+                      type="button"
+                      onClick={handleLogin}
+                      disabled={loading}
+                      style={{
+                        display: 'flex',
+                        width: '100%',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        padding: isMobile ? '0.8rem 1.2rem' : '1rem 1.5rem',
+                        border: 'none',
+                        borderRadius: '10px',
+                        boxShadow: '0 4px 6px rgba(102, 126, 234, 0.3)',
+                        fontSize: '1rem',
+                        fontWeight: '600',
+                        color: 'white',
+                        background: 'linear-gradient(135deg, #2b6cb0 0%, #0D47A1 100%)',
+                        outline: 'none',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        position: 'relative',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      {loading ? <RiLoader2Fill style={{ animation: 'spin 1s linear infinite', height: '1.25rem', width: '1.25rem' }} /> : 'ورود'}
+                    </button>
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    marginTop: '0.2rem'
+                  }}>
+                    <a href="/forgot-password" style={{
+                      fontSize: '0.9rem',
+                      color: '#2b6cb0',
+                      textDecoration: 'none',
+                      fontWeight: '500',
+                      transition: 'color 0.2s ease'
+                    }}>
                       گذرواژه خود را فراموش کرده‌اید؟
                     </a>
                   </div>
-                </div>
+                </form>
 
-                <div>
-                  <button
-                    type="button"
-                    onClick={handleLogin}
-                    disabled={loading}
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-900  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                  >
-                    {loading ? <RiLoader2Fill className="animate-spin h-5 w-5" /> : 'ورود'}
-                  </button>
+                <div style={{
+                  marginTop: '2rem',
+                  textAlign: 'center',
+                  paddingTop: '1.5rem',
+                  borderTop: '1px solid #e2e8f0'
+                }}>
+                  <p style={{ fontSize: '0.95rem', color: '#718096' }}>
+                    حساب ندارید؟{' '}
+                    <a href="/register" style={{
+                      fontWeight: '600',
+                      color: '#2b6cb0',
+                      textDecoration: 'none',
+                      transition: 'color 0.2s ease'
+                    }}>
+                      ثبت نام کنید
+                    </a>
+                  </p>
                 </div>
-              </form>
+              </div>
+            )}
+          </div>
+        </div>
 
-              <div className="mt-6 text-center">
-                <p className="text-sm text-gray-600">
-                  حساب ندارید؟{' '}
-                  <a href="/register" className="font-medium text-blue-900 ">
-                    ثبت نام کنید
-                  </a>
-                </p>
+        {/* Background Image Section - Only show on larger screens */}
+        {!isMobile && (
+          <div style={{
+            flex: 1,
+            background: 'url(../images/auth/login.jpg) center/cover no-repeat',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative'
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(to right, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.3))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              padding: '30px',
+              color: 'white'
+            }}>
+              <div>
+                <h1 style={{ fontSize: '2.2rem', marginBottom: '20px', textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)' }}>ورود به گودتریپ</h1>
+                <p style={{ fontSize: '1.2rem', opacity: 0.9 }}>از اینجا میتوانید وارد سایت شوید</p>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
+
       <ToastContainer />
+      
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}
+      </style>
     </div>
   );
 };

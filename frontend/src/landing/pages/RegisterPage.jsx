@@ -1,109 +1,166 @@
 import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
-import Spinner from "../components/Spinner"
-import axios from "axios"
+import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { RiEye2Line, RiEyeCloseLine, RiPhoneLine, RiUser2Line, RiUser5Line, RiMailLine, RiLoader2Fill } from "@remixicon/react";
+import axios from "axios";
 
-import { RiEye2Line, RiEyeCloseLine, RiPhoneLine, RiUserSmileLine, RiUser2Line, RiMailLine, RiLoader2Fill, RiUser5Line } from "@remixicon/react"
-import { MdOutlineSms } from "react-icons/md";
-
-const LoginPage = () => {
-
+const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
-  const [isLogin, setIsLogin] = useState(false);
-
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [code, setCode] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [name, setName] = useState('')
-  const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
+  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [errors, setErrors] = useState({
+    phone: '',
+    password: '',
+    name: '',
+    username: '',
+    email: ''
+  });
+  const [touched, setTouched] = useState({
+    phone: false,
+    password: false,
+    name: false,
+    username: false,
+    email: false
+  });
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+  const navigate = useNavigate();
 
-  const [errorPhoneMessage, setErrorPhoneMessage] = useState("")
-  const [errorPasswordMessage, setErrorPasswordMessage] = useState("")
-  const [errorNameMessage, setErrorNameMessage] = useState("")
-  const [errorUsernameMessage, setErrorUsernameMessage] = useState("")
-  const [errorEmailMessage, setErrorEmailMessage] = useState("")
+  // Check screen size on resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
 
-  const handlePhoneChange = (e) => {
-    setPhone(e.target.value);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Validation functions
+  const validatePhone = (phone) => {
+    if (!phone) return 'شماره تلفن الزامی است';
+    if (!/^(\+98|0)?9\d{9}$/.test(phone)) return 'شماره تلفن معتبر نیست (مثال: 09123456789)';
+    return '';
   };
 
-  const handleNameChange = (e) => {
-    setName(e.target.value);
+  const validatePassword = (password) => {
+    if (!password) return 'گذرواژه الزامی است';
+    if (password.length < 8) return 'گذرواژه باید حداقل 8 کاراکتر باشد';
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      return 'گذرواژه باید شامل حروف بزرگ، کوچک و اعداد باشد';
+    }
+    return '';
   };
 
-
-  const handleUsernameChange = (e) => {
-    setUsername(e.target.value);
+  const validateName = (name) => {
+    if (!name) return 'نام و نام خانوادگی الزامی است';
+    if (name.length < 3) return 'نام باید حداقل 3 کاراکتر باشد';
+    return '';
   };
 
-
-  const handleEmailChange = (e) => {
-    setEmail(e.target.value);
+  const validateUsername = (username) => {
+    if (!username) return 'نام کاربری الزامی است';
+    if (username.length < 3) return 'نام کاربری باید حداقل 3 کارакتر باشد';
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) return 'نام کاربری فقط می‌تواند شامل حروف، اعداد و زیرخط باشد';
+    return '';
   };
 
+  const validateEmail = (email) => {
+    if (!email) return 'ایمیل الزامی است';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'ایمیل معتبر نیست';
+    return '';
+  };
 
-  const navigate = useNavigate()
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
 
+    // Validate the field on blur
+    if (name === 'phone') {
+      setErrors(prev => ({ ...prev, phone: validatePhone(value) }));
+    } else if (name === 'password') {
+      setErrors(prev => ({ ...prev, password: validatePassword(value) }));
+    } else if (name === 'name') {
+      setErrors(prev => ({ ...prev, name: validateName(value) }));
+    } else if (name === 'username') {
+      setErrors(prev => ({ ...prev, username: validateUsername(value) }));
+    } else if (name === 'email') {
+      setErrors(prev => ({ ...prev, email: validateEmail(value) }));
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === 'phone') setPhone(value);
+    else if (name === 'password') setPassword(value);
+    else if (name === 'name') setName(value);
+    else if (name === 'username') setUsername(value);
+    else if (name === 'email') setEmail(value);
+
+    // Real-time validation for touched fields
+    if (touched[name]) {
+      if (name === 'phone') {
+        setErrors(prev => ({ ...prev, phone: validatePhone(value) }));
+      } else if (name === 'password') {
+        setErrors(prev => ({ ...prev, password: validatePassword(value) }));
+      } else if (name === 'name') {
+        setErrors(prev => ({ ...prev, name: validateName(value) }));
+      } else if (name === 'username') {
+        setErrors(prev => ({ ...prev, username: validateUsername(value) }));
+      } else if (name === 'email') {
+        setErrors(prev => ({ ...prev, email: validateEmail(value) }));
+      }
+    }
+  };
 
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
   };
 
-  const handlePasswordChange = (e) => {
-    setPassword(e.target.value);
+  const validateForm = () => {
+    const newErrors = {
+      phone: validatePhone(phone),
+      password: validatePassword(password),
+      name: validateName(name),
+      username: validateUsername(username),
+      email: validateEmail(email)
+    };
+
+    setErrors(newErrors);
+    setTouched({
+      phone: true,
+      password: true,
+      name: true,
+      username: true,
+      email: true
+    });
+
+    return !Object.values(newErrors).some(error => error);
   };
 
+  const register = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
 
-  const register = (e) => {
-    e.preventDefault()
-
-    if (phone && password && name && username && email) {
+    try {
+      setLoading(true);
       const config = {
         headers: {
           'Content-Type': 'application/json',
         },
-      }
+      };
 
+      const response = await axios.post('/api/users/auth/register',
+        { phone, password, name, username, email }, config);
 
-      axios.post('/api/users/auth/register', { phone, password, name, username, email }, config).then((data) => {
-        console.log(data.data.msg);
-        toast.success(data.data.msg, {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-
-        setTimeout(() => {
-          navigate('/login')
-        }, 2000);
-      }).catch((errMsg) => {
-        console.log(errMsg);
-        toast.error(errMsg, {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-      })
-
-
-    } else {
-      toast.error('!!لطفا همه فیلدها را وارد کنید', {
-        position: "top-right",
+      toast.success(response.data.msg, {
+        position: isMobile ? "top-center" : "top-right",
         autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: true,
@@ -111,125 +168,495 @@ const LoginPage = () => {
         draggable: true,
         progress: undefined,
       });
+
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+    } catch (error) {
+      const errorMsg = error.response?.data?.msg || 'خطا در ثبت نام. لطفا مجددا تلاش کنید';
+      toast.error(errorMsg, {
+        position: isMobile ? "top-center" : "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+    } finally {
+      setLoading(false);
     }
-  }
-
-
+  };
 
   return (
-    <div dir="rtl" className="flex justify-center items-center h-screen bg-gray-50 shadow-md">
-      <div className="w-7/12 px-10 space-y-2 bg-white rounded border">
-        <div className='flex flex-col bg-white px-4 sm:px-2 md:px-4 lg:px-8 py-4 w-full max-w-md mx-auto my-1'>
-          <div className="self-center text-xl sm:text-2xl uppercase text-gray-800">
-            <div className="w-12 h-12 mx-3 bg-white rounded-full">
-              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="remixicon w-12 h-12"><path d="M22.1034 19L12.8659 3.00017C12.7782 2.84815 12.6519 2.72191 12.4999 2.63414C12.0216 2.358 11.41 2.52187 11.1339 3.00017L1.89638 19H1V21C8.33333 21 15.6667 21 23 21V19H22.1034ZM7.59991 19.0002H4.20568L11.9999 5.50017L19.7941 19.0002H16.4001L12 11L7.59991 19.0002ZM12 15.1501L14.1175 19H9.88254L12 15.1501Z"></path></svg>
+    <div dir="rtl" style={{
+      background: '#f5f7fa',
+      minHeight: '100vh',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: isMobile ? '10px' : '20px',
+      width: '100%'
+    }}>
+      <div style={{
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        width: '100%',
+        maxWidth: isMobile ? '100%' : '1200px',
+        minHeight: isMobile ? 'auto' : '650px',
+        background: 'rgba(255, 255, 255, 0.95)',
+        borderRadius: '20px',
+        overflow: 'hidden',
+        boxShadow: '0 15px 40px rgba(0, 0, 0, 0.2)',
+        animation: 'fadeIn 0.8s ease-out'
+      }}>
+        {/* Registration Form Section */}
+        <div style={{
+          flex: 1,
+          padding: isMobile ? '25px 20px' : '40px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center'
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: '500px',
+            margin: '0 auto'
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: isMobile ? '25px' : '35px' }}>
+              <h2 style={{ 
+                fontSize: isMobile ? '1.5rem' : '2rem', 
+                color: '#2d3748', 
+                marginBottom: isMobile ? '8px' : '12px' 
+              }}>
+                ثبت نام در سایت
+              </h2>
+              <p style={{ 
+                color: '#718096', 
+                fontSize: isMobile ? '0.9rem' : '1.1rem' 
+              }}>
+                برای ثبت نام اطلاعات خود را وارد کنید
+              </p>
             </div>
-          </div>
-          <div className="relative mt-6 h-px bg-gray-300">
-            <div className="absolute left-0 top-0 flex justify-center w-full -mt-2">
-              <span className="bg-white px-4 text-xs text-gray-500 uppercase"> ثبت نام در سایت  </span>
-            </div>
-          </div>
-        </div>
-        <p className='text-center text-gray-500' style={{ marginBottom: '30px' }}>برای ثبت نام اطلاعات خود را وارد کنید. </p>
-        <form className="space-y-2 mt-4" onSubmit={register}>
-          <div className="container mx-auto p-4">
-            <div className="grid grid-cols-2 gap-4">
-              {/* name */}
-              <div className="flex flex-col mb-4">
-                <label htmlFor="name" className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">نام و نام خانوادگی</label>
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                    <RiUser2Line />
+
+            <form onSubmit={register} style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: isMobile ? '20px' : '25px' 
+            }}>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', 
+                gap: isMobile ? '15px' : '20px' 
+              }}>
+                {/* Name Field */}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label htmlFor="name" style={{
+                    fontSize: isMobile ? '0.9rem' : '1rem',
+                    fontWeight: '500',
+                    color: '#4a5568',
+                    marginBottom: isMobile ? '8px' : '10px'
+                  }}>
+                    نام و نام خانوادگی
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      bottom: 0,
+                      left: isMobile ? '12px' : '18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      pointerEvents: 'none',
+                      zIndex: 10,
+                      color: '#a0aec0'
+                    }}>
+                      <RiUser2Line style={{ 
+                        width: isMobile ? '1.1rem' : '1.4rem', 
+                        height: isMobile ? '1.1rem' : '1.4rem' 
+                      }} />
+                    </div>
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      value={name}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      style={{
+                        width: '100%',
+                        padding: isMobile ? '12px 12px 12px 40px' : '18px 18px 18px 55px',
+                        border: `1px solid ${errors.name ? '#fc8181' : '#e2e8f0'}`,
+                        backgroundColor: errors.name ? '#fff5f5' : '#f7fafc',
+                        borderRadius: '12px',
+                        fontSize: isMobile ? '0.9rem' : '1.1rem',
+                        transition: 'all 0.3s ease',
+                        height: isMobile ? '48px' : '56px'
+                      }}
+                      placeholder="نام و نام خانوادگی"
+                    />
                   </div>
-                  <input style={{ borderRadius: '5px' }} type="text" value={name}
-                    onChange={handleNameChange} className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-400 w-full py-2 focus:outline-none focus:border-blue-800" placeholder="نام و نام خانوادگی" />
+                  {errors.name && <p style={{
+                    marginTop: isMobile ? '6px' : '8px',
+                    fontSize: isMobile ? '0.8rem' : '0.9rem',
+                    color: '#e53e3e'
+                  }}>{errors.name}</p>}
                 </div>
-                <span className='text-red-500 relative text-sm'>{errorNameMessage ? errorPhoneMessage : ""}</span>
-              </div>
-              {/* username */}
-              <div className="flex flex-col mb-4">
-                <label htmlFor="username" className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">نام کاربری</label>
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                    <RiUser5Line />
+
+                {/* Username Field */}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label htmlFor="username" style={{
+                    fontSize: isMobile ? '0.9rem' : '1rem',
+                    fontWeight: '500',
+                    color: '#4a5568',
+                    marginBottom: isMobile ? '8px' : '10px'
+                  }}>
+                    نام کاربری
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      bottom: 0,
+                      left: isMobile ? '12px' : '18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      pointerEvents: 'none',
+                      zIndex: 10,
+                      color: '#a0aec0'
+                    }}>
+                      <RiUser5Line style={{ 
+                        width: isMobile ? '1.1rem' : '1.4rem', 
+                        height: isMobile ? '1.1rem' : '1.4rem' 
+                      }} />
+                    </div>
+                    <input
+                      id="username"
+                      name="username"
+                      type="text"
+                      value={username}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      style={{
+                        width: '100%',
+                        padding: isMobile ? '12px 12px 12px 40px' : '18px 18px 18px 55px',
+                        border: `1px solid ${errors.username ? '#fc8181' : '#e2e8f0'}`,
+                        backgroundColor: errors.username ? '#fff5f5' : '#f7fafc',
+                        borderRadius: '12px',
+                        fontSize: isMobile ? '0.9rem' : '1.1rem',
+                        transition: 'all 0.3s ease',
+                        height: isMobile ? '48px' : '56px'
+                      }}
+                      placeholder="نام کاربری"
+                    />
                   </div>
-                  <input style={{ borderRadius: '5px' }} type="text" value={username}
-                    onChange={handleUsernameChange} className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-400 w-full py-2 focus:outline-none focus:border-blue-800" placeholder="نام کاربری" />
+                  {errors.username && <p style={{
+                    marginTop: isMobile ? '6px' : '8px',
+                    fontSize: isMobile ? '0.8rem' : '0.9rem',
+                    color: '#e53e3e'
+                  }}>{errors.username}</p>}
                 </div>
-                <span className='text-red-500 relative text-sm'>{errorUsernameMessage ? errorUsernameMessage : ""}</span>
-              </div>
-              {/* phone */}
-              <div className="flex flex-col mb-4">
-                <label htmlFor="phone" className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">شماره تلفن</label>
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                    <RiPhoneLine />
+
+                {/* Phone Field */}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label htmlFor="phone" style={{
+                    fontSize: isMobile ? '0.9rem' : '1rem',
+                    fontWeight: '500',
+                    color: '#4a5568',
+                    marginBottom: isMobile ? '8px' : '10px'
+                  }}>
+                    شماره تلفن
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      bottom: 0,
+                      left: isMobile ? '12px' : '18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      pointerEvents: 'none',
+                      zIndex: 10,
+                      color: '#a0aec0'
+                    }}>
+                      <RiPhoneLine style={{ 
+                        width: isMobile ? '1.1rem' : '1.4rem', 
+                        height: isMobile ? '1.1rem' : '1.4rem' 
+                      }} />
+                    </div>
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={phone}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      style={{
+                        width: '100%',
+                        padding: isMobile ? '12px 12px 12px 40px' : '18px 18px 18px 55px',
+                        border: `1px solid ${errors.phone ? '#fc8181' : '#e2e8f0'}`,
+                        backgroundColor: errors.phone ? '#fff5f5' : '#f7fafc',
+                        borderRadius: '12px',
+                        fontSize: isMobile ? '0.9rem' : '1.1rem',
+                        transition: 'all 0.3s ease',
+                        height: isMobile ? '48px' : '56px'
+                      }}
+                      placeholder="09123456789"
+                    />
                   </div>
-                  <input style={{ borderRadius: '5px' }} type="text" value={phone}
-                    onChange={handlePhoneChange} className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-400 w-full py-2 focus:outline-none focus:border-blue-800" placeholder="شماره تلفن" />
+                  {errors.phone && <p style={{
+                    marginTop: isMobile ? '6px' : '8px',
+                    fontSize: isMobile ? '0.8rem' : '0.9rem',
+                    color: '#e53e3e'
+                  }}>{errors.phone}</p>}
+                  <div style={{
+                    marginTop: isMobile ? '6px' : '8px',
+                    fontSize: isMobile ? '0.75rem' : '0.85rem',
+                    color: '#718096'
+                  }}>شماره تلفن همراه خود را با پیش‌شماره 09 وارد کنید</div>
                 </div>
-                <span className='text-red-500 relative text-sm'>{errorPhoneMessage ? errorPhoneMessage : ""}</span>
-              </div>
-              {/* email */}
-              <div className="flex flex-col mb-4">
-                <label htmlFor="email" className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">ایمیل</label>
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                    <RiMailLine />
+
+                {/* Email Field */}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label htmlFor="email" style={{
+                    fontSize: isMobile ? '0.9rem' : '1rem',
+                    fontWeight: '500',
+                    color: '#4a5568',
+                    marginBottom: isMobile ? '8px' : '10px'
+                  }}>
+                    ایمیل
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      bottom: 0,
+                      left: isMobile ? '12px' : '18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      pointerEvents: 'none',
+                      zIndex: 10,
+                      color: '#a0aec0'
+                    }}>
+                      <RiMailLine style={{ 
+                        width: isMobile ? '1.1rem' : '1.4rem', 
+                        height: isMobile ? '1.1rem' : '1.4rem' 
+                      }} />
+                    </div>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={email}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      style={{
+                        width: '100%',
+                        padding: isMobile ? '12px 12px 12px 40px' : '18px 18px 18px 55px',
+                        border: `1px solid ${errors.email ? '#fc8181' : '#e2e8f0'}`,
+                        backgroundColor: errors.email ? '#fff5f5' : '#f7fafc',
+                        borderRadius: '12px',
+                        fontSize: isMobile ? '0.9rem' : '1.1rem',
+                        transition: 'all 0.3s ease',
+                        height: isMobile ? '48px' : '56px'
+                      }}
+                      placeholder="example@domain.com"
+                    />
                   </div>
-                  <input style={{ borderRadius: '5px' }} type="text" value={email}
-                    onChange={handleEmailChange} className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-400 w-full py-2 focus:outline-none focus:border-blue-800" placeholder="ایمیل" />
+                  {errors.email && <p style={{
+                    marginTop: isMobile ? '6px' : '8px',
+                    fontSize: isMobile ? '0.8rem' : '0.9rem',
+                    color: '#e53e3e'
+                  }}>{errors.email}</p>}
                 </div>
-                <span className='text-red-500 relative text-sm'>{errorEmailMessage ? errorEmailMessage : ""}</span>
               </div>
-            </div>
-            {/* password */}
-            <div className="flex flex-col mb-1">
-              <div className="relative">
-                <label className="block mb-1 text-xs sm:text-sm tracking-wide text-gray-600" htmlFor="password">
+
+              {/* Password Field */}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <label htmlFor="password" style={{
+                  fontSize: isMobile ? '0.9rem' : '1rem',
+                  fontWeight: '500',
+                  color: '#4a5568',
+                  marginBottom: isMobile ? '8px' : '10px'
+                }}>
                   گذرواژه
                 </label>
-
-                <input
-                  type={passwordVisible ? "text" : "password"}
-                  id="password"
-                  onChange={handlePasswordChange}
-                  value={password}
-                  className="w-full px-4 py-2 border border-gray-400 placeholder-gray-400 rounded-sm focus:outline-none focus:border-blue-800"
-                  placeholder="گذرواژه"
-                  style={{ borderRadius: '5px' }}
-                />
-
-                <div
-                  onClick={togglePasswordVisibility}
-                  className="absolute inset-y-0 left-3 flex items-center cursor-pointer top-6"
-                >
-                  {passwordVisible ? (
-                    <RiEye2Line className='text-gray-400' />
-                  ) : (
-                    <RiEyeCloseLine className='text-gray-400' />
-                  )}
+                <div style={{ position: 'relative' }}>
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    bottom: 0,
+                    left: isMobile ? '12px' : '18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    zIndex: 10,
+                    color: '#a0aec0',
+                    cursor: 'pointer'
+                  }} onClick={togglePasswordVisibility}>
+                    {passwordVisible ? (
+                      <RiEye2Line style={{ 
+                        width: isMobile ? '1.1rem' : '1.4rem', 
+                        height: isMobile ? '1.1rem' : '1.4rem' 
+                      }} /> 
+                    ) : (
+                      <RiEyeCloseLine style={{ 
+                        width: isMobile ? '1.1rem' : '1.4rem', 
+                        height: isMobile ? '1.1rem' : '1.4rem' 
+                      }} /> 
+                    )}
+                  </div>
+                  <input
+                    id="password"
+                    name="password"
+                    type={passwordVisible ? "text" : "password"}
+                    value={password}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    style={{
+                      width: '100%',
+                      padding: isMobile ? '12px 12px 12px 40px' : '18px 18px 18px 55px',
+                      border: `1px solid ${errors.password ? '#fc8181' : '#e2e8f0'}`,
+                      backgroundColor: errors.password ? '#fff5f5' : '#f7fafc',
+                      borderRadius: '12px',
+                      fontSize: isMobile ? '0.9rem' : '1.1rem',
+                      transition: 'all 0.3s ease',
+                      height: isMobile ? '48px' : '56px'
+                    }}
+                    placeholder="••••••••"
+                  />
                 </div>
-                <span className='text-red-500 relative text-sm'>{errorPasswordMessage ? errorPasswordMessage : ""}</span>
+                {errors.password && <p style={{
+                  marginTop: isMobile ? '6px' : '8px',
+                  fontSize: isMobile ? '0.8rem' : '0.9rem',
+                  color: '#e53e3e'
+                }}>{errors.password}</p>}
+                <div style={{
+                  marginTop: isMobile ? '6px' : '8px',
+                  fontSize: isMobile ? '0.75rem' : '0.85rem',
+                  color: '#718096'
+                }}>حداقل 8 کاراکتر و شامل حروف بزرگ، کوچک و اعداد</div>
+              </div>
 
+              <div style={{ marginTop: isMobile ? '1rem' : '1.5rem' }}>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  style={{
+                    display: 'flex',
+                    width: '100%',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    padding: isMobile ? '0.9rem 1.2rem' : '1.2rem 1.5rem',
+                    border: 'none',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 6px rgba(102, 126, 234, 0.3)',
+                    fontSize: isMobile ? '0.9rem' : '1.1rem',
+                    fontWeight: '600',
+                    color: 'white',
+                    background: 'linear-gradient(135deg, #2b6cb0 0%, #0D47A1 100%)',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    height: isMobile ? '50px' : '60px'
+                  }}
+                >
+                  {loading ? <RiLoader2Fill style={{ 
+                    animation: 'spin 1s linear infinite', 
+                    height: isMobile ? '1.2rem' : '1.5rem', 
+                    width: isMobile ? '1.2rem' : '1.5rem' 
+                  }} /> : 'ثبت نام'}
+                </button>
+              </div>
+
+              <div style={{
+                marginTop: isMobile ? '2rem' : '2.5rem',
+                textAlign: 'center',
+                paddingTop: isMobile ? '1.5rem' : '1.8rem',
+                borderTop: '1px solid #e2e8f0'
+              }}>
+                <p style={{ 
+                  fontSize: isMobile ? '0.9rem' : '1rem', 
+                  color: '#718096' 
+                }}>
+                  حساب دارید؟{' '}
+                  <a href="/login" style={{
+                    fontWeight: '600',
+                    color: '#2b6cb0',
+                    textDecoration: 'none',
+                    transition: 'color 0.2s ease',
+                    fontSize: isMobile ? '0.95rem' : '1.05rem'
+                  }}>
+                    ورود
+                  </a>
+                </p>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {/* Background Image Section - Only show on larger screens */}
+        {!isMobile && (
+          <div style={{
+            flex: 1,
+            background: 'url(../images/auth/register.jpg) center/cover no-repeat',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative'
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(to right, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.3))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              padding: '30px',
+              color: 'white'
+            }}>
+              <div>
+                <h1 style={{ 
+                  fontSize: '2.5rem', 
+                  marginBottom: '25px', 
+                  textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)' 
+                }}>
+                  به گودتریپ بپیوندید
+                </h1>
+                <p style={{ 
+                  fontSize: '1.3rem', 
+                  opacity: 0.9 
+                }}>
+                  با ثبت نام از تمامی امکانات سایت بهره‌مند شوید
+                </p>
               </div>
             </div>
-            <button
-              type="submit"
-              className="w-full rounded mb-2 mt-8 p-2 text-white bg-blue-800 hover:bg-blue-900"
-            >
-              {loading ? <RiLoader2Fill /> : 'ثبت نام'}
-            </button>
-            <p className='text-sm text-gray-800'>حساب دارید؟ <a href='/login' className='hover:text-blue-900 hover:cursor-pointer'>ورود </a></p>
           </div>
-
-        </form>
+        )}
       </div>
 
       <ToastContainer />
-    </div >
+
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}
+      </style>
+    </div>
   );
 };
 
-export default LoginPage;
+export default RegisterPage;
