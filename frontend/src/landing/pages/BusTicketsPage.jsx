@@ -1,32 +1,36 @@
 // src/pages/BusTicketsPage.js
 import React, { useState, useEffect } from 'react';
 import {
-  RiUser3Fill,
   RiLogoutBoxRLine,
-  RiHeart2Fill,
-  RiBankCardLine,
-  RiNotification3Line,
-  RiCustomerService2Line,
-  RiSearchLine,
-  RiCalendarLine,
-  RiMenuLine,
-  RiCloseLine,
   RiBusLine,
   RiTicketLine,
   RiMapPinLine,
   RiMoneyDollarCircleLine,
   RiInformationLine,
+  RiCalendarLine,
+  RiMenuLine,
+  RiCloseLine,
   RiArrowRightLine
 } from "@remixicon/react";
 import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { BsHouseDoor } from "react-icons/bs";
-import { GiFoodTruck } from "react-icons/gi";
-import { FaBusAlt, FaUser, FaMale, FaFemale } from "react-icons/fa";
+import { IoFastFoodOutline } from "react-icons/io5";
 import { IoIosCamera } from 'react-icons/io';
+import { FaMale, FaFemale } from "react-icons/fa";
 import { ClipLoader } from 'react-spinners';
 import { motion } from 'framer-motion';
+
+// React Icons from pi package for sidebar
+import { 
+  PiUser,
+  PiHouse,
+  PiHeart,
+  PiCreditCard,
+  PiBell,
+  PiHeadset
+} from 'react-icons/pi';
+
 import { useBusStore, useUserStore } from '../store/busStore';
 import useUserAuthStore from '../store/authStore';
 
@@ -100,16 +104,16 @@ const BusTicketsPage = () => {
     return true;
   });
 
-  // Navigation items
+  // Navigation items with links - using same icons as previous components
   const navItems = [
-    { id: 'profile', icon: <RiUser3Fill className="ml-2 w-5 h-5" />, text: 'حساب کاربری' },
-    { id: 'bookings', icon: <BsHouseDoor className="ml-2 w-5 h-5" />, text: 'رزرو اقامتگاه' },
-    { id: 'order-foods', icon: <GiFoodTruck className="ml-2 w-5 h-5" />, text: 'سفارشات غذا' },
-    { id: 'bus-tickets', icon: <FaBusAlt className="ml-2 w-5 h-5" />, text: 'بلیط اتوبوس' },
-    { id: 'favorites', icon: <RiHeart2Fill className="ml-2 w-5 h-5" />, text: 'علاقه‌مندی‌ها' },
-    { id: 'bank', icon: <RiBankCardLine className="ml-2 w-5 h-5" />, text: 'حساب بانکی' },
-    { id: 'notifications', icon: <RiNotification3Line className="ml-2 w-5 h-5" />, text: 'اعلان‌ها' },
-    { id: 'support', icon: <RiCustomerService2Line className="ml-2 w-5 h-5" />, text: 'پشتیبانی' },
+    { id: 'profile', icon: <PiUser className="ml-2 w-5 h-5" />, text: 'حساب کاربری', link: '/profile' },
+    { id: 'bookings', icon: <PiHouse className="ml-2 w-5 h-5" />, text: 'رزرو اقامتگاه', link: '/bookings' },
+    { id: 'order-foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارشات غذا', link: '/order-foods' },
+    { id: 'bus-tickets', icon: <RiBusLine className="ml-2 w-5 h-5" />, text: 'بلیط اتوبوس', link: '/bus-tickets' },
+    { id: 'favorites', icon: <PiHeart className="ml-2 w-5 h-5" />, text: 'علاقه‌مندی‌ها', link: '/favorites' },
+    { id: 'bank', icon: <PiCreditCard className="ml-2 w-5 h-5" />, text: 'حساب بانکی', link: '/bank' },
+    { id: 'notifications', icon: <PiBell className="ml-2 w-5 h-5" />, text: 'اعلان‌ها', link: '/notifications' },
+    { id: 'support', icon: <PiHeadset className="ml-2 w-5 h-5" />, text: 'پشتیبانی', link: '/support' },
   ];
 
   const renderTicketCard = (ticket) => (
@@ -188,7 +192,7 @@ const BusTicketsPage = () => {
         <div className="bg-blue-50 p-4 rounded-lg flex-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <FaUser className="text-gray-500 ml-2" />
+              <RiInformationLine className="text-gray-500 ml-2" />
               <span className="text-gray-600">تعداد مسافران:</span>
             </div>
             <span className="font-medium text-gray-800">{ticket.passengerCount || ticket.count || 1}</span>
@@ -217,7 +221,7 @@ const BusTicketsPage = () => {
       {ticket.passengers && ticket.passengers.length > 0 && (
         <div className="mt-6 pt-5 border-t border-gray-200">
           <h4 className="font-bold text-gray-800 mb-4 flex items-center">
-            <FaUser className="ml-2" /> اطلاعات مسافران
+            <RiInformationLine className="ml-2" /> اطلاعات مسافران
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {ticket.passengers.map((passenger, index) => (
@@ -281,7 +285,7 @@ const BusTicketsPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-4 md:px-8">
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-between mb-4 p-4 bg-white rounded-xl shadow-sm">
-        <h1 className="text-xl font-bold text-gray-800">بلیط‌های اتوبوس</h1>
+        <h1 className="text-xl font-bold text-gray-800">بلیط‌های اتوبус</h1>
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 rounded-lg bg-blue-50 text-blue-600 z-50 relative"
@@ -344,13 +348,9 @@ const BusTicketsPage = () => {
             <ul className="space-y-1 md:space-y-2">
               {navItems.map((item) => (
                 <li key={item.id}>
-                  <button
-                    onClick={() => {
-                      if (item.id !== 'bus-tickets') {
-                        navigate(`/${item.id}`);
-                      }
-                      setIsMobileMenuOpen(false);
-                    }}
+                  <Link
+                    to={item.link}
+                    onClick={() => setIsMobileMenuOpen(false)}
                     className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 ${item.id === 'bus-tickets' 
                       ? 'bg-blue-50 text-blue-600 shadow-inner' 
                       : 'text-gray-600 hover:bg-gray-50 hover:text-blue-500'
@@ -358,7 +358,7 @@ const BusTicketsPage = () => {
                   >
                     {item.icon}
                     <span className="text-right flex-1 text-sm md:text-base">{item.text}</span>
-                  </button>
+                  </Link>
                 </li>
               ))}
               
@@ -390,7 +390,7 @@ const BusTicketsPage = () => {
                   to="/buses"
                   className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl flex items-center transition-all duration-300 shadow-md hover:shadow-lg"
                 >
-                  <FaBusAlt className="ml-1" size={18} />
+                  <RiBusLine className="ml-1" size={18} />
                   <span>رزرو بلیط جدید</span>
                 </Link>
               </div>

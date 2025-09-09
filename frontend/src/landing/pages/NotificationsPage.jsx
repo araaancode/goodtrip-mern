@@ -1,12 +1,7 @@
 // src/pages/NotificationsPage.js
 import React, { useState, useEffect } from 'react';
 import {
-  RiUser3Fill,
   RiLogoutBoxRLine,
-  RiHeart2Fill,
-  RiBankCardLine,
-  RiNotification3Line,
-  RiCustomerService2Line,
   RiMenuLine,
   RiCloseLine,
   RiBellFill,
@@ -23,11 +18,19 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { BsHouseDoor } from "react-icons/bs";
-import { GiFoodTruck } from "react-icons/gi";
-import { FaBusAlt, FaUser } from "react-icons/fa";
+import { IoFastFoodOutline } from "react-icons/io5";
 import { IoIosCamera } from 'react-icons/io';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// React Icons from pi package for sidebar
+import { 
+  PiUser,
+  PiHouse,
+  PiHeart,
+  PiCreditCard,
+  PiBell,
+  PiHeadset
+} from 'react-icons/pi';
 
 // Mock data since we don't have the actual store
 const mockNotifications = [
@@ -260,7 +263,7 @@ const NotificationsPage = () => {
       try {
         await Promise.all(selectedNotifications.map(id => deleteNotification(id)));
         setSelectedNotifications([]);
-        toast.success('اعلان‌های انتخاب شده با موفقیت حذف شدند', {
+        toast.success('اعلان‌های انتخاب شده با успеیت حذف شدند', {
           position: "top-right",
           autoClose: 3000,
         });
@@ -289,16 +292,16 @@ const NotificationsPage = () => {
   // Count unread notifications
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Navigation items
+  // Navigation items with links - using same icons as previous components
   const navItems = [
-    { id: 'profile', icon: <RiUser3Fill className="ml-2 w-5 h-5" />, text: 'حساب کاربری' },
-    { id: 'bookings', icon: <BsHouseDoor className="ml-2 w-5 h-5" />, text: 'رزرو اقامتگاه' },
-    { id: 'order-foods', icon: <GiFoodTruck className="ml-2 w-5 h-5" />, text: 'سفارشات غذا' },
-    { id: 'bus-tickets', icon: <FaBusAlt className="ml-2 w-5 h-5" />, text: 'بلیط اتوبوس' },
-    { id: 'favorites', icon: <RiHeart2Fill className="ml-2 w-5 h-5" />, text: 'علاقه‌مندی‌ها' },
-    { id: 'bank', icon: <RiBankCardLine className="ml-2 w-5 h-5" />, text: 'حساب بانکی' },
-    { id: 'notifications', icon: <RiNotification3Line className="ml-2 w-5 h-5" />, text: 'اعلان‌ها' },
-    { id: 'support', icon: <RiCustomerService2Line className="ml-2 w-5 h-5" />, text: 'پشتیبانی' },
+    { id: 'profile', icon: <PiUser className="ml-2 w-5 h-5" />, text: 'حساب کاربری', link: '/profile' },
+    { id: 'bookings', icon: <PiHouse className="ml-2 w-5 h-5" />, text: 'رزرو اقامتگاه', link: '/bookings' },
+    { id: 'order-foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارشات غذا', link: '/order-foods' },
+    { id: 'bus-tickets', icon: <PiBell className="ml-2 w-5 h-5" />, text: 'بلیط اتوبوس', link: '/bus-tickets' },
+    { id: 'favorites', icon: <PiHeart className="ml-2 w-5 h-5" />, text: 'علاقه‌مندی‌ها', link: '/favorites' },
+    { id: 'bank', icon: <PiCreditCard className="ml-2 w-5 h-5" />, text: 'حساب بانکی', link: '/bank' },
+    { id: 'notifications', icon: <PiBell className="ml-2 w-5 h-5" />, text: 'اعلان‌ها', link: '/notifications' },
+    { id: 'support', icon: <PiHeadset className="ml-2 w-5 h-5" />, text: 'پشتیبانی', link: '/support' },
   ];
 
   const renderNotificationCard = (notification) => (
@@ -484,13 +487,9 @@ const NotificationsPage = () => {
             <ul className="space-y-1 md:space-y-2">
               {navItems.map((item) => (
                 <li key={item.id}>
-                  <button
-                    onClick={() => {
-                      if (item.id !== 'notifications') {
-                        navigate(`/${item.id}`);
-                      }
-                      setIsMobileMenuOpen(false);
-                    }}
+                  <Link
+                    to={item.link}
+                    onClick={() => setIsMobileMenuOpen(false)}
                     className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 ${item.id === 'notifications' 
                       ? 'bg-blue-50 text-blue-600 shadow-inner' 
                       : 'text-gray-600 hover:bg-gray-50 hover:text-blue-500'
@@ -503,7 +502,7 @@ const NotificationsPage = () => {
                         {unreadCount}
                       </span>
                     )}
-                  </button>
+                  </Link>
                 </li>
               ))}
               
@@ -555,7 +554,7 @@ const NotificationsPage = () => {
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition-colors duration-300 flex items-center"
                   >
                     <RiCheckLine className="ml-1" size={16} />
-                    علامت همه как خوانده شده
+                    علامت همه به عنوان خوانده شده
                   </button>
                   <button
                     onClick={handleClearAll}

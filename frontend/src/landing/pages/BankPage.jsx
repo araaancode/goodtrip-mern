@@ -1,12 +1,7 @@
 // src/pages/BankPage.js
 import React, { useState, useEffect } from 'react';
 import {
-  RiUser3Fill,
   RiLogoutBoxRLine,
-  RiHeart2Fill,
-  RiBankCardLine,
-  RiNotification3Line,
-  RiCustomerService2Line,
   RiSearchLine,
   RiMenuLine,
   RiCloseLine,
@@ -23,11 +18,19 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { BsHouseDoor } from "react-icons/bs";
-import { GiFoodTruck } from "react-icons/gi";
-import { FaBusAlt, FaUser } from "react-icons/fa";
+import { IoFastFoodOutline } from "react-icons/io5";
 import { IoIosCamera } from 'react-icons/io';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// React Icons from pi package for sidebar
+import { 
+  PiUser,
+  PiHouse,
+  PiHeart,
+  PiCreditCard,
+  PiBell,
+  PiHeadset
+} from 'react-icons/pi';
 
 // Mock data since we don't have the actual store
 const mockBankAccounts = [
@@ -182,7 +185,6 @@ const BankPage = () => {
     
     if (value.length > 26) value = value.slice(0, 26);
     
-    // Format as IRXX-XXXX-XXXX-XXXX-XXXX-XXXX-XX
     if (value.length > 4) {
       value = value.replace(/(IR\d{2})(\d{4})(\d{4})(\d{4})(\d{4})(\d{4})(\d{2})/, '$1-$2-$3-$4-$5-$6-$7');
     }
@@ -287,16 +289,16 @@ const BankPage = () => {
     navigate('/');
   };
 
-  // Navigation items
+  // Navigation items with links - using same icons as previous components
   const navItems = [
-    { id: 'profile', icon: <RiUser3Fill className="ml-2 w-5 h-5" />, text: 'حساب کاربری' },
-    { id: 'bookings', icon: <BsHouseDoor className="ml-2 w-5 h-5" />, text: 'رزرو اقامتگاه' },
-    { id: 'order-foods', icon: <GiFoodTruck className="ml-2 w-5 h-5" />, text: 'سفارشات غذا' },
-    { id: 'bus-tickets', icon: <FaBusAlt className="ml-2 w-5 h-5" />, text: 'بلیط اتوبوس' },
-    { id: 'favorites', icon: <RiHeart2Fill className="ml-2 w-5 h-5" />, text: 'علاقه‌مندی‌ها' },
-    { id: 'bank', icon: <RiBankCardLine className="ml-2 w-5 h-5" />, text: 'حساب بانکی' },
-    { id: 'notifications', icon: <RiNotification3Line className="ml-2 w-5 h-5" />, text: 'اعلان‌ها' },
-    { id: 'support', icon: <RiCustomerService2Line className="ml-2 w-5 h-5" />, text: 'پشتیبانی' },
+    { id: 'profile', icon: <PiUser className="ml-2 w-5 h-5" />, text: 'حساب کاربری', link: '/profile' },
+    { id: 'bookings', icon: <PiHouse className="ml-2 w-5 h-5" />, text: 'رزرو اقامتگاه', link: '/bookings' },
+    { id: 'order-foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارشات غذا', link: '/order-foods' },
+    { id: 'bus-tickets', icon: <RiBankLine className="ml-2 w-5 h-5" />, text: 'بلیط اتوبوس', link: '/bus-tickets' },
+    { id: 'favorites', icon: <PiHeart className="ml-2 w-5 h-5" />, text: 'علاقه‌مندی‌ها', link: '/favorites' },
+    { id: 'bank', icon: <PiCreditCard className="ml-2 w-5 h-5" />, text: 'حساب بانکی', link: '/bank' },
+    { id: 'notifications', icon: <PiBell className="ml-2 w-5 h-5" />, text: 'اعلان‌ها', link: '/notifications' },
+    { id: 'support', icon: <PiHeadset className="ml-2 w-5 h-5" />, text: 'پشتیبانی', link: '/support' },
   ];
 
   const renderBankCard = (account) => (
@@ -364,7 +366,7 @@ const BankPage = () => {
             className="bg-white text-blue-600 px-3 py-1 rounded-lg text-sm hover:bg-blue-50 transition-colors"
           >
             ویرایش
-          </button>
+            </button>
           <button
             onClick={() => handleDelete(account._id)}
             className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600 transition-colors"
@@ -471,13 +473,9 @@ const BankPage = () => {
             <ul className="space-y-1 md:space-y-2">
               {navItems.map((item) => (
                 <li key={item.id}>
-                  <button
-                    onClick={() => {
-                      if (item.id !== 'bank') {
-                        navigate(`/${item.id}`);
-                      }
-                      setIsMobileMenuOpen(false);
-                    }}
+                  <Link
+                    to={item.link}
+                    onClick={() => setIsMobileMenuOpen(false)}
                     className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 ${item.id === 'bank' 
                       ? 'bg-blue-50 text-blue-600 shadow-inner' 
                       : 'text-gray-600 hover:bg-gray-50 hover:text-blue-500'
@@ -485,7 +483,7 @@ const BankPage = () => {
                   >
                     {item.icon}
                     <span className="text-right flex-1 text-sm md:text-base">{item.text}</span>
-                  </button>
+                  </Link>
                 </li>
               ))}
               
@@ -510,7 +508,7 @@ const BankPage = () => {
             <div className="p-4 md:p-6 lg:p-8">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
                 <div className="mb-4 md:mb-0">
-                  <h2 className="text-xl md:text-2xl font-bold text-gray-800">حساب‌های بانکی</h2>
+                  <h2 className="text-xl md: text-2xl font-bold text-gray-800">حساب‌های بانکی</h2>
                   <p className="text-gray-500 text-sm mt-1">مدیریت حساب‌های بانکی شما</p>
                 </div>
                 

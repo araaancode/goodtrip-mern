@@ -1,12 +1,7 @@
 // src/pages/FavoritesPage.js
 import React, { useState, useEffect } from 'react';
 import {
-  RiUser3Fill,
   RiLogoutBoxRLine,
-  RiHeart2Fill,
-  RiBankCardLine,
-  RiNotification3Line,
-  RiCustomerService2Line,
   RiSearchLine,
   RiMenuLine,
   RiCloseLine,
@@ -21,11 +16,19 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { BsHouseDoor } from "react-icons/bs";
-import { GiFoodTruck } from "react-icons/gi";
-import { FaBusAlt, FaUser } from "react-icons/fa";
+import { IoFastFoodOutline } from "react-icons/io5";
 import { IoIosCamera } from 'react-icons/io';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// React Icons from pi package for sidebar
+import { 
+  PiUser,
+  PiHouse,
+  PiHeart,
+  PiCreditCard,
+  PiBell,
+  PiHeadset
+} from 'react-icons/pi';
 
 // Mock data since we don't have the actual store
 const mockFavorites = [
@@ -54,7 +57,7 @@ const mockFavorites = [
     type: 'food',
     name: 'پیتزا مخصوص',
     price: 85000,
-    description: 'پیتزا با پنیر فراوان و قارچ تازه',
+    description: 'پیتزا با پنیر فراوان و قارچ تfresh',
     rating: 4.7,
     reviewCount: 32,
     image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?ixlib=rb-4.0.3&auto=format&fit=crop&w=481&q=80'
@@ -173,16 +176,16 @@ const FavoritesPage = () => {
     buses: filteredFavorites.filter(item => item.type === 'bus')
   };
 
-  // Navigation items
+  // Navigation items with links - using same icons as previous components
   const navItems = [
-    { id: 'profile', icon: <RiUser3Fill className="ml-2 w-5 h-5" />, text: 'حساب کاربری' },
-    { id: 'bookings', icon: <BsHouseDoor className="ml-2 w-5 h-5" />, text: 'رزرو اقامتگاه' },
-    { id: 'order-foods', icon: <GiFoodTruck className="ml-2 w-5 h-5" />, text: 'سفارشات غذا' },
-    { id: 'bus-tickets', icon: <FaBusAlt className="ml-2 w-5 h-5" />, text: 'بلیط اتوبوس' },
-    { id: 'favorites', icon: <RiHeart2Fill className="ml-2 w-5 h-5" />, text: 'علاقه‌مندی‌ها' },
-    { id: 'bank', icon: <RiBankCardLine className="ml-2 w-5 h-5" />, text: 'حساب بانکی' },
-    { id: 'notifications', icon: <RiNotification3Line className="ml-2 w-5 h-5" />, text: 'اعلان‌ها' },
-    { id: 'support', icon: <RiCustomerService2Line className="ml-2 w-5 h-5" />, text: 'پشتیبانی' },
+    { id: 'profile', icon: <PiUser className="ml-2 w-5 h-5" />, text: 'حساب کاربری', link: '/profile' },
+    { id: 'bookings', icon: <PiHouse className="ml-2 w-5 h-5" />, text: 'رزرو اقامتگاه', link: '/bookings' },
+    { id: 'order-foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارشات غذا', link: '/order-foods' },
+    { id: 'bus-tickets', icon: <RiBusLine className="ml-2 w-5 h-5" />, text: 'بلیط اتوبوس', link: '/bus-tickets' },
+    { id: 'favorites', icon: <PiHeart className="ml-2 w-5 h-5" />, text: 'علاقه‌مندی‌ها', link: '/favorites' },
+    { id: 'bank', icon: <PiCreditCard className="ml-2 w-5 h-5" />, text: 'حساب بانکی', link: '/bank' },
+    { id: 'notifications', icon: <PiBell className="ml-2 w-5 h-5" />, text: 'اعلان‌ها', link: '/notifications' },
+    { id: 'support', icon: <PiHeadset className="ml-2 w-5 h-5" />, text: 'پشتیبانی', link: '/support' },
   ];
 
   const renderHouseCard = (house) => (
@@ -442,13 +445,9 @@ const FavoritesPage = () => {
             <ul className="space-y-1 md:space-y-2">
               {navItems.map((item) => (
                 <li key={item.id}>
-                  <button
-                    onClick={() => {
-                      if (item.id !== 'favorites') {
-                        navigate(`/${item.id}`);
-                      }
-                      setIsMobileMenuOpen(false);
-                    }}
+                  <Link
+                    to={item.link}
+                    onClick={() => setIsMobileMenuOpen(false)}
                     className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 ${item.id === 'favorites' 
                       ? 'bg-blue-50 text-blue-600 shadow-inner' 
                       : 'text-gray-600 hover:bg-gray-50 hover:text-blue-500'
@@ -456,7 +455,7 @@ const FavoritesPage = () => {
                   >
                     {item.icon}
                     <span className="text-right flex-1 text-sm md:text-base">{item.text}</span>
-                  </button>
+                  </Link>
                 </li>
               ))}
               
@@ -662,6 +661,5 @@ const FavoritesPage = () => {
     </div>
   );
 };
-
 
 export default FavoritesPage;
