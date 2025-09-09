@@ -1,199 +1,667 @@
+// src/pages/FavoritesPage.js
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-
-// Icons (Grouped logically)
 import {
   RiUser3Fill,
-  RiCalendar2Line,
-  RiHeart2Line,
-  RiBankCard2Line,
-  RiNotificationLine,
-  RiCustomerService2Line,
   RiLogoutBoxRLine,
-} from '@remixicon/react';
+  RiHeart2Fill,
+  RiBankCardLine,
+  RiNotification3Line,
+  RiCustomerService2Line,
+  RiSearchLine,
+  RiMenuLine,
+  RiCloseLine,
+  RiHeartFill,
+  RiHotelLine,
+  RiRestaurantLine,
+  RiBusLine,
+  RiMapPinLine,
+  RiStarFill,
+  RiDeleteBinLine
+} from "@remixicon/react";
+import { Link, useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { BsHouseDoor } from "react-icons/bs";
+import { GiFoodTruck } from "react-icons/gi";
+import { FaBusAlt, FaUser } from "react-icons/fa";
 import { IoIosCamera } from 'react-icons/io';
-import { BsTrash } from 'react-icons/bs';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// Components
-import HeaderPages from '../components/HeaderPages';
-import Footer from '../components/Footer';
+// Mock data since we don't have the actual store
+const mockFavorites = [
+  {
+    _id: '1',
+    type: 'house',
+    name: 'ویلای زیبا در شمال',
+    price: 450000,
+    location: 'نوشهر، مازندران',
+    rating: 4.5,
+    reviewCount: 24,
+    image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80'
+  },
+  {
+    _id: '2',
+    type: 'house',
+    name: 'آپارتمان مدرن در تهران',
+    price: 320000,
+    location: 'تهران، تجریش',
+    rating: 4.2,
+    reviewCount: 18,
+    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80'
+  },
+  {
+    _id: '3',
+    type: 'food',
+    name: 'پیتزا مخصوص',
+    price: 85000,
+    description: 'پیتزا با پنیر فراوان و قارچ تازه',
+    rating: 4.7,
+    reviewCount: 32,
+    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?ixlib=rb-4.0.3&auto=format&fit=crop&w=481&q=80'
+  },
+  {
+    _id: '4',
+    type: 'bus',
+    name: 'اتوبوس VIP تهران-مشهد',
+    price: 250000,
+    origin: 'تهران',
+    destination: 'مشهد',
+    company: 'سیر و سفر',
+    rating: 4.3,
+    reviewCount: 12,
+    image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?ixlib=rb-4.0.3&auto=format&fit=crop&w=869&q=80'
+  }
+];
 
-// Constants (Move to a separate file if reused)
-const DEFAULT_USER_IMAGE = 'https://cdn-icons-png.flaticon.com/128/17384/17384295.png';
+// Mock user authentication
+const useMockAuth = () => {
+  return {
+    user: {
+      name: 'کاربر مهمان',
+      phone: '09123456789',
+      avatar: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png'
+    },
+    isAuthenticated: true,
+    logout: () => {
+      toast.info('عملیات خروج انجام شد');
+    }
+  };
+};
+
+// Mock favorites store
+const useMockFavoritesStore = () => {
+  const [favorites, setFavorites] = useState(mockFavorites);
+  const [loading, setLoading] = useState(false);
+  
+  const fetchFavorites = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+  };
+  
+  const removeFavorite = (itemId, type) => {
+    return new Promise((resolve) => {
+      setFavorites(favorites.filter(item => item._id !== itemId));
+      resolve();
+    });
+  };
+  
+  return {
+    favorites,
+    loading,
+    error: null,
+    fetchFavorites,
+    removeFavorite
+  };
+};
 
 const FavoritesPage = () => {
-  // State
-  const [user, setUser] = useState(null);
-  const [favorites, setFavorites] = useState([]);
   const navigate = useNavigate();
-  const userToken = localStorage.getItem('userToken');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch user data
+  // Use mock stores instead of the missing ones
+  const { favorites, loading, fetchFavorites, removeFavorite } = useMockFavoritesStore();
+  const { user, isAuthenticated, logout } = useMockAuth();
+
   useEffect(() => {
-    // if (!userToken) {
-    //   navigate('/login');
-    //   return;
-    // }
+    if (isAuthenticated) {
+      fetchFavorites();
+    }
+  }, [isAuthenticated, fetchFavorites]);
 
-    const fetchUserData = async () => {
-      try {
-        const response = await axios.get('/api/users/me', {
-          headers: { Authorization: `Bearer ${userToken}` },
-        });
-        setUser(response.data.user);
-        setFavorites(response.data.user.favorites || []);
-      } catch (error) {
-        toast.error('Failed to fetch user data');
-        console.error('Error fetching user:', error);
-      }
-    };
-
-    fetchUserData();
-  }, [userToken, navigate]);
-
-  // Remove favorite
-  const removeFavorite = async (houseId) => {
+  const handleRemoveFavorite = async (itemId, type) => {
     try {
-      await axios.put(
-        '/api/users/handle-favorite',
-        { house: houseId },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${userToken}`,
-          },
-        }
-      );
-      setFavorites(favorites.filter((fav) => fav._id !== houseId));
-      toast.success('Removed from favorites');
+      await removeFavorite(itemId, type);
+      toast.success('از علاقه‌مندی‌ها حذف شد', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        rtl: true
+      });
     } catch (error) {
-      toast.error('Failed to remove favorite');
-      console.error('Error removing favorite:', error);
+      toast.error('خطا در حذف از علاقه‌مندی‌ها', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        rtl: true
+      });
     }
   };
 
-  // Logout
-  const handleLogout = () => {
-    localStorage.removeItem('userToken');
+  const logoutUser = async () => {
+    await logout();
     navigate('/');
-    window.location.reload();
   };
 
-  // Sidebar menu items (Avoid repetition)
-  const menuItems = [
-    { icon: <RiUser3Fill />, label: 'حساب کاربری', path: '/profile' },
-    { icon: <RiCalendar2Line />, label: 'رزروهای من', path: '/bookings' },
-    {
-      icon: <RiHeart2Line className="text-blue-800" />,
-      label: 'لیست علاقه مندی ها',
-      path: '/favorites',
-      active: true,
-    },
-    { icon: <RiBankCard2Line />, label: 'اطلاعات حساب بانکی', path: '/bank' },
-    { icon: <RiNotificationLine />, label: 'لیست اعلان ها', path: '/notifications' },
-    { icon: <RiCustomerService2Line />, label: 'پشتیبانی', path: '/support' },
-    {
-      icon: <RiLogoutBoxRLine />,
-      label: 'خروج',
-      onClick: handleLogout,
-    },
+  // Filter favorites based on category and search term
+  const filteredFavorites = favorites.filter(item => {
+    const matchesCategory = selectedCategory === 'all' || item.type === selectedCategory;
+    const matchesSearch = item.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         item.title?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  // Group favorites by type
+  const favoritesByType = {
+    houses: filteredFavorites.filter(item => item.type === 'house'),
+    foods: filteredFavorites.filter(item => item.type === 'food'),
+    buses: filteredFavorites.filter(item => item.type === 'bus')
+  };
+
+  // Navigation items
+  const navItems = [
+    { id: 'profile', icon: <RiUser3Fill className="ml-2 w-5 h-5" />, text: 'حساب کاربری' },
+    { id: 'bookings', icon: <BsHouseDoor className="ml-2 w-5 h-5" />, text: 'رزرو اقامتگاه' },
+    { id: 'order-foods', icon: <GiFoodTruck className="ml-2 w-5 h-5" />, text: 'سفارشات غذا' },
+    { id: 'bus-tickets', icon: <FaBusAlt className="ml-2 w-5 h-5" />, text: 'بلیط اتوبوس' },
+    { id: 'favorites', icon: <RiHeart2Fill className="ml-2 w-5 h-5" />, text: 'علاقه‌مندی‌ها' },
+    { id: 'bank', icon: <RiBankCardLine className="ml-2 w-5 h-5" />, text: 'حساب بانکی' },
+    { id: 'notifications', icon: <RiNotification3Line className="ml-2 w-5 h-5" />, text: 'اعلان‌ها' },
+    { id: 'support', icon: <RiCustomerService2Line className="ml-2 w-5 h-5" />, text: 'پشتیبانی' },
   ];
 
-  return (
-    <>
-      <div className="flex flex-col md:flex-row p-4 rtl mt-4">
-        {/* Sidebar */}
-        <div className="w-full md:w-1/4 py-6 bg-white border border-gray-200 rounded-lg shadow mb-4 md:mb-0">
-          <div className="mb-8 px-4 text-center mx-auto flex justify-center">
-            <div className="relative" style={{ width: '160px', height: '160px' }}>
-              <img
-                src={user?.profileImage || DEFAULT_USER_IMAGE}
-                alt="User profile"
-                className="object-cover rounded-full mx-auto w-full h-full"
-              />
-              <div className="absolute bottom-8 left-0 p-2 bg-white cursor-pointer shadow shadow-full rounded-full">
-                <IoIosCamera className="text-blue-800 h-8 w-8" />
-              </div>
-              <p className="text-gray-900 text-center mt-2">
-                {user?.name || user?.phone || 'User'}
-              </p>
-            </div>
-          </div>
-          <div className="border"></div>
-          <ul className="my-6 px-8">
-            {menuItems.map((item, index) => (
-              <li key={index} className="flex items-center mb-2">
-                <span className="mr-2 text-gray-400">{item.icon}</span>
-                {item.onClick ? (
-                  <button onClick={item.onClick} className="mr-4 text-lg">
-                    {item.label}
-                  </button>
-                ) : (
-                  <Link
-                    to={item.path}
-                    className={`mr-4 text-lg ${item.active ? 'text-blue-800' : ''}`}
-                  >
-                    {item.label}
-                  </Link>
-                )}
-              </li>
-            ))}
-          </ul>
+  const renderHouseCard = (house) => (
+    <motion.div
+      key={house._id}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+      className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100"
+    >
+      <div className="relative">
+        <img
+          src={house.image}
+          alt={house.name}
+          className="w-full h-48 object-cover"
+        />
+        <button
+          onClick={() => handleRemoveFavorite(house._id, 'house')}
+          className="absolute top-3 left-3 bg-white p-2 rounded-full shadow-md hover:bg-red-50 hover:text-red-600 transition-colors duration-300"
+        >
+          <RiHeartFill className="text-red-500" size={18} />
+        </button>
+        <div className="absolute bottom-3 left-3 bg-blue-600 text-white px-2 py-1 rounded-full text-xs">
+          {house.price?.toLocaleString('fa-IR')} تومان
         </div>
+      </div>
+      <div className="p-4">
+        <h3 className="font-bold text-gray-800 mb-2">{house.name}</h3>
+        <div className="flex items-center text-gray-600 mb-3">
+          <RiMapPinLine size={16} className="ml-1" />
+          <span className="text-sm">{house.location}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <RiStarFill
+                key={star}
+                size={16}
+                className={star <= Math.floor(house.rating) ? "text-yellow-400" : "text-gray-300"}
+              />
+            ))}
+            <span className="text-sm text-gray-600 mr-2">({house.reviewCount})</span>
+          </div>
+          <button
+            onClick={() => navigate(`/houses/${house._id}`)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm transition-colors duration-300"
+          >
+            مشاهده
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
 
-        {/* Main Content */}
-        <div className="w-full md:w-3/4 p-6 bg-white border border-gray-200 rounded-lg shadow mx-6">
-          {favorites.length > 0 ? (
-            <div className="container mx-auto px-4 py-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {favorites.map((house) => (
-                  <div
-                    key={house._id}
-                    className="rounded-lg overflow-hidden transition-shadow duration-300"
-                  >
-                    <div className="relative group">
-                      <img
-                        src={house.cover}
-                        alt={house.name}
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
-                      <button
-                        onClick={() => removeFavorite(house._id)}
-                        className="absolute top-2 left-2 p-1 opacity-0 group-hover:opacity-100 bg-white rounded-full transition-opacity duration-300"
-                        aria-label="Remove favorite"
-                      >
-                        <BsTrash className="text-blue-800 w-10 h-10 cursor-pointer bg-white bg-opacity-50 rounded-full p-2" />
-                      </button>
-                    </div>
-                    <div className="p-4">
-                      <h3 className="text-lg font-semibold">{house.name}</h3>
-                      <p className="text-gray-600">
-                        {house.description?.slice(0, 20)}...
-                      </p>
-                      <span className="text-sm">
-                        هر شب از {house.price}
-                        <span className="text-xl font-semibold"> تومان</span>
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <h1 className="text-xl text-gray-500">لیست شما خالی است!</h1>
-              </div>
+  const renderFoodCard = (food) => (
+    <motion.div
+      key={food._id}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+      className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100"
+    >
+      <div className="relative">
+        <img
+          src={food.image}
+          alt={food.name}
+          className="w-full h-48 object-cover"
+        />
+        <button
+          onClick={() => handleRemoveFavorite(food._id, 'food')}
+          className="absolute top-3 left-3 bg-white p-2 rounded-full shadow-md hover:bg-red-50 hover:text-red-600 transition-colors duration-300"
+        >
+          <RiHeartFill className="text-red-500" size={18} />
+        </button>
+        <div className="absolute bottom-3 left-3 bg-green-600 text-white px-2 py-1 rounded-full text-xs">
+          {food.price?.toLocaleString('fa-IR')} تومان
+        </div>
+      </div>
+      <div className="p-4">
+        <h3 className="font-bold text-gray-800 mb-2">{food.name}</h3>
+        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+          {food.description}
+        </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <RiStarFill
+                key={star}
+                size={16}
+                className={star <= Math.floor(food.rating) ? "text-yellow-400" : "text-gray-300"}
+              />
+            ))}
+            <span className="text-sm text-gray-600 mr-2">({food.reviewCount})</span>
+          </div>
+          <button
+            onClick={() => navigate(`/foods/${food._id}`)}
+            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm transition-colors duration-300"
+          >
+            سفارش
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  const renderBusCard = (bus) => (
+    <motion.div
+      key={bus._id}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+      className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100"
+    >
+      <div className="relative">
+        <img
+          src={bus.image}
+          alt={bus.name}
+          className="w-full h-48 object-cover"
+        />
+        <button
+          onClick={() => handleRemoveFavorite(bus._id, 'bus')}
+          className="absolute top-3 left-3 bg-white p-2 rounded-full shadow-md hover:bg-red-50 hover:text-red-600 transition-colors duration-300"
+        >
+          <RiHeartFill className="text-red-500" size={18} />
+        </button>
+        <div className="absolute bottom-3 left-3 bg-purple-600 text-white px-2 py-1 rounded-full text-xs">
+          {bus.price?.toLocaleString('fa-IR')} تومان
+        </div>
+      </div>
+      <div className="p-4">
+        <h3 className="font-bold text-gray-800 mb-2">{bus.name}</h3>
+        <div className="flex items-center text-gray-600 mb-2">
+          <RiMapPinLine size={16} className="ml-1" />
+          <span className="text-sm">{bus.origin} → {bus.destination}</span>
+        </div>
+        <div className="flex items-center text-gray-600 mb-3 text-sm">
+          <RiBusLine size={16} className="ml-1" />
+          <span>{bus.company}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <RiStarFill
+                key={star}
+                size={16}
+                className={star <= Math.floor(bus.rating) ? "text-yellow-400" : "text-gray-300"}
+              />
+            ))}
+            <span className="text-sm text-gray-600 mr-2">({bus.reviewCount})</span>
+          </div>
+          <button
+            onClick={() => navigate(`/buses/${bus._id}`)}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-lg text-sm transition-colors duration-300"
+          >
+            رزرو
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+        <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">دسترسی محدود</h2>
+          <p className="text-gray-600 mb-6">برای مشاهده علاقه‌مندی‌ها لطفاً وارد حساب کاربری شوید</p>
+          <Link
+            to="/login"
+            className="inline-block bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg"
+          >
+            ورود به حساب کاربری
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading && !favorites.length) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600">در حال دریافت علاقه‌مندی‌ها...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-4 md:px-8">
+      {/* Mobile Header */}
+      <div className="lg:hidden flex items-center justify-between mb-4 p-4 bg-white rounded-xl shadow-sm">
+        <h1 className="text-xl font-bold text-gray-800">علاقه‌مندی‌ها</h1>
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 rounded-lg bg-blue-50 text-blue-600 z-50 relative"
+        >
+          {isMobileMenuOpen ? <RiCloseLine size={20} /> : <RiMenuLine size={20} />}
+        </button>
+      </div>
+
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-4 md:gap-6">
+        {/* Mobile Sidebar Overlay */}
+        {isMobileMenuOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" 
+            onClick={() => setIsMobileMenuOpen(false)}
+          ></div>
+        )}
+        
+        {/* User Sidebar */}
+        <div className={`
+          w-full lg:w-1/4 bg-white rounded-2xl shadow-lg border border-gray-100 
+          transition-all duration-300 z-50 lg:z-auto
+          ${isMobileMenuOpen 
+            ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5/6 max-w-md max-h-[80vh] overflow-y-auto' 
+            : 'hidden lg:block'
+          }
+        `}>
+          {/* Close button for mobile */}
+          {isMobileMenuOpen && (
+            <div className="sticky top-0 bg-white p-4 border-b border-gray-200 flex justify-between items-center lg:hidden">
+              <h2 className="text-lg font-semibold text-gray-800">منو</h2>
+              <button 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-1 rounded-full bg-gray-100 text-gray-600"
+              >
+                <RiCloseLine size={20} />
+              </button>
             </div>
           )}
+          
+          <div className="p-4 md:p-6 text-center">
+            <div className="relative mx-auto w-24 h-24 md:w-32 md:h-32 mb-4">
+              <img
+                src={user.avatar}
+                alt="پروفایل کاربر"
+                className="object-cover rounded-full w-full h-full border-4 border-white shadow-lg transition-all duration-300 hover:scale-105"
+              />
+              <button className="absolute bottom-0 right-0 p-1 md:p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-all duration-200 transform hover:scale-110">
+                <IoIosCamera className="text-blue-600 text-lg md:text-xl" />
+              </button>
+            </div>
+            <h3 className="mt-2 text-lg md:text-xl font-semibold text-gray-800 truncate">
+              {user.name}
+            </h3>
+            <p className="text-gray-500 mt-1 text-sm md:text-base truncate">کاربر عزیز، خوش آمدید</p>
+          </div>
+
+          <div className="border-t border-gray-100 mx-4"></div>
+
+          <nav className="p-2 md:p-4">
+            <ul className="space-y-1 md:space-y-2">
+              {navItems.map((item) => (
+                <li key={item.id}>
+                  <button
+                    onClick={() => {
+                      if (item.id !== 'favorites') {
+                        navigate(`/${item.id}`);
+                      }
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 ${item.id === 'favorites' 
+                      ? 'bg-blue-50 text-blue-600 shadow-inner' 
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-blue-500'
+                    }`}
+                  >
+                    {item.icon}
+                    <span className="text-right flex-1 text-sm md:text-base">{item.text}</span>
+                  </button>
+                </li>
+              ))}
+              
+              <li>
+                <button
+                  onClick={logoutUser}
+                  className="w-full flex items-center p-3 rounded-xl text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
+                >
+                  <RiLogoutBoxRLine className="ml-2 w-5 h-5" />
+                  <span className="text-right flex-1 text-sm md:text-base">خروج از حساب</span>
+                </button>
+              </li>
+            </ul>
+          </nav>
         </div>
-        <ToastContainer position="bottom-left" autoClose={3000} />
+
+        {/* Main Content Area */}
+        <div className="w-full lg:w-3/4">
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+            <div className="p-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+            
+            <div className="p-4 md:p-6 lg:p-8">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                <div className="mb-4 md:mb-0">
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-800">علاقه‌مندی‌های شما</h2>
+                  <p className="text-gray-500 text-sm mt-1">مدیریت موارد مورد علاقه شما</p>
+                </div>
+                <div className="flex items-center">
+                  <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm">
+                    {favorites.length} مورد
+                  </span>
+                </div>
+              </div>
+
+              {/* Search and Filter */}
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="relative flex-1">
+                  <RiSearchLine className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="جستجو در علاقه‌مندی‌ها..."
+                    className="w-full pr-10 pl-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-300 focus:border-blue-500 text-right transition-colors duration-300"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setSelectedCategory('all')}
+                    className={`px-4 py-2 rounded-xl transition-colors duration-300 ${
+                      selectedCategory === 'all' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    همه
+                  </button>
+                  <button
+                    onClick={() => setSelectedCategory('house')}
+                    className={`px-4 py-2 rounded-xl transition-colors duration-300 ${
+                      selectedCategory === 'house' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    اقامتگاه‌ها
+                  </button>
+                  <button
+                    onClick={() => setSelectedCategory('food')}
+                    className={`px-4 py-2 rounded-xl transition-colors duration-300 ${
+                      selectedCategory === 'food' 
+                        ? 'bg-green-600 text-white' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    غذاها
+                  </button>
+                  <button
+                    onClick={() => setSelectedCategory('bus')}
+                    className={`px-4 py-2 rounded-xl transition-colors duration-300 ${
+                      selectedCategory === 'bus' 
+                        ? 'bg-purple-600 text-white' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    اتوبوس‌ها
+                  </button>
+                </div>
+              </div>
+
+              {filteredFavorites.length > 0 ? (
+                <div className="space-y-6">
+                  {/* Houses Section */}
+                  {favoritesByType.houses.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <RiHotelLine className="ml-2 text-blue-600" />
+                        اقامتگاه‌ها ({favoritesByType.houses.length})
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <AnimatePresence>
+                          {favoritesByType.houses.map(renderHouseCard)}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Foods Section */}
+                  {favoritesByType.foods.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <RiRestaurantLine className="ml-2 text-green-600" />
+                        غذاها ({favoritesByType.foods.length})
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <AnimatePresence>
+                          {favoritesByType.foods.map(renderFoodCard)}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Buses Section */}
+                  {favoritesByType.buses.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <RiBusLine className="ml-2 text-purple-600" />
+                        اتوبوس‌ها ({favoritesByType.buses.length})
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <AnimatePresence>
+                          {favoritesByType.buses.map(renderBusCard)}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="max-w-md mx-auto">
+                    <div className="bg-red-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <RiHeartFill className="text-red-500 text-3xl" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-700 mt-4">موردی یافت نشد</h3>
+                    <p className="text-gray-500 mt-2">
+                      {searchTerm || selectedCategory !== 'all' 
+                        ? 'هیچ موردی با فیلترهای انتخاب شده مطابقت ندارد' 
+                        : 'شما هنوز هیچ موردی به علاقه‌مندی‌ها اضافه نکرده‌اید'}
+                    </p>
+                    {(searchTerm || selectedCategory !== 'all') ? (
+                      <button
+                        onClick={() => {
+                          setSearchTerm('');
+                          setSelectedCategory('all');
+                        }}
+                        className="inline-block mt-6 bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-xl transition-colors duration-300"
+                      >
+                        حذف فیلترها
+                      </button>
+                    ) : (
+                      <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+                        <button
+                          onClick={() => navigate('/houses')}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl transition-colors duration-300"
+                        >
+                          مشاهده اقامتگاه‌ها
+                        </button>
+                        <button
+                          onClick={() => navigate('/foods')}
+                          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl transition-colors duration-300"
+                        >
+                          مشاهده غذاها
+                        </button>
+                        <button
+                          onClick={() => navigate('/buses')}
+                          className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-xl transition-colors duration-300"
+                        >
+                          مشاهده اتوبوس‌ها
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
-    </>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+    </div>
   );
 };
+
 
 export default FavoritesPage;

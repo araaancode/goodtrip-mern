@@ -2,51 +2,48 @@
 import React, { useState, useEffect } from 'react';
 import { RiTentLine, RiUser3Fill, RiSearchLine, RiCalendar2Line, RiLogoutBoxRLine, RiHeart2Line, RiBankCard2Line, RiNotificationLine, RiCustomerService2Line, RiCameraFill } from "@remixicon/react";
 import { FaCamera } from 'react-icons/fa';
-import { useDispatch, useSelector } from 'react-redux'
-import { Link, useParams, useNavigate } from "react-router-dom";
-import axios from "axios"
+import { Link, useNavigate } from "react-router-dom";
 import HeaderPages from '../components/HeaderPages';
 import Footer from "../components/Footer"
-
 import { IoIosCamera } from "react-icons/io";
-
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-
+import useUserAuthStore from '../store/authStore';
 
 const SupportPage = () => {
-
-
-  const userToken = localStorage.getItem("userToken") ? localStorage.getItem("userToken") : null
   const navigate = useNavigate();
-  const [name, setName] = useState('')
-  const [user, setUser] = useState('')
-
-  useEffect(() => {
-    axios.get('/api/users/me', {
-      headers: {
-        'authorization': 'Bearer ' + userToken
-      }
-    })
-      .then((res) => {
-        setUser(res.data.user)
-      })
-      .catch((err) => console.error(err));
-  }, [])
-
-  function logout() {
-    localStorage.removeItem("userToken")
-    navigate('/');
-    window.location.reload()
-  }
-
-
+  const { user, isAuthenticated, logout: authLogout, checkAuth } = useUserAuthStore();
+  
+  // Move ALL hooks to the top, before any conditionals
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     message: "",
   });
+
+  useEffect(() => {
+    // If not authenticated, try to check auth status
+    if (!isAuthenticated) {
+      checkAuth();
+    }
+  }, [isAuthenticated, checkAuth]);
+
+  // Update formData when user data is available
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || "",
+        email: user.email || "",
+        message: formData.message, // Keep existing message
+      });
+    }
+  }, [user]); // Only run when user changes
+
+  function handleLogout() {
+    authLogout();
+    navigate('/');
+    window.location.reload();
+  }
 
   const handleChange = (e) => {
     setFormData({
@@ -57,7 +54,6 @@ const SupportPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle form submission (e.g., send the data to a server)
     toast.info('پیام شما با موفقیت ارسال شد', {
       position: "top-right",
       autoClose: 5000,
@@ -66,21 +62,26 @@ const SupportPage = () => {
       pauseOnHover: true,
       draggable: true,
       progress: undefined,
-    })
+    });
 
-    // Clear form after submission
     setFormData({
-      name: "",
-      email: "",
+      ...formData,
       message: "",
     });
   };
 
+  // Redirect if not authenticated - this should come AFTER all hooks
+  if (!isAuthenticated) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>لطفاً برای دسترسی به این صفحه وارد شوید</p>
+      </div>
+    );
+  }
+
   return (
     <>
-      <HeaderPages />
       <div className="flex flex-col md:flex-row p-4 rtl mt-4">
-
         {/* User Basic Information Column 1 */}
         <div className="w-full md:w-1/4 py-6 bg-white border border-gray-200 rounded-lg shadow mb-4 md:mb-0">
           <div className="mb-8 px-4 text-center mx-auto flex justify-center">
@@ -93,8 +94,7 @@ const SupportPage = () => {
               <div className="absolute bottom-8 left-0 p-2 bg-white cursor-pointer shadow shadow-full rounded-full">
                 <IoIosCamera className='text-blue-800 h-8 w-8' />
               </div>
-
-              <p className="text-gray-900 text-center mt-2">{name ? user.name : user.phone}</p>
+              <p className="text-gray-900 text-center mt-2">{user?.name || user?.phone}</p>
             </div>
           </div>
           <div className='border'></div>
@@ -138,7 +138,6 @@ const SupportPage = () => {
               </li>
             </Link>
           </div>
-
           <div className='my-6 px-8'>
             <Link to="/support">
               <li className="flex items-center mb-2">
@@ -151,13 +150,13 @@ const SupportPage = () => {
             <Link to="/">
               <li className="flex items-center mb-2">
                 <span className="mr-2 text-gray-400"><RiLogoutBoxRLine /></span>
-                <button className="mx-4" onClick={logout}>خروج</button>
+                <button className="mx-4" onClick={handleLogout}>خروج</button>
               </li>
             </Link>
           </div>
         </div>
 
-        {/* Update User Information Column 2 */}
+        {/* Support Form Column 2 */}
         <div className="w-full md:w-3/4 p-6 bg-white border border-gray-200 rounded-lg mx-6">
           <div className="w-full flex items-center justify-center">
             <div className="bg-white p-2 rounded-lg w-full flex flex-col items-center">
@@ -165,10 +164,43 @@ const SupportPage = () => {
               <h3 className='font-bold mt-4'>برای رفع مشکل خود با ما تماس حاصل نمایید</h3>
               <span className='py-3 px-6 my-2 text-xl bg-gray-200 rounded-full font-bold'>0951xxxxxxx</span>
               <span className='py-3 px-6 my-2 text-xl bg-gray-200 rounded-full font-bold'>0951xxxxxxx</span>
-              <form onSubmit={handleSubmit} className="space-y-10">
-
+              <form onSubmit={handleSubmit} className="space-y-10 w-full max-w-lg">
                 <h1 className='font-bold my-4'>و یا مشکل خود را با ما در میان بگذارید تا در سریع ترین زمان با شما تماس بگیریم</h1>
+                
                 <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                    نام
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    id="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                    ایمیل
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    id="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="message" className="block text-sm font-medium text-gray-700">
+                    پیام
+                  </label>
                   <textarea
                     name="message"
                     id="message"
@@ -179,6 +211,7 @@ const SupportPage = () => {
                     rows="5"
                   />
                 </div>
+                
                 <button
                   type="submit"
                   className="w-full bg-blue-800 text-white py-2 px-4 rounded-md hover:bg-blue-900 focus:outline-none"
@@ -191,7 +224,6 @@ const SupportPage = () => {
         </div>
         <ToastContainer />
       </div>
-      <Footer />
     </>
   );
 };

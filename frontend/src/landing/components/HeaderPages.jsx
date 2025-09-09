@@ -6,7 +6,7 @@ import { CiShoppingCart } from "react-icons/ci";
 
 const HeaderPages = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(3); // Example cart count
+  const [cartCount, setCartCount] = useState(0);
 
   return (
     <>
