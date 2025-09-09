@@ -122,7 +122,7 @@ const BookingsPage = () => {
         <div className="flex flex-col md:flex-row justify-between">
           <div className="flex-1">
             <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center ml-3">
                 <BsHouses className="text-blue-600 text-xl" />
               </div>
               <div>
@@ -134,7 +134,7 @@ const BookingsPage = () => {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex flex-wrap gap-3 md:gap-4 mt-4">
               <div className="flex items-center text-gray-600 text-sm md:text-base">
                 <RiCalendarEventLine className="ml-1" size={16} />
@@ -156,7 +156,7 @@ const BookingsPage = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="flex flex-col md:items-end mt-4 md:mt-0">
             <div className="mb-2 text-gray-500 text-xs md:text-sm">کد رزرو: {booking._id.slice(-8)}</div>
             <div className="flex flex-col md:flex-row gap-2 mt-2">
@@ -184,7 +184,7 @@ const BookingsPage = () => {
   const navItems = [
     { id: 'profile', icon: <RiUser3Fill className="ml-2 w-5 h-5" />, text: 'حساب کاربری' },
     { id: 'bookings', icon: <BsHouses className="ml-2 w-5 h-5" />, text: 'رزروهای اقامتگاه' },
-    { id: 'foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارش های غذا' },
+    { id: 'order-foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارش های غذا' },
     { id: 'bus', icon: <LiaBusSolid className="ml-2 w-5 h-5" />, text: 'بلیط های اتوبوس' },
     { id: 'favorites', icon: <RiHeart2Line className="ml-2 w-5 h-5" />, text: 'لیست علاقه مندی ها' },
     { id: 'bank', icon: <RiBankCard2Line className="ml-2 w-5 h-5" />, text: 'اطلاعات حساب بانکی' },
@@ -198,7 +198,7 @@ const BookingsPage = () => {
       <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="text-center p-6 bg-white rounded-xl shadow-md max-w-md w-full">
           <div className="text-red-500 text-xl mb-4">{authError || houseError}</div>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg"
           >
@@ -225,7 +225,7 @@ const BookingsPage = () => {
       <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="text-center p-6 bg-white rounded-xl shadow-md max-w-md w-full">
           <div className="text-xl mb-4">لطفا ابتدا وارد شوید</div>
-          <button 
+          <button
             onClick={() => navigate('/login')}
             className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg"
           >
@@ -237,11 +237,11 @@ const BookingsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-4 md:px-8">
+    <div className="min-h-screen bg-gray-50 py-4 px-4 md:px-8">
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-between mb-4 p-4 bg-white rounded-xl shadow-sm">
         <h1 className="text-xl font-bold text-gray-800">رزروهای اقامتگاه</h1>
-        <button 
+        <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 rounded-lg bg-blue-50 text-blue-600 z-50 relative"
         >
@@ -252,18 +252,18 @@ const BookingsPage = () => {
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-4 md:gap-6">
         {/* Mobile Sidebar Overlay */}
         {isMobileMenuOpen && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" 
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           ></div>
         )}
-        
+
         {/* User Sidebar */}
         <div className={`
           w-full lg:w-1/4 bg-white rounded-2xl shadow-lg border border-gray-100 
           transition-all duration-300 z-50 lg:z-auto
-          ${isMobileMenuOpen 
-            ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5/6 max-w-md max-h-[80vh] overflow-y-auto' 
+          ${isMobileMenuOpen
+            ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5/6 max-w-md max-h-[80vh] overflow-y-auto'
             : 'hidden lg:block'
           }
         `}>
@@ -271,7 +271,7 @@ const BookingsPage = () => {
           {isMobileMenuOpen && (
             <div className="sticky top-0 bg-white p-4 border-b border-gray-200 flex justify-between items-center lg:hidden">
               <h2 className="text-lg font-semibold text-gray-800">منو</h2>
-              <button 
+              <button
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="p-1 rounded-full bg-gray-100 text-gray-600"
               >
@@ -279,7 +279,7 @@ const BookingsPage = () => {
               </button>
             </div>
           )}
-          
+
           <div className="p-4 md:p-6 text-center">
             <div className="relative mx-auto w-24 h-24 md:w-32 md:h-32 mb-4">
               <img
@@ -310,17 +310,17 @@ const BookingsPage = () => {
                       }
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 ${item.id === 'bookings' 
-                      ? 'bg-blue-50 text-blue-600 shadow-inner' 
+                    className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 ${item.id === 'bookings'
+                      ? 'bg-blue-50 text-blue-600 shadow-inner'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-blue-500'
-                    }`}
+                      }`}
                   >
                     {item.icon}
                     <span className="text-right flex-1 text-sm md:text-base">{item.text}</span>
                   </button>
                 </li>
               ))}
-              
+
               <li>
                 <button
                   onClick={logoutUser}
@@ -338,23 +338,28 @@ const BookingsPage = () => {
         <div className="w-full lg:w-3/4">
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
             <div className="p-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
-            
+
             <div className="p-4 md:p-6 lg:p-8">
               {bookings.length > 0 ? (
                 <>
                   <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6 pb-2 border-b border-gray-100">رزروهای اقامتگاه</h2>
-                  
+
                   <div className='flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-6'>
                     <div className="relative flex-1">
-                      <RiSearchLine className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      {/* Search Icon */}
+                      <RiSearchLine className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+
+                      {/* Input */}
                       <input
-                        className="w-full border border-gray-300 focus:border-blue-500 focus:outline-none rounded-xl py-3 pr-10 pl-4 transition-colors duration-300"
+                        className="w-full border border-gray-300 focus:border-blue-500 focus:outline-none rounded-xl py-3 pr-14 pl-4 transition-colors duration-300"
                         type="text"
                         placeholder="جستجو بر اساس نام اقامتگاه..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
                     </div>
+
+
 
                     <div className="w-full md:w-56">
                       <select

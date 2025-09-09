@@ -24,6 +24,18 @@ import { BsHouses } from "react-icons/bs";
 import { IoFastFoodOutline } from "react-icons/io5";
 import { LiaBusSolid } from "react-icons/lia";
 
+// React Icons from pi package for form inputs (using outline icons)
+import {
+  PiUser,
+  PiUserCircle,
+  PiEnvelope,
+  PiPhone,
+  PiIdentificationCard,
+  PiMapPinArea,
+  PiBuildings,
+  PiGenderIntersex
+} from 'react-icons/pi';
+
 const ProfilePage = () => {
   const navigate = useNavigate();
 
@@ -60,7 +72,7 @@ const ProfilePage = () => {
   const updateUser = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       const data = await updateProfile(name, phone, email, username, nationalCode, province, city, gender)
 
@@ -76,7 +88,7 @@ const ProfilePage = () => {
     } catch (error) {
       toast.error('خطایی رخ داده است. لطفاً دوباره تلاش کنید.', {
         position: 'top-right',
-        autoClose:5000,
+        autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
@@ -95,14 +107,14 @@ const ProfilePage = () => {
 
   // Navigation items
   const navItems = [
-    { id: 'profile', icon: <RiUser3Fill className="ml-2 w-5 h-5" />, text: 'حساب کاربری' },
-    { id: 'bookings', icon: <BsHouses className="ml-2 w-5 h-5" />, text: 'رزروهای اقامتگاه' },
-    { id: 'foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارش های غذا' },
-    { id: 'bus', icon: <LiaBusSolid className="ml-2 w-5 h-5" />, text: 'بلیط های اتوبوس' },
-    { id: 'favorites', icon: <RiHeart2Line className="ml-2 w-5 h-5" />, text: 'لیست علاقه مندی ها' },
-    { id: 'bank', icon: <RiBankCard2Line className="ml-2 w-5 h-5" />, text: 'اطلاعات حساب بانکی' },
-    { id: 'notifications', icon: <RiNotificationLine className="ml-2 w-5 h-5" />, text: 'لیست اعلان ها' },
-    { id: 'support', icon: <RiCustomerService2Line className="ml-2 w-5 h-5" />, text: 'پشتیبانی' },
+    { id: 'profile', icon: <RiUser3Fill className="ml-2 w-5 h-5" />, text: 'حساب کاربری', link: '/profile' },
+    { id: 'bookings', icon: <BsHouses className="ml-2 w-5 h-5" />, text: 'رزروهای اقامتگاه', link: '/bookings' },
+    { id: 'foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارش های غذا', link: '/foods' },
+    { id: 'bus', icon: <LiaBusSolid className="ml-2 w-5 h-5" />, text: 'بلیط های اتوبوس', link: '/bus' },
+    { id: 'favorites', icon: <RiHeart2Line className="ml-2 w-5 h-5" />, text: 'لیست علاقه مندی ها', link: '/favorites' },
+    { id: 'bank', icon: <RiBankCard2Line className="ml-2 w-5 h-5" />, text: 'اطلاعات حساب بانکی', link: '/bank' },
+    { id: 'notifications', icon: <RiNotificationLine className="ml-2 w-5 h-5" />, text: 'لیست اعلان ها', link: '/notifications' },
+    { id: 'support', icon: <RiCustomerService2Line className="ml-2 w-5 h-5" />, text: 'پشتیبانی', link: '/support' },
   ];
 
   return (
@@ -111,7 +123,7 @@ const ProfilePage = () => {
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between mb-4 p-4 bg-white rounded-xl shadow-sm">
           <h1 className="text-xl font-bold text-gray-800">پنل کاربری</h1>
-          <button 
+          <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-2 rounded-lg bg-blue-50 text-blue-600 z-50 relative"
           >
@@ -122,17 +134,17 @@ const ProfilePage = () => {
         <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
           {/* User Sidebar - Mobile Overlay */}
           {isMobileMenuOpen && (
-            <div 
-              className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" 
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
               onClick={() => setIsMobileMenuOpen(false)}
             ></div>
           )}
-          
+
           <div className={`
             w-full lg:w-1/4 bg-white rounded-2xl shadow-lg border border-gray-100 
             transition-all duration-300 z-50 lg:z-auto
-            ${isMobileMenuOpen 
-              ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5/6 max-w-md max-h-[80vh] overflow-y-auto' 
+            ${isMobileMenuOpen
+              ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5/6 max-w-md max-h-[80vh] overflow-y-auto'
               : 'hidden lg:block'
             }
           `}>
@@ -140,7 +152,7 @@ const ProfilePage = () => {
             {isMobileMenuOpen && (
               <div className="sticky top-0 bg-white p-4 border-b border-gray-200 flex justify-between items-center lg:hidden">
                 <h2 className="text-lg font-semibold text-gray-800">منو</h2>
-                <button 
+                <button
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="p-1 rounded-full bg-gray-100 text-gray-600"
                 >
@@ -148,7 +160,7 @@ const ProfilePage = () => {
                 </button>
               </div>
             )}
-            
+
             <div className="p-4 md:p-6 text-center">
               <div className="relative mx-auto w-24 h-24 md:w-32 md:h-32 mb-4">
                 <img
@@ -172,22 +184,23 @@ const ProfilePage = () => {
               <ul className="space-y-1 md:space-y-2">
                 {navItems.map((item) => (
                   <li key={item.id}>
-                    <button
+                    <Link
+                      to={item.link}
                       onClick={() => {
                         setActiveTab(item.id);
                         setIsMobileMenuOpen(false);
                       }}
-                      className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 ${activeTab === item.id 
-                        ? 'bg-blue-50 text-blue-600 shadow-inner' 
+                      className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 ${activeTab === item.id
+                        ? 'bg-blue-50 text-blue-600 shadow-inner'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-blue-500'
-                      }`}
+                        }`}
                     >
                       {item.icon}
                       <span className="text-right flex-1 text-sm md:text-base">{item.text}</span>
-                    </button>
+                    </Link>
                   </li>
                 ))}
-                
+
                 <li>
                   <button
                     onClick={logoutUser}
@@ -205,137 +218,169 @@ const ProfilePage = () => {
           <div className="w-full lg:w-3/4">
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
               <div className="p-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
-              
+
               <div className="p-4 md:p-6 lg:p-8">
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6 pb-2 border-b border-gray-100">اطلاعات شخصی</h2>
-                
+
                 <form onSubmit={updateUser}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
                     {/* Column 1 */}
                     <div className="space-y-4 md:space-y-5">
-                      <div className="form-group">
+                      <div className="form-group relative">
                         <label className="block text-gray-700 text-sm font-medium mb-2">
                           نام و نام خانوادگی
                         </label>
-                        <input
-                          type="text"
-                          id="name"
-                          name="name"
-                          defaultValue={name}
-                          onChange={(e) => setName(e.target.value)}
-                          className="w-full p-3 md:p-3.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all duration-200"
-                          placeholder="نام خود را وارد کنید"
-                        />
+                        <div className="relative">
+                          <PiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                          <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            defaultValue={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full p-3 md:p-3.5 pl-10 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent transition-all duration-200"
+                            placeholder="نام خود را وارد کنید"
+                            style={{borderRadius:'8px'}}
+                          />
+                        </div>
                       </div>
-                      
-                      <div className="form-group">
+
+                      <div className="form-group relative">
                         <label className="block text-gray-700 text-sm font-medium mb-2">
                           نام کاربری
                         </label>
-                        <input
-                          type="text"
-                          id="username"
-                          name="username"
-                          defaultValue={username}
-                          onChange={(e) => setUsername(e.target.value)}
-                          className="w-full p-3 md:p-3.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all duration-200"
-                          placeholder="نام کاربری خود را وارد کنید"
-                        />
+                        <div className="relative">
+                          <PiUserCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                          <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            defaultValue={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            className="w-full p-3 md:p-3.5 pl-10 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent transition-all duration-200"
+                            placeholder="نام کاربری خود را وارد کنید"
+                            style={{borderRadius:'8px'}}
+                          />
+                        </div>
                       </div>
-                      
-                      <div className="form-group">
+
+                      <div className="form-group relative">
                         <label className="block text-gray-700 text-sm font-medium mb-2">
                           ایمیل
                         </label>
-                        <input
-                          type="email"
-                          id="email"
-                          name="email"
-                          defaultValue={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="w-full p-3 md:p-3.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all duration-200"
-                          placeholder="ایمیل خود را وارد کنید"
-                        />
+                        <div className="relative">
+                          <PiEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                          <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            defaultValue={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full p-3 md:p-3.5 pl-10 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent transition-all duration-200"
+                            placeholder="ایمیل خود را وارد کنید"
+                            style={{borderRadius:'8px'}}
+                          />
+                        </div>
                       </div>
-                      
-                      <div className="form-group">
+
+                      <div className="form-group relative">
                         <label className="block text-gray-700 text-sm font-medium mb-2">
                           شماره همراه
                         </label>
-                        <input
-                          type="text"
-                          id="phone"
-                          name="phone"
-                          defaultValue={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          className="w-full p-3 md:p-3.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all duration-200"
-                          placeholder="شماره همراه خود را وارد کنید"
-                        />
+                        <div className="relative">
+                          <PiPhone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                          <input
+                            type="text"
+                            id="phone"
+                            name="phone"
+                            defaultValue={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            className="w-full p-3 md:p-3.5 pl-10 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent transition-all duration-200"
+                            placeholder="شماره همراه خود را وارد کنید"
+                            style={{borderRadius:'8px'}}
+                          />
+                        </div>
                       </div>
                     </div>
 
                     {/* Column 2 */}
                     <div className="space-y-4 md:space-y-5">
-                      <div className="form-group">
+                      <div className="form-group relative">
                         <label className="block text-gray-700 text-sm font-medium mb-2">
                           کد ملی
                         </label>
-                        <input
-                          type="text"
-                          id="nationalCode"
-                          name="nationalCode"
-                          defaultValue={nationalCode}
-                          onChange={(e) => setNationalCode(e.target.value)}
-                          className="w-full p-3 md:p-3.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all duration-200"
-                          placeholder="کد ملی خود را وارد کنید"
-                        />
+                        <div className="relative">
+                          <PiIdentificationCard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                          <input
+                            type="text"
+                            id="nationalCode"
+                            name="nationalCode"
+                            defaultValue={nationalCode}
+                            onChange={(e) => setNationalCode(e.target.value)}
+                            className="w-full p-3 md:p-3.5 pl-10 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent transition-all duration-200"
+                            placeholder="کد ملی خود را وارد کنید"
+                            style={{borderRadius:'8px'}}
+                          />
+                        </div>
                       </div>
-                      
-                      <div className="form-group">
+
+                      <div className="form-group relative">
                         <label className="block text-gray-700 text-sm font-medium mb-2">
                           استان
                         </label>
-                        <input
-                          type="text"
-                          id="province"
-                          name="province"
-                          defaultValue={province}
-                          onChange={(e) => setProvince(e.target.value)}
-                          className="w-full p-3 md:p-3.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all duration-200"
-                          placeholder="استان خود را وارد کنید"
-                        />
+                        <div className="relative">
+                          <PiMapPinArea className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                          <input
+                            type="text"
+                            id="province"
+                            name="province"
+                            defaultValue={province}
+                            onChange={(e) => setProvince(e.target.value)}
+                            className="w-full p-3 md:p-3.5 pl-10 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent transition-all duration-200"
+                            placeholder="استان خود را وارد کنید"
+                            style={{borderRadius:'8px'}}
+                          />
+                        </div>
                       </div>
-                      
-                      <div className="form-group">
+
+                      <div className="form-group relative">
                         <label className="block text-gray-700 text-sm font-medium mb-2">
                           شهر
                         </label>
-                        <input
-                          type="text"
-                          id="city"
-                          name="city"
-                          defaultValue={city}
-                          onChange={(e) => setCity(e.target.value)}
-                          className="w-full p-3 md:p-3.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all duration-200"
-                          placeholder="شهر خود را وارد کنید"
-                        />
+                        <div className="relative">
+                          <PiBuildings className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                          <input
+                            type="text"
+                            id="city"
+                            name="city"
+                            defaultValue={city}
+                            onChange={(e) => setCity(e.target.value)}
+                            className="w-full p-3 md:p-3.5 pl-10 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent transition-all duration-200"
+                            placeholder="شهر خود را وارد کنید"
+                            style={{borderRadius:'8px'}}
+                          />
+                        </div>
                       </div>
-                      
-                      <div className="form-group">
+
+                      <div className="form-group relative">
                         <label className="block text-gray-700 text-sm font-medium mb-2">
                           جنسیت
                         </label>
-                        <select
-                          id="gender"
-                          name="gender"
-                          value={gender}
-                          onChange={(e) => setGender(e.target.value)}
-                          className="w-full p-3 md:p-3.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all duration-200"
-                        >
-                          <option value="">انتخاب جنسیت</option>
-                          <option value="male">مرد</option>
-                          <option value="female">زن</option>
-                        </select>
+                        <div className="relative">
+                          <PiGenderIntersex className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
+                          <select
+                            id="gender"
+                            name="gender"
+                            value={gender}
+                            onChange={(e) => setGender(e.target.value)}
+                            className="w-full p-3 md:p-3.5 pl-10 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent transition-all duration-200 appearance-none"
+                            style={{borderRadius:'8px'}}
+                          >
+                            <option value="">انتخاب جنسیت</option>
+                            <option value="male">مرد</option>
+                            <option value="female">زن</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
                   </div>

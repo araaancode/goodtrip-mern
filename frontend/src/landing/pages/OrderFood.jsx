@@ -1,23 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from "react-router-dom";
-import Footer from "../components/Footer";
-import HeaderPages from '../components/HeaderPages';
 import axios from "axios"
 import { TiStarFullOutline } from "react-icons/ti";
-import { FaStar } from "react-icons/fa";
+import { FaStar, FaFilter, FaSearch, FaTimes } from "react-icons/fa";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-
 import useCartStore from '../store/cartStore';
 import useUserAuthStore from "../store/authStore"
-
 import './OrderFood.css'
 
 const itemsPerPage = 6;
 
 const OrderFood = () => {
-
   // ************** navigation hook **************
   const navigate = useNavigate()
 
@@ -38,9 +32,7 @@ const OrderFood = () => {
   const [noResult, setNoResult] = useState(false);
   const [foodNameError, setFoodNameError] = useState(false);
   const [foodNameErrorMsg, setFoodNameErrorMsg] = useState("");
-
-
-
+  const [showFilters, setShowFilters] = useState(false);
 
   // Filters state
   const [filters, setFilters] = useState({
@@ -55,8 +47,6 @@ const OrderFood = () => {
   });
 
   const [sortBy, setSortBy] = useState('popular');
-
-  const activeLink = { food: true };
 
   // Mock data for popular foods and suggestions
   const popularFoods = [
@@ -74,6 +64,7 @@ const OrderFood = () => {
   ];
 
   const searchRef = useRef(null);
+  const filtersRef = useRef(null);
 
   // Load mock data on initial render
   useEffect(() => {
@@ -94,11 +85,14 @@ const OrderFood = () => {
     }
   }, [searchQuery]);
 
-  // Handle clicks outside search suggestions
+  // Handle clicks outside search suggestions and filters
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowSuggestions(false);
+      }
+      if (filtersRef.current && !filtersRef.current.contains(event.target) && !event.target.closest('.filter-button')) {
+        setShowFilters(false);
       }
     };
 
@@ -141,7 +135,6 @@ const OrderFood = () => {
       setIsSearching(false);
 
     } catch (error) {
-      // setNoResult(true)
       setLoading(false)
       setIsSearching(false);
       console.error("API error:", error.response?.data || error.message);
@@ -255,44 +248,36 @@ const OrderFood = () => {
   const filteredAndSortedFoods = sortFoods(applyFilters(foods));
   const currentFoods = filteredAndSortedFoods.slice(indexOfFirstItem, indexOfLastItem);
 
-
-
-
   // ****************************** ordering food logic ******************************
-  // ****************************** ******************* ******************************
-  // ****************************** ******************* ******************************
   const handleOrderFood = async (e, food) => {
     e.preventDefault();
 
     if (isAuthenticated) {
       await addItemToCart(food)
-
-
     } else {
       navigate('/login')
     }
-
   }
 
   return (
     <div className="min-h-screen flex flex-col">
-
       <main className="flex-grow">
         {/* Search Section */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 rtl my-10 relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 rtl my-6 md:my-10 relative">
           {/* Food cover image */}
-          <div className="relative overflow-hidden rounded-md" style={{ height: '300px' }}>
+          <div className="relative overflow-hidden rounded-xl md:rounded-2xl shadow-md" style={{ height: '250px', maxHeight: '40vh' }}>
             <img
-              src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+              src="https://as1.ftcdn.net/jpg/05/12/42/00/1000_F_512420067_kAx68gVU77yDkvp0ADLkEEfhBIWpbPYl.jpg"
               alt="غذای ایرانی"
               className="w-full h-full object-cover object-center"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+           
           </div>
 
           {/* Search box */}
-          <div className="bg-white rounded-lg shadow-lg p-6 relative z-10 -mt-16 mx-4">
+          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 relative z-10 -mt-10 mx-2 md:-mt-16 md:mx-4">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               {/* Search Input */}
               <div className="relative flex-1 w-full" ref={searchRef}>
@@ -300,6 +285,9 @@ const OrderFood = () => {
                   جستجوی غذا
                 </label>
                 <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FaSearch className="text-gray-400" />
+                  </div>
                   <input
                     type="text"
                     id="search"
@@ -309,10 +297,9 @@ const OrderFood = () => {
                       setFoodNameError(false);
                     }}
                     onFocus={() => setShowSuggestions(true)}
-                    className={`w-full pr-10 pl-3 py-3 border ${foodNameError ? 'border-red-500' : 'border-gray-300'} text-right outline-none focus:[border:1px_solid_#1e3a8a]`}
+                    className={`w-full pr-10 pl-10 py-3 border ${foodNameError ? 'border-red-500' : 'border-gray-300'} text-right outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent rounded-lg transition-all`}
                     placeholder="نام غذا را وارد کنید"
                     autoComplete="off"
-                    style={{ borderRadius: '8px' }}
                   />
 
                   {/* Clear Button */}
@@ -320,9 +307,9 @@ const OrderFood = () => {
                     <button
                       type="button"
                       onClick={() => setSearchQuery('')}
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                      className="absolute left-10 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
                     >
-                      ✕
+                      <FaTimes className="w-4 h-4" />
                     </button>
                   )}
 
@@ -333,15 +320,18 @@ const OrderFood = () => {
                   )}
 
                   {showSuggestions && filteredFoods.length > 0 && (
-                    <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                    <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
                       {filteredFoods.map((food) => (
                         <li
                           key={food.id}
-                          className="p-3 hover:bg-gray-100 cursor-pointer text-right"
+                          className="p-3 hover:bg-blue-50 cursor-pointer text-right flex items-center"
                           onClick={() => handleFoodSelect(food)}
                         >
-                          <div className="font-medium">{food.name}</div>
-                          <div className="text-xs text-gray-500">{food.category}</div>
+                          <img src={food.image} alt={food.name} className="w-8 h-8 ml-3" />
+                          <div>
+                            <div className="font-medium">{food.name}</div>
+                            <div className="text-xs text-gray-500">{food.category}</div>
+                          </div>
                         </li>
                       ))}
                     </ul>
@@ -349,40 +339,25 @@ const OrderFood = () => {
                 </div>
               </div>
 
-
               {/* Search Button */}
-              <div className="w-full md:w-auto mt-6">
+              <div className="w-full md:w-auto mt-4 md:mt-6">
                 <button
                   onClick={handleSearch}
                   disabled={isSearching}
-                  className="w-full md:w-auto px-16 py-3 bg-blue-900 text-white rounded-md font-bold focus:ring-offset-2 transition-colors disabled:opacity-70 disabled:cursor-not-allowed "
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium py-2 md:py-3 px-6 md:px-8 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-70 disabled:transform-none disabled:hover:shadow-md flex items-center text-sm md:text-base"
                 >
                   {isSearching ? (
-                    <span className="flex items-center justify-center">
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
+                    <>
+                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-
-                    </span>
+                      <span>در حال جستجو</span>
+                    </>
                   ) : (
-                    'جستجو'
+                    <>
+                      <span>جستجو</span>
+                    </>
                   )}
                 </button>
               </div>
@@ -391,10 +366,13 @@ const OrderFood = () => {
             {/* Popular Foods */}
             <div className="popular-foods-section mt-6 px-4 py-5 bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-sm">
               <h3 className="section-title text-lg font-bold text-gray-800 mb-3 flex items-center">
-                غذاهای پرطرفدار
+                <span className="ml-2">غذاهای پرطرفدار</span>
+                <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
               </h3>
 
-              <div className="food-tags-container flex flex-wrap gap-3">
+              <div className="food-tags-container flex flex-wrap gap-2 md:gap-3">
                 {popularFoods.map((food) => (
                   <button
                     key={food.id}
@@ -402,83 +380,105 @@ const OrderFood = () => {
                       setSearchQuery(food.name);
                       setFoodNameError(false);
                     }}
-                    className="food-tag-button 
-                   text-sm px-4 py-2
-                   bg-white border border-gray-200 rounded-full
-                   hover:bg-primary-50 hover:border-primary-100 hover:text-primary-600
-                   focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-transparent
-                   active:scale-95 active:bg-primary-100
-                   shadow-xs
-                   transition-all duration-200 ease-in-out"
+                    className="food-tag-button text-xs md:text-sm px-3 py-2 bg-white border border-gray-200 rounded-full hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent active:scale-95 active:bg-blue-100 shadow-xs transition-all duration-200 ease-in-out flex items-center"
                     aria-label={`جستجوی ${food.name}`}
                   >
-                    <div className="flex items-center gap-2">
-                      <img className="w-6 h-6" src={food.image} alt={food.name} />
-                      <span>{food.name}</span>
-                    </div>
-
+                    <img className="w-5 h-5 ml-1" src={food.image} alt={food.name} />
+                    <span>{food.name}</span>
                   </button>
                 ))}
               </div>
             </div>
-
-
           </div>
         </div>
-
 
         {/* Results Section */}
         {hasSearched ? (
           <>
             {loading ? (
               <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                <div className="flex flex-col items-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-900"></div>
+                  <p className="mt-4 text-gray-600">در حال جستجوی غذاها...</p>
+                </div>
               </div>
             ) : error ? (
-              <div className="text-center py-12 flex items-center justify-center flex-col">
-                <h1 className="text-2xl font-semibold text-gray-700 mb-8">نتیجه ای پیدا نشد</h1>
-                <img
-                  src="https://cdn-icons-png.flaticon.com/128/1925/1925988.png"
-                  alt="No results"
-                  className="w-24 h-24 mb-6"
-                />
-                <button
-                  onClick={() => window.location.reload()}
-                  className="mt-6 inline-block px-16 py-3 font-semibold bg-white text-blue-900 border border-blue-600 rounded-md hover:text-white hover:bg-blue-900 transition-colors"
-                >
-                  تلاش دوباره
-                </button>
+              <div className="text-center py-12 flex items-center justify-center flex-col px-4">
+                <div className="bg-white rounded-xl shadow-md p-8 max-w-md w-full">
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/128/1925/1925988.png"
+                    alt="No results"
+                    className="w-24 h-24 mx-auto mb-6"
+                  />
+                  <h1 className="text-xl font-semibold text-gray-800 mb-2">خطا در دریافت اطلاعات</h1>
+                  <p className="text-gray-600 mb-6">متاسفانه مشکلی در دریافت اطلاعات پیش آمده است</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-6 py-2 font-medium bg-blue-900 text-white rounded-lg hover:bg-blue-800 transition-colors"
+                  >
+                    تلاش دوباره
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                {/* Mobile filter button */}
+                <div className="md:hidden mb-4">
+                  <button 
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="filter-button flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <FaFilter className="w-4 h-4" />
+                    <span>فیلترها</span>
+                    {Object.values(filters).some(filter => 
+                      Array.isArray(filter) ? filter.length > 0 : filter !== 0 && filter !== false
+                    ) && (
+                      <span className="bg-blue-900 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        !
+                      </span>
+                    )}
+                  </button>
+                </div>
+
                 {/* Filters and Results */}
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* Filters Sidebar */}
-                  <div className="w-full md:w-1/4 bg-white rounded-lg shadow p-4 h-fit sticky top-4">
-                    <div className="mb-6">
+                  <div 
+                    ref={filtersRef}
+                    className={`w-full md:w-1/4 bg-white rounded-lg shadow p-4 h-fit transition-all duration-300 ${showFilters ? 'block' : 'hidden'} md:block md:sticky top-4`}
+                  >
+                    <div className="flex justify-between items-center mb-4 md:hidden">
+                      <h2 className="font-bold text-lg">فیلترها</h2>
+                      <button onClick={() => setShowFilters(false)} className="text-gray-500">
+                        <FaTimes className="w-5 h-5" />
+                      </button>
+                    </div>
 
+                    <div className="mb-6">
                       {/* Category Filter */}
                       <div className="mb-6">
-                        <h3 className="font-bold mb-2">دسته بندی</h3>
-                        {allCategories.map(category => (
-                          <div key={category} className="flex items-center mb-2">
-                            <input
-                              type="checkbox"
-                              id={`category-${category}`}
-                              checked={filters.categories.includes(category)}
-                              onChange={() => handleFilterChange('categories', category)}
-                              className="ml-2 h-4 w-4 rounded border-gray-300 text-blue-900 focus:ring-blue-900"
-                            />
-                            <label htmlFor={`category-${category}`} className="text-sm">
-                              {category}
-                            </label>
-                          </div>
-                        ))}
+                        <h3 className="font-bold mb-2 text-gray-700">دسته بندی</h3>
+                        <div className="max-h-40 overflow-y-auto">
+                          {allCategories.map(category => (
+                            <div key={category} className="flex items-center mb-2">
+                              <input
+                                type="checkbox"
+                                id={`category-${category}`}
+                                checked={filters.categories.includes(category)}
+                                onChange={() => handleFilterChange('categories', category)}
+                                className="ml-2 h-4 w-4 rounded border-gray-300 text-blue-900 focus:ring-blue-900"
+                              />
+                              <label htmlFor={`category-${category}`} className="text-sm text-gray-700">
+                                {category}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
 
                       {/* Price Range Filter */}
                       <div className="mb-6">
-                        <h4 className="font-bold mb-2">محدوده قیمت</h4>
+                        <h4 className="font-bold mb-2 text-gray-700">محدوده قیمت</h4>
                         <input
                           type="range"
                           min="0"
@@ -486,9 +486,9 @@ const OrderFood = () => {
                           step="10000"
                           value={filters.priceRange[1]}
                           onChange={(e) => handleFilterChange('priceRange', [filters.priceRange[0], parseInt(e.target.value)])}
-                          className="w-full"
+                          className="w-full range-blue-900"
                         />
-                        <div className="flex justify-between text-xs mt-1">
+                        <div className="flex justify-between text-xs mt-1 text-gray-600">
                           <span>0 تومان</span>
                           <span>{filters.priceRange[1].toLocaleString()} تومان</span>
                         </div>
@@ -496,36 +496,35 @@ const OrderFood = () => {
 
                       {/* Rating Filter */}
                       <div className="mb-6">
-                        <h3 className="font-bold mb-2"> امتیاز غذا</h3>
+                        <h3 className="font-bold mb-2 text-gray-700"> امتیاز غذا</h3>
                         <div className="flex items-center">
                           {[1, 2, 3, 4, 5].map(star => (
                             <button
                               key={star}
                               onClick={() => handleFilterChange('rating', star)}
-                              className={`text-xl ${star <= filters.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                              className={`text-xl ${star <= filters.rating ? 'text-yellow-400' : 'text-gray-300'} transition-colors`}
                             >
                               <FaStar />
                             </button>
                           ))}
-                          <span className="text-sm mr-2">{filters.rating}</span>
+                          <span className="text-sm mr-2 text-gray-700">{filters.rating}</span>
                         </div>
                       </div>
 
-
                       {/* Cook Rating Filter */}
                       <div className="mb-6">
-                        <h3 className="font-bold mb-2"> امتیاز آشپز</h3>
+                        <h3 className="font-bold mb-2 text-gray-700"> امتیاز آشپز</h3>
                         <div className="flex items-center">
                           {[1, 2, 3, 4, 5].map(star => (
                             <button
                               key={star}
                               onClick={() => handleFilterChange('cookRating', star)}
-                              className={`text-xl ${star <= filters.cookRating ? 'text-yellow-400' : 'text-gray-300'}`}
+                              className={`text-xl ${star <= filters.cookRating ? 'text-yellow-400' : 'text-gray-300'} transition-colors`}
                             >
                               <FaStar />
                             </button>
                           ))}
-                          <span className="text-sm mr-2">{filters.cookRating}</span>
+                          <span className="text-sm mr-2 text-gray-700">{filters.cookRating}</span>
                         </div>
                       </div>
 
@@ -539,7 +538,7 @@ const OrderFood = () => {
                             onChange={(e) => handleFilterChange('availableNow', e.target.checked)}
                             className="ml-2 h-4 w-4 rounded border-gray-300 text-blue-900 focus:ring-blue-900"
                           />
-                          <label htmlFor="available-now" className="text-sm">
+                          <label htmlFor="available-now" className="text-sm text-gray-700">
                             فقط غذاهای موجود
                           </label>
                         </div>
@@ -557,7 +556,7 @@ const OrderFood = () => {
                           cookRating: 0,
                           availableNow: false
                         })}
-                        className="w-full mt-4 text-blue-900 border border-blue-600 py-2 rounded-md hover:bg-blue-50 transition"
+                        className="w-full mt-4 text-blue-900 border border-blue-600 py-2 rounded-lg hover:bg-blue-50 transition-colors font-medium"
                       >
                         حذف همه فیلترها
                       </button>
@@ -567,7 +566,7 @@ const OrderFood = () => {
                   {/* Results Section */}
                   <div className="w-full md:w-3/4">
                     {/* Sorting Bar */}
-                    <div className="bg-white rounded-lg shadow-md p-6 mb-6 transition-all">
+                    <div className="bg-white rounded-lg shadow p-4 md:p-6 mb-6 transition-all">
                       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         {/* Results count */}
                         <div className="text-sm font-medium text-gray-700">
@@ -591,7 +590,7 @@ const OrderFood = () => {
                               id="sort-select"
                               value={sortBy}
                               onChange={(e) => setSortBy(e.target.value)}
-                              className="appearance-none bg-white border border-gray-300 rounded-md px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-blue-900 focus:border-blue-900 transition-all cursor-pointer shadow-sm hover:border-gray-400"
+                              className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent transition-all cursor-pointer shadow-sm hover:border-gray-400 w-full md:w-auto"
                             >
                               <option value="popular">محبوب‌ترین</option>
                               <option value="expensive">گران‌ترین</option>
@@ -612,11 +611,11 @@ const OrderFood = () => {
 
                     {/* Foods List */}
                     {currentFoods.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                         {currentFoods.map(food => (
                           <div
                             key={food._id}
-                            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 ease-in-out text-right"
+                            className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 ease-in-out text-right flex flex-col h-full"
                             dir="rtl"
                           >
                             {/* Image Section */}
@@ -629,14 +628,15 @@ const OrderFood = () => {
                               />
 
                               {/* Rating Badge */}
-                              <div className="absolute top-2 right-2 bg-blue-900 text-white px-2 py-1 rounded text-xs font-bold">
-                                ★ {food.rating.toFixed(1)}
+                              <div className="absolute top-2 right-2 bg-blue-900 text-white px-2 py-1 rounded-lg text-xs font-bold flex items-center">
+                                <FaStar className="ml-1 w-3 h-3" />
+                                <span>{food.rating.toFixed(1)}</span>
                               </div>
 
                               {/* Out of Stock Overlay */}
                               {!food.isAvailable && (
                                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                  <span className="text-white font-bold bg-red-500 px-3 py-1 rounded text-sm">
+                                  <span className="text-white font-bold bg-red-500 px-3 py-1 rounded-lg text-sm">
                                     ناموجود
                                   </span>
                                 </div>
@@ -644,24 +644,23 @@ const OrderFood = () => {
                             </div>
 
                             {/* Content Section */}
-                            <div className="p-4 space-y-4">
+                            <div className="p-4 space-y-4 flex-grow flex flex-col">
                               {/* Header with Food Info and Cook Details */}
                               <div className="flex justify-between items-start gap-2">
                                 <div className="flex-1">
-                                  <h3 className="font-bold text-lg text-gray-800"><Link to={`/foods/${food._id}`}>{food.name}</Link></h3>
+                                  <h3 className="font-bold text-lg text-gray-800 hover:text-blue-900 transition-colors">
+                                    <Link to={`/foods/${food._id}`}>{food.name}</Link>
+                                  </h3>
                                   <p className="text-gray-500 text-sm mt-1">{food.category}</p>
                                 </div>
 
-
                                 {/* Cook Profile */}
                                 <div className="flex items-center flex-row-reverse">
-
                                   <div className="mr-2 text-right">
                                     <span className="block text-sm text-gray-700">{food.cookName}</span>
                                     <span className="flex items-center justify-start text-xs text-yellow-500">
                                       <TiStarFullOutline className="w-3 h-3 ml-1" />
                                       {food.cook.rating.toFixed(1)}
-
                                     </span>
                                   </div>
                                   <img
@@ -670,65 +669,63 @@ const OrderFood = () => {
                                     className="w-8 h-8 rounded-full object-cover border border-gray-200"
                                   />
                                 </div>
-
-
                               </div>
 
                               {/* Description */}
-                              <p className="text-gray-600 text-sm line-clamp-2 leading-5">
-                                {`${food.description.substring(0, 20)}...`}
+                              <p className="text-gray-600 text-sm line-clamp-2 leading-5 flex-grow">
+                                {food.description && `${food.description.substring(0, 60)}...`}
                               </p>
 
                               {/* Cooking Details & Price - Improved Layout */}
                               <div className="grid grid-cols-3 gap-2 text-sm border-t border-gray-100 pt-3 mt-2">
                                 {/* Cooking Days */}
-                                <div className="flex flex-col items-center justify-center bg-gray-50 rounded p-2">
+                                <div className="flex flex-col items-center justify-center bg-gray-50 rounded-lg p-2">
                                   <div className="flex items-center text-gray-700">
-                                    <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
-                                    <span className="text-xs mr-2">روزهای پخت</span>
-
+                                    <span className="text-xs mr-1">روزهای پخت</span>
                                   </div>
-                                  <span className="font-medium text-gray-800 mt-1">{food.cookDate[0]}</span>
+                                  <span className="font-medium text-gray-800 mt-1 text-xs">{food.cookDate && food.cookDate[0]}</span>
                                 </div>
 
                                 {/* Cooking Hours */}
-                                <div className="flex flex-col items-center justify-center bg-gray-50 rounded p-2">
+                                <div className="flex flex-col items-center justify-center bg-gray-50 rounded-lg p-2">
                                   <div className="flex items-center text-gray-700">
-                                    <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    <span className="text-xs mr-2">ساعت پخت</span>
-
+                                    <span className="text-xs mr-1">ساعت پخت</span>
                                   </div>
-                                  <span className="font-medium text-gray-800 mt-1">{food.cookHour}</span>
+                                  <span className="font-medium text-gray-800 mt-1 text-xs">{food.cookHour}</span>
                                 </div>
 
                                 {/* Price */}
-                                <div className="flex flex-col items-center justify-center bg-blue-50 rounded p-2">
+                                <div className="flex flex-col items-center justify-center bg-blue-50 rounded-lg p-2">
                                   <span className="text-xs text-gray-700">قیمت</span>
-                                  <span className="font-bold text-blue-900 mt-1">
+                                  <span className="font-bold text-blue-900 mt-1 text-sm">
                                     {new Intl.NumberFormat('fa-IR').format(food.price)} تومان
                                   </span>
                                 </div>
                               </div>
 
-
                               {/* Order Button */}
                               <button
-                                className={`w-full mt-3 py-2 rounded-md font-bold transition-colors duration-200
-                               ${food.isAvailable
-                                    ? 'bg-blue-900 text-white'
+                                className={`w-full mt-3 py-2 rounded-lg font-bold transition-colors duration-200 flex items-center justify-center gap-2
+                                  ${food.isAvailable
+                                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium py-2 md:py-3 px-6 md:px-8 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-70 disabled:transform-none disabled:hover:shadow-md flex items-center text-sm md:text-base'
                                     : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
                                 disabled={!food.isAvailable}
                                 onClick={(e) => handleOrderFood(e, food)}
                               >
                                 {food.isAvailable ? (
-                                  <span className="flex items-center justify-center">
+                                  <>
+                                  
                                     <span>سفارش غذا</span>
-                                  </span>
-                                ) : 'موجود نیست'}
+                                  </>
+                                ) : (
+                                  'موجود نیست'
+                                )}
                               </button>
                             </div>
                           </div>
@@ -736,27 +733,49 @@ const OrderFood = () => {
                       </div>
                     ) : (
                       <div className="bg-white rounded-lg shadow p-8 text-center">
-                        <h3 className="text-lg font-medium mb-2">نتیجه‌ای یافت نشد</h3>
+                        <img
+                          src="https://cdn-icons-png.flaticon.com/128/7486/7486747.png"
+                          alt="No results"
+                          className="w-20 h-20 mx-auto mb-4 opacity-60"
+                        />
+                        <h3 className="text-lg font-medium text-gray-800 mb-2">نتیجه‌ای یافت نشد</h3>
                         <p className="text-gray-500 mb-4">با تغییر فیلترها دوباره امتحان کنید</p>
+                        <button
+                          onClick={() => setFilters({
+                            categories: [],
+                            priceRange: [0, 1000000],
+                            rating: 0,
+                            preparationTime: [0, 120],
+                            dietaryOptions: [],
+                            cuisineTypes: [],
+                            cookRating: 0,
+                            availableNow: false
+                          })}
+                          className="px-4 py-2 text-blue-900 border border-blue-900 rounded-lg hover:bg-blue-50 transition-colors"
+                        >
+                          حذف فیلترها
+                        </button>
                       </div>
                     )}
 
                     {/* Pagination */}
                     {filteredAndSortedFoods.length > itemsPerPage && (
-                      <div className="flex justify-center items-center space-x-2 p-8">
-                        {Array(Math.ceil(filteredAndSortedFoods.length / itemsPerPage)).fill().map((_, index) => (
-                          <button
-                            key={index + 1}
-                            onClick={() => handlePageChange(index + 1)}
-                            className={`px-4 py-3 mx-2 rounded-full text-sm font-medium transition-all duration-300 ${currentPage === index + 1
-                              ? 'bg-blue-900 text-white'
-                              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                              }`}
-                            aria-label={`صفحه ${index + 1}`}
-                          >
-                            {index + 1}
-                          </button>
-                        ))}
+                      <div className="flex justify-center items-center mt-8 p-4">
+                        <div className="flex flex-wrap justify-center gap-2">
+                          {Array(Math.ceil(filteredAndSortedFoods.length / itemsPerPage)).fill().map((_, index) => (
+                            <button
+                              key={index + 1}
+                              onClick={() => handlePageChange(index + 1)}
+                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${currentPage === index + 1
+                                ? 'bg-blue-900 text-white shadow-md'
+                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                                }`}
+                              aria-label={`صفحه ${index + 1}`}
+                            >
+                              {index + 1}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -765,15 +784,18 @@ const OrderFood = () => {
             )}
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-4 p-6 bg-white rounded-lg mb-12">
+          <div className="flex flex-col items-center justify-center gap-4 p-6 bg-white rounded-lg mb-12 mx-4">
             <img
               src="https://img.freepik.com/premium-vector/drawing-chef-cooking-with-spoon-sauce_1087929-12556.jpg?uid=R156737658&ga=GA1.1.1404144783.1745138448&semt=ais_items_boosted&w=740"
               alt="Search for food"
-              className="w-80 h-80 object-contain"
+              className="w-64 h-64 object-contain"
             />
             <h1 className="text-xl font-bold text-gray-800 text-center">
               همین الان غذای خود را سفارش دهید
             </h1>
+            <p className="text-gray-600 text-center max-w-md">
+              با جستجوی نام غذا در کادر بالا، از بین صدها غذای خوشمزه انتخاب کنید
+            </p>
           </div>
         )}
       </main>
@@ -788,6 +810,7 @@ const OrderFood = () => {
         pauseOnFocusLoss
         draggable
         pauseOnHover
+        theme="colored"
       />
     </div>
   );
