@@ -24,12 +24,16 @@ import { motion } from 'framer-motion';
 // React Icons from pi package for sidebar
 import { 
   PiUser,
-  PiHouse,
-  PiHeart,
-  PiCreditCard,
-  PiBell,
-  PiHeadset
 } from 'react-icons/pi';
+
+import { BsHouses } from "react-icons/bs";
+import { LiaBusSolid } from "react-icons/lia";
+import {
+  RiHeart2Line,
+  RiBankCard2Line,
+  RiNotificationLine,
+  RiCustomerService2Line,
+} from '@remixicon/react';
 
 import { useBusStore, useUserStore } from '../store/busStore';
 import useUserAuthStore from '../store/authStore';
@@ -104,17 +108,18 @@ const BusTicketsPage = () => {
     return true;
   });
 
-  // Navigation items with links - using same icons as previous components
+  // Navigation items
   const navItems = [
     { id: 'profile', icon: <PiUser className="ml-2 w-5 h-5" />, text: 'حساب کاربری', link: '/profile' },
-    { id: 'bookings', icon: <PiHouse className="ml-2 w-5 h-5" />, text: 'رزرو اقامتگاه', link: '/bookings' },
-    { id: 'order-foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارشات غذا', link: '/order-foods' },
-    { id: 'bus-tickets', icon: <RiBusLine className="ml-2 w-5 h-5" />, text: 'بلیط اتوبوس', link: '/bus-tickets' },
-    { id: 'favorites', icon: <PiHeart className="ml-2 w-5 h-5" />, text: 'علاقه‌مندی‌ها', link: '/favorites' },
-    { id: 'bank', icon: <PiCreditCard className="ml-2 w-5 h-5" />, text: 'حساب بانکی', link: '/bank' },
-    { id: 'notifications', icon: <PiBell className="ml-2 w-5 h-5" />, text: 'اعلان‌ها', link: '/notifications' },
-    { id: 'support', icon: <PiHeadset className="ml-2 w-5 h-5" />, text: 'پشتیبانی', link: '/support' },
+    { id: 'bookings', icon: <BsHouses className="ml-2 w-5 h-5" />, text: 'رزروهای اقامتگاه', link: '/bookings' },
+    { id: 'order-foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارش های غذا', link: '/order-foods' },
+    { id: 'bus-tickets', icon: <LiaBusSolid className="ml-2 w-5 h-5" />, text: 'بلیط های اتوبوس', link: '/bus-tickets' },
+    { id: 'favorites', icon: <RiHeart2Line className="ml-2 w-5 h-5" />, text: 'لیست علاقه مندی ها', link: '/favorites' },
+    { id: 'bank', icon: <RiBankCard2Line className="ml-2 w-5 h-5" />, text: 'اطلاعات حساب بانکی', link: '/bank' },
+    { id: 'notifications', icon: <RiNotificationLine className="ml-2 w-5 h-5" />, text: 'لیست اعلان ها', link: '/notifications' },
+    { id: 'support', icon: <RiCustomerService2Line className="ml-2 w-5 h-5" />, text: 'پشتیبانی', link: '/support' },
   ];
+
 
   const renderTicketCard = (ticket) => (
     <motion.div
@@ -282,7 +287,7 @@ const BusTicketsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-4 md:px-8">
+    <div className="min-h-screen bg-gray-50 py-4 px-4 md:px-8">
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-between mb-4 p-4 bg-white rounded-xl shadow-sm">
         <h1 className="text-xl font-bold text-gray-800">بلیط‌های اتوبус</h1>
@@ -325,11 +330,11 @@ const BusTicketsPage = () => {
             </div>
           )}
           
-          <div className="p-4 md:p-6 text-center">
+           <div className="p-4 md:p-6 text-center">
             <div className="relative mx-auto w-24 h-24 md:w-32 md:h-32 mb-4">
               <img
-                src={user.avatar || "https://cdn-icons-png.flaticon.com/128/3135/3135715.png"}
-                alt="پروفایل کاربر"
+                src="https://cdn-icons-png.flaticon.com/128/17384/17384295.png"
+                alt="User profile"
                 className="object-cover rounded-full w-full h-full border-4 border-white shadow-lg transition-all duration-300 hover:scale-105"
               />
               <button className="absolute bottom-0 right-0 p-1 md:p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-all duration-200 transform hover:scale-110">
@@ -339,7 +344,7 @@ const BusTicketsPage = () => {
             <h3 className="mt-2 text-lg md:text-xl font-semibold text-gray-800 truncate">
               {user.name || user.phone}
             </h3>
-            <p className="text-gray-500 mt-1 text-sm md:text-base truncate">کاربر عزیز، خوش آمدید</p>
+            <p className="text-gray-500 mt-1 text-sm md:text-base truncate">{user.email || 'ایمیل ثبت نشده'}</p>
           </div>
 
           <div className="border-t border-gray-100 mx-4"></div>

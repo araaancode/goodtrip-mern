@@ -2,15 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   RiTentLine,
-  RiUser3Fill,
   RiLogoutBoxRLine,
   RiHeart2Line,
   RiBankCard2Line,
   RiNotificationLine,
   RiCustomerService2Line,
-  RiSearchLine,
-  RiFilterLine,
-  RiArrowLeftSLine,
   RiCalendarEventLine,
   RiMoneyDollarCircleLine,
   RiCloseCircleLine,
@@ -24,6 +20,13 @@ import { BsHouses } from "react-icons/bs";
 import { IoFastFoodOutline } from "react-icons/io5";
 import { LiaBusSolid } from "react-icons/lia";
 import { IoIosCamera } from 'react-icons/io';
+
+// React Icons from pi package for form inputs
+import {
+  PiUser,
+  PiMagnifyingGlass,
+  PiCaretDown
+} from 'react-icons/pi';
 
 // hooks
 import houseStore from '../store/houseStore';
@@ -182,14 +185,14 @@ const BookingsPage = () => {
 
   // Navigation items
   const navItems = [
-    { id: 'profile', icon: <RiUser3Fill className="ml-2 w-5 h-5" />, text: 'حساب کاربری' },
-    { id: 'bookings', icon: <BsHouses className="ml-2 w-5 h-5" />, text: 'رزروهای اقامتگاه' },
-    { id: 'order-foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارش های غذا' },
-    { id: 'bus', icon: <LiaBusSolid className="ml-2 w-5 h-5" />, text: 'بلیط های اتوبوس' },
-    { id: 'favorites', icon: <RiHeart2Line className="ml-2 w-5 h-5" />, text: 'لیست علاقه مندی ها' },
-    { id: 'bank', icon: <RiBankCard2Line className="ml-2 w-5 h-5" />, text: 'اطلاعات حساب بانکی' },
-    { id: 'notifications', icon: <RiNotificationLine className="ml-2 w-5 h-5" />, text: 'لیست اعلان ها' },
-    { id: 'support', icon: <RiCustomerService2Line className="ml-2 w-5 h-5" />, text: 'پشتیبانی' },
+    { id: 'profile', icon: <PiUser className="ml-2 w-5 h-5" />, text: 'حساب کاربری', link: '/profile' },
+    { id: 'bookings', icon: <BsHouses className="ml-2 w-5 h-5" />, text: 'رزروهای اقامتگاه', link: '/bookings' },
+    { id: 'foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارش های غذا', link: '/order-foods' },
+    { id: 'bus', icon: <LiaBusSolid className="ml-2 w-5 h-5" />, text: 'بلیط های اتوبوس', link: '/bus-tickets' },
+    { id: 'favorites', icon: <RiHeart2Line className="ml-2 w-5 h-5" />, text: 'لیست علاقه مندی ها', link: '/favorites' },
+    { id: 'bank', icon: <RiBankCard2Line className="ml-2 w-5 h-5" />, text: 'اطلاعات حساب بانکی', link: '/bank' },
+    { id: 'notifications', icon: <RiNotificationLine className="ml-2 w-5 h-5" />, text: 'لیست اعلان ها', link: '/notifications' },
+    { id: 'support', icon: <RiCustomerService2Line className="ml-2 w-5 h-5" />, text: 'پشتیبانی', link: '/support' },
   ];
 
   // Error and loading states
@@ -303,21 +306,17 @@ const BookingsPage = () => {
             <ul className="space-y-1 md:space-y-2">
               {navItems.map((item) => (
                 <li key={item.id}>
-                  <button
-                    onClick={() => {
-                      if (item.id !== 'bookings') {
-                        navigate(`/${item.id}`);
-                      }
-                      setIsMobileMenuOpen(false);
-                    }}
+                  <Link
+                    to={item.link}
                     className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 ${item.id === 'bookings'
                       ? 'bg-blue-50 text-blue-600 shadow-inner'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-blue-500'
                       }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {item.icon}
                     <span className="text-right flex-1 text-sm md:text-base">{item.text}</span>
-                  </button>
+                  </Link>
                 </li>
               ))}
 
@@ -347,7 +346,7 @@ const BookingsPage = () => {
                   <div className='flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-6'>
                     <div className="relative flex-1">
                       {/* Search Icon */}
-                      <RiSearchLine className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                      <PiMagnifyingGlass className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
 
                       {/* Input */}
                       <input
@@ -359,11 +358,12 @@ const BookingsPage = () => {
                       />
                     </div>
 
-
-
-                    <div className="w-full md:w-56">
+                    <div className="relative w-full md:w-56">
+                      {/* Dropdown Icon */}
+                      <PiCaretDown className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                      
                       <select
-                        className="w-full p-3 border border-gray-300 bg-white focus:border-blue-500 focus:outline-none rounded-xl transition-colors duration-300"
+                        className="w-full p-3 border border-gray-300 bg-white focus:border-blue-500 focus:outline-none rounded-xl transition-colors duration-300 pl-10"
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
                       >

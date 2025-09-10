@@ -2,37 +2,30 @@
 import React, { useState, useEffect } from 'react';
 import {
   RiLogoutBoxRLine,
-  RiHeart2Fill,
-  RiNotification3Line,
   RiCustomerService2Line,
   RiSearchLine,
-  RiCalendarLine,
   RiMenuLine,
   RiCloseLine,
-  RiRestaurantLine,
-  RiShoppingCartLine,
-  RiStarFill,
-  RiStarHalfFill,
-  RiArrowRightLine
 } from "@remixicon/react";
 import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { IoFastFoodOutline } from "react-icons/io5";
 import { LiaBusSolid } from "react-icons/lia";
-import { IoIosCamera } from 'react-icons/io';
 
-// React Icons from pi package for input fields and sidebar
-import { 
-  PiMagnifyingGlass, 
+import {
+  PiMagnifyingGlass,
   PiCalendarBlank,
   PiUser,
-  PiHouse,
-  PiHeart,
-  PiCreditCard,
-  PiBell,
-  PiHeadset
 } from 'react-icons/pi';
+
+import { IoIosCamera } from 'react-icons/io';
+import { BsHouses } from "react-icons/bs";
+import {
+  RiHeart2Line,
+  RiBankCard2Line,
+  RiNotificationLine,
+} from '@remixicon/react';
 
 import useOrderFoodStore from '../store/orderFoodStore';
 import useUserAuthStore from '../store/authStore';
@@ -131,17 +124,18 @@ const OrderFoodsPage = () => {
     navigate('/');
   };
 
-  // Navigation items with links - using same icons as previous components
+  // Navigation items
   const navItems = [
     { id: 'profile', icon: <PiUser className="ml-2 w-5 h-5" />, text: 'حساب کاربری', link: '/profile' },
-    { id: 'bookings', icon: <PiHouse className="ml-2 w-5 h-5" />, text: 'رزرو اقامتگاه', link: '/bookings' },
-    { id: 'order-foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارشات غذا', link: '/order-foods' },
-    { id: 'bus-tickets', icon: <LiaBusSolid className="ml-2 w-5 h-5" />, text: 'بلیط اتوبوس', link: '/bus' },
-    { id: 'favorites', icon: <PiHeart className="ml-2 w-5 h-5" />, text: 'علاقه‌مندی‌ها', link: '/favorites' },
-    { id: 'bank', icon: <PiCreditCard className="ml-2 w-5 h-5" />, text: 'حساب بانکی', link: '/bank' },
-    { id: 'notifications', icon: <PiBell className="ml-2 w-5 h-5" />, text: 'اعلان‌ها', link: '/notifications' },
-    { id: 'support', icon: <PiHeadset className="ml-2 w-5 h-5" />, text: 'پشتیبانی', link: '/support' },
+    { id: 'bookings', icon: <BsHouses className="ml-2 w-5 h-5" />, text: 'رزروهای اقامتگاه', link: '/bookings' },
+    { id: 'order-foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارش های غذا', link: '/order-foods' },
+    { id: 'bus-tickets', icon: <LiaBusSolid className="ml-2 w-5 h-5" />, text: 'بلیط های اتوبوس', link: '/bus-tickets' },
+    { id: 'favorites', icon: <RiHeart2Line className="ml-2 w-5 h-5" />, text: 'لیست علاقه مندی ها', link: '/favorites' },
+    { id: 'bank', icon: <RiBankCard2Line className="ml-2 w-5 h-5" />, text: 'اطلاعات حساب بانکی', link: '/bank' },
+    { id: 'notifications', icon: <RiNotificationLine className="ml-2 w-5 h-5" />, text: 'لیست اعلان ها', link: '/notifications' },
+    { id: 'support', icon: <RiCustomerService2Line className="ml-2 w-5 h-5" />, text: 'پشتیبانی', link: '/support' },
   ];
+
 
   const renderOrderCard = (order) => (
     <div key={order._id} className="w-full rounded-2xl p-5 mb-4 bg-gradient-to-br from-white to-gray-50 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5">
@@ -151,22 +145,21 @@ const OrderFoodsPage = () => {
             <span className="bg-blue-100 text-blue-600 text-xs font-medium px-2.5 py-0.5 rounded-full">
               سفارش #{order._id.slice(-6).toUpperCase()}
             </span>
-            <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full mr-2 ${
-              order.orderStatus === 'Delivered' ? 'bg-green-100 text-green-800' :
-              order.orderStatus === 'Cancelled' ? 'bg-red-100 text-red-800' :
-              'bg-yellow-100 text-yellow-800'
-            }`}>
+            <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full mr-2 ${order.orderStatus === 'Delivered' ? 'bg-green-100 text-green-800' :
+                order.orderStatus === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                  'bg-yellow-100 text-yellow-800'
+              }`}>
               {order.orderStatus === 'Pending' ? 'در انتظار تایید' :
-               order.orderStatus === 'Processing' ? 'در حال آماده سازی' :
-               order.orderStatus === 'Shipped' ? 'ارسال شده' :
-               order.orderStatus === 'Delivered' ? 'تحویل داده شده' :
-               'لغو شده'}
+                order.orderStatus === 'Processing' ? 'در حال آماده سازی' :
+                  order.orderStatus === 'Shipped' ? 'ارسال شده' :
+                    order.orderStatus === 'Delivered' ? 'تحویل داده شده' :
+                      'لغو شده'}
             </span>
           </div>
           <p className="text-gray-500 text-sm mt-1">
-            {new Date(order.createdAt).toLocaleDateString('fa-IR', { 
-              year: 'numeric', 
-              month: 'long', 
+            {new Date(order.createdAt).toLocaleDateString('fa-IR', {
+              year: 'numeric',
+              month: 'long',
               day: 'numeric',
               hour: '2-digit',
               minute: '2-digit'
@@ -270,11 +263,11 @@ const OrderFoodsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-4 md:px-8">
+    <div className="min-h-screen bg-gray-50 py-4 px-4 md:px-8">
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-between mb-4 p-4 bg-white rounded-xl shadow-sm">
         <h1 className="text-xl font-bold text-gray-800">سفارشات غذایی</h1>
-        <button 
+        <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 rounded-lg bg-blue-50 text-blue-600 z-50 relative"
         >
@@ -285,18 +278,18 @@ const OrderFoodsPage = () => {
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-4 md:gap-6">
         {/* Mobile Sidebar Overlay */}
         {isMobileMenuOpen && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" 
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           ></div>
         )}
-        
+
         {/* User Sidebar */}
         <div className={`
           w-full lg:w-1/4 bg-white rounded-2xl shadow-lg border border-gray-100 
           transition-all duration-300 z-50 lg:z-auto
-          ${isMobileMenuOpen 
-            ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5/6 max-w-md max-h-[80vh] overflow-y-auto' 
+          ${isMobileMenuOpen
+            ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5/6 max-w-md max-h-[80vh] overflow-y-auto'
             : 'hidden lg:block'
           }
         `}>
@@ -304,7 +297,7 @@ const OrderFoodsPage = () => {
           {isMobileMenuOpen && (
             <div className="sticky top-0 bg-white p-4 border-b border-gray-200 flex justify-between items-center lg:hidden">
               <h2 className="text-lg font-semibold text-gray-800">منو</h2>
-              <button 
+              <button
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="p-1 rounded-full bg-gray-100 text-gray-600"
               >
@@ -312,12 +305,13 @@ const OrderFoodsPage = () => {
               </button>
             </div>
           )}
-          
+
+
           <div className="p-4 md:p-6 text-center">
             <div className="relative mx-auto w-24 h-24 md:w-32 md:h-32 mb-4">
               <img
-                src={user.avatar || "https://cdn-icons-png.flaticon.com/128/3135/3135715.png"}
-                alt="پروفایل کاربر"
+                src="https://cdn-icons-png.flaticon.com/128/17384/17384295.png"
+                alt="User profile"
                 className="object-cover rounded-full w-full h-full border-4 border-white shadow-lg transition-all duration-300 hover:scale-105"
               />
               <button className="absolute bottom-0 right-0 p-1 md:p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-all duration-200 transform hover:scale-110">
@@ -327,7 +321,7 @@ const OrderFoodsPage = () => {
             <h3 className="mt-2 text-lg md:text-xl font-semibold text-gray-800 truncate">
               {user.name || user.phone}
             </h3>
-            <p className="text-gray-500 mt-1 text-sm md:text-base truncate">کاربر عزیز، خوش آمدید</p>
+            <p className="text-gray-500 mt-1 text-sm md:text-base truncate">{user.email || 'ایمیل ثبت نشده'}</p>
           </div>
 
           <div className="border-t border-gray-100 mx-4"></div>
@@ -339,17 +333,17 @@ const OrderFoodsPage = () => {
                   <Link
                     to={item.link}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 ${item.id === 'order-foods' 
-                      ? 'bg-blue-50 text-blue-600 shadow-inner' 
+                    className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 ${item.id === 'order-foods'
+                      ? 'bg-blue-50 text-blue-600 shadow-inner'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-blue-500'
-                    }`}
+                      }`}
                   >
                     {item.icon}
                     <span className="text-right flex-1 text-sm md:text-base">{item.text}</span>
                   </Link>
                 </li>
               ))}
-              
+
               <li>
                 <button
                   onClick={logoutUser}
@@ -367,7 +361,7 @@ const OrderFoodsPage = () => {
         <div className="w-full lg:w-3/4">
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
             <div className="p-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
-            
+
             <div className="p-4 md:p-6 lg:p-8">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
                 <div className="mb-4 md:mb-0">
@@ -453,8 +447,8 @@ const OrderFoodsPage = () => {
               {orders.length > 0 ? (
                 <div className="space-y-4">
                   {orders
-                    .filter(order => 
-                      !deliveryDate || 
+                    .filter(order =>
+                      !deliveryDate ||
                       new Date(order.deliveryDate).toISOString().split('T')[0] === deliveryDate
                     )
                     .map(renderOrderCard)}

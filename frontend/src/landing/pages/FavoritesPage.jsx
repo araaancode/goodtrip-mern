@@ -1,4 +1,4 @@
-// src/pages/FavoritesPage.js
+// src/landing/pages/FavoritesPage.jsx
 import React, { useState, useEffect } from 'react';
 import {
   RiLogoutBoxRLine,
@@ -10,8 +10,7 @@ import {
   RiRestaurantLine,
   RiBusLine,
   RiMapPinLine,
-  RiStarFill,
-  RiDeleteBinLine
+  RiStarFill
 } from "@remixicon/react";
 import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from 'react-toastify';
@@ -21,123 +20,102 @@ import { IoIosCamera } from 'react-icons/io';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // React Icons from pi package for sidebar
-import { 
-  PiUser,
-  PiHouse,
-  PiHeart,
-  PiCreditCard,
-  PiBell,
-  PiHeadset
-} from 'react-icons/pi';
+import { PiUser } from 'react-icons/pi';
+import { BsHouses } from "react-icons/bs";
+import { LiaBusSolid } from "react-icons/lia";
+import {
+  RiHeart2Line,
+  RiBankCard2Line,
+  RiNotificationLine,
+  RiCustomerService2Line,
+} from '@remixicon/react';
 
-// Mock data since we don't have the actual store
-const mockFavorites = [
-  {
-    _id: '1',
-    type: 'house',
-    name: 'ویلای زیبا در شمال',
-    price: 450000,
-    location: 'نوشهر، مازندران',
-    rating: 4.5,
-    reviewCount: 24,
-    image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80'
-  },
-  {
-    _id: '2',
-    type: 'house',
-    name: 'آپارتمان مدرن در تهران',
-    price: 320000,
-    location: 'تهران، تجریش',
-    rating: 4.2,
-    reviewCount: 18,
-    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80'
-  },
-  {
-    _id: '3',
-    type: 'food',
-    name: 'پیتزا مخصوص',
-    price: 85000,
-    description: 'پیتزا با پنیر فراوان و قارچ تfresh',
-    rating: 4.7,
-    reviewCount: 32,
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?ixlib=rb-4.0.3&auto=format&fit=crop&w=481&q=80'
-  },
-  {
-    _id: '4',
-    type: 'bus',
-    name: 'اتوبوس VIP تهران-مشهد',
-    price: 250000,
-    origin: 'تهران',
-    destination: 'مشهد',
-    company: 'سیر و سفر',
-    rating: 4.3,
-    reviewCount: 12,
-    image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?ixlib=rb-4.0.3&auto=format&fit=crop&w=869&q=80'
-  }
-];
-
-// Mock user authentication
-const useMockAuth = () => {
-  return {
-    user: {
-      name: 'کاربر مهمان',
-      phone: '09123456789',
-      avatar: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png'
-    },
-    isAuthenticated: true,
-    logout: () => {
-      toast.info('عملیات خروج انجام شد');
-    }
-  };
-};
-
-// Mock favorites store
-const useMockFavoritesStore = () => {
-  const [favorites, setFavorites] = useState(mockFavorites);
-  const [loading, setLoading] = useState(false);
-  
-  const fetchFavorites = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-  };
-  
-  const removeFavorite = (itemId, type) => {
-    return new Promise((resolve) => {
-      setFavorites(favorites.filter(item => item._id !== itemId));
-      resolve();
-    });
-  };
-  
-  return {
-    favorites,
-    loading,
-    error: null,
-    fetchFavorites,
-    removeFavorite
-  };
-};
+// Import your actual auth store - adjust the path as needed
+import useUserAuthStore from '../store/authStore';
 
 const FavoritesPage = () => {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [favorites, setFavorites] = useState({
+    houses: [],
+    foods: [],
+    buses: []
+  });
 
-  // Use mock stores instead of the missing ones
-  const { favorites, loading, fetchFavorites, removeFavorite } = useMockFavoritesStore();
-  const { user, isAuthenticated, logout } = useMockAuth();
+  // Use your actual auth store
+  const { user, isAuthenticated, logout, checkAuth } = useUserAuthStore();
+
+  useEffect(() => {
+    // Check authentication status on component mount
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchFavorites();
+      loadFavorites();
+    } else {
+      setLoading(false);
     }
-  }, [isAuthenticated, fetchFavorites]);
+  }, [isAuthenticated]);
+
+  // Mock API functions since we don't have the actual services
+  const getFavorites = async () => {
+    // In a real app, this would be an API call
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          houses: user?.favoriteHouses || [],
+          foods: user?.favoriteFoods || [],
+          buses: user?.favoriteBuses || []
+        });
+      }, 1000);
+    });
+  };
+
+  const removeFavorite = async (itemId, type) => {
+    // In a real app, this would be an API call
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ success: true });
+      }, 500);
+    });
+  };
+
+  const loadFavorites = async () => {
+    try {
+      setLoading(true);
+      const favoritesData = await getFavorites();
+      setFavorites(favoritesData);
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+      toast.error('خطا در دریافت علاقه‌مندی‌ها', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        rtl: true
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleRemoveFavorite = async (itemId, type) => {
     try {
       await removeFavorite(itemId, type);
+
+      // Update local state
+      setFavorites(prev => ({
+        ...prev,
+        [type === 'house' ? 'houses' :
+          type === 'food' ? 'foods' : 'buses']:
+          prev[type === 'house' ? 'houses' :
+            type === 'food' ? 'foods' : 'buses'].filter(item => item._id !== itemId)
+      }));
+
       toast.success('از علاقه‌مندی‌ها حذف شد', {
         position: "top-right",
         autoClose: 3000,
@@ -146,6 +124,7 @@ const FavoritesPage = () => {
         rtl: true
       });
     } catch (error) {
+      console.error('Error removing favorite:', error);
       toast.error('خطا در حذف از علاقه‌مندی‌ها', {
         position: "top-right",
         autoClose: 3000,
@@ -157,15 +136,34 @@ const FavoritesPage = () => {
   };
 
   const logoutUser = async () => {
-    await logout();
-    navigate('/');
+    try {
+      await logout();
+      toast.info('عملیات خروج انجام شد');
+      navigate('/');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast.error('خطا در خروج از حساب', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        rtl: true
+      });
+    }
   };
 
+  // Combine all favorites for filtering
+  const allFavorites = [
+    ...favorites.houses.map(item => ({ ...item, type: 'house' })),
+    ...favorites.foods.map(item => ({ ...item, type: 'food' })),
+    ...favorites.buses.map(item => ({ ...item, type: 'bus' }))
+  ];
+
   // Filter favorites based on category and search term
-  const filteredFavorites = favorites.filter(item => {
+  const filteredFavorites = allFavorites.filter(item => {
     const matchesCategory = selectedCategory === 'all' || item.type === selectedCategory;
-    const matchesSearch = item.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         item.title?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.title?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
@@ -176,16 +174,16 @@ const FavoritesPage = () => {
     buses: filteredFavorites.filter(item => item.type === 'bus')
   };
 
-  // Navigation items with links - using same icons as previous components
+  // Navigation items
   const navItems = [
     { id: 'profile', icon: <PiUser className="ml-2 w-5 h-5" />, text: 'حساب کاربری', link: '/profile' },
-    { id: 'bookings', icon: <PiHouse className="ml-2 w-5 h-5" />, text: 'رزرو اقامتگاه', link: '/bookings' },
-    { id: 'order-foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارشات غذا', link: '/order-foods' },
-    { id: 'bus-tickets', icon: <RiBusLine className="ml-2 w-5 h-5" />, text: 'بلیط اتوبوس', link: '/bus-tickets' },
-    { id: 'favorites', icon: <PiHeart className="ml-2 w-5 h-5" />, text: 'علاقه‌مندی‌ها', link: '/favorites' },
-    { id: 'bank', icon: <PiCreditCard className="ml-2 w-5 h-5" />, text: 'حساب بانکی', link: '/bank' },
-    { id: 'notifications', icon: <PiBell className="ml-2 w-5 h-5" />, text: 'اعلان‌ها', link: '/notifications' },
-    { id: 'support', icon: <PiHeadset className="ml-2 w-5 h-5" />, text: 'پشتیبانی', link: '/support' },
+    { id: 'bookings', icon: <BsHouses className="ml-2 w-5 h-5" />, text: 'رزروهای اقامتگاه', link: '/bookings' },
+    { id: 'foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارش های غذا', link: '/order-foods' },
+    { id: 'bus', icon: <LiaBusSolid className="ml-2 w-5 h-5" />, text: 'بلیط های اتوبوس', link: '/bus-tickets' },
+    { id: 'favorites', icon: <RiHeart2Line className="ml-2 w-5 h-5" />, text: 'لیست علاقه مندی ها', link: '/favorites' },
+    { id: 'bank', icon: <RiBankCard2Line className="ml-2 w-5 h-5" />, text: 'اطلاعات حساب بانکی', link: '/bank' },
+    { id: 'notifications', icon: <RiNotificationLine className="ml-2 w-5 h-5" />, text: 'لیست اعلان ها', link: '/notifications' },
+    { id: 'support', icon: <RiCustomerService2Line className="ml-2 w-5 h-5" />, text: 'پشتیبانی', link: '/support' },
   ];
 
   const renderHouseCard = (house) => (
@@ -367,7 +365,7 @@ const FavoritesPage = () => {
     );
   }
 
-  if (loading && !favorites.length) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="flex flex-col items-center">
@@ -378,12 +376,14 @@ const FavoritesPage = () => {
     );
   }
 
+  const totalFavorites = favorites.houses.length + favorites.foods.length + favorites.buses.length;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-4 md:px-8">
+    <div className="min-h-screen bg-gray-50 py-4 px-4 md:px-8">
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-between mb-4 p-4 bg-white rounded-xl shadow-sm">
         <h1 className="text-xl font-bold text-gray-800">علاقه‌مندی‌ها</h1>
-        <button 
+        <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 rounded-lg bg-blue-50 text-blue-600 z-50 relative"
         >
@@ -394,18 +394,18 @@ const FavoritesPage = () => {
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-4 md:gap-6">
         {/* Mobile Sidebar Overlay */}
         {isMobileMenuOpen && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" 
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           ></div>
         )}
-        
+
         {/* User Sidebar */}
         <div className={`
           w-full lg:w-1/4 bg-white rounded-2xl shadow-lg border border-gray-100 
           transition-all duration-300 z-50 lg:z-auto
-          ${isMobileMenuOpen 
-            ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5/6 max-w-md max-h-[80vh] overflow-y-auto' 
+          ${isMobileMenuOpen
+            ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5/6 max-w-md max-h-[80vh] overflow-y-auto'
             : 'hidden lg:block'
           }
         `}>
@@ -413,7 +413,7 @@ const FavoritesPage = () => {
           {isMobileMenuOpen && (
             <div className="sticky top-0 bg-white p-4 border-b border-gray-200 flex justify-between items-center lg:hidden">
               <h2 className="text-lg font-semibold text-gray-800">منو</h2>
-              <button 
+              <button
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="p-1 rounded-full bg-gray-100 text-gray-600"
               >
@@ -421,12 +421,12 @@ const FavoritesPage = () => {
               </button>
             </div>
           )}
-          
+
           <div className="p-4 md:p-6 text-center">
             <div className="relative mx-auto w-24 h-24 md:w-32 md:h-32 mb-4">
               <img
-                src={user.avatar}
-                alt="پروفایل کاربر"
+                src={"https://cdn-icons-png.flaticon.com/128/17384/17384295.png" || user.avatar}
+                alt="User profile"
                 className="object-cover rounded-full w-full h-full border-4 border-white shadow-lg transition-all duration-300 hover:scale-105"
               />
               <button className="absolute bottom-0 right-0 p-1 md:p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-all duration-200 transform hover:scale-110">
@@ -434,9 +434,9 @@ const FavoritesPage = () => {
               </button>
             </div>
             <h3 className="mt-2 text-lg md:text-xl font-semibold text-gray-800 truncate">
-              {user.name}
+              {user.name || user.phone}
             </h3>
-            <p className="text-gray-500 mt-1 text-sm md:text-base truncate">کاربر عزیز، خوش آمدید</p>
+            <p className="text-gray-500 mt-1 text-sm md:text-base truncate">{user.email || 'ایمیل ثبت نشده'}</p>
           </div>
 
           <div className="border-t border-gray-100 mx-4"></div>
@@ -448,17 +448,17 @@ const FavoritesPage = () => {
                   <Link
                     to={item.link}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 ${item.id === 'favorites' 
-                      ? 'bg-blue-50 text-blue-600 shadow-inner' 
+                    className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 ${item.id === 'favorites'
+                      ? 'bg-blue-50 text-blue-600 shadow-inner'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-blue-500'
-                    }`}
+                      }`}
                   >
                     {item.icon}
                     <span className="text-right flex-1 text-sm md:text-base">{item.text}</span>
                   </Link>
                 </li>
               ))}
-              
+
               <li>
                 <button
                   onClick={logoutUser}
@@ -476,7 +476,7 @@ const FavoritesPage = () => {
         <div className="w-full lg:w-3/4">
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
             <div className="p-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
-            
+
             <div className="p-4 md:p-6 lg:p-8">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
                 <div className="mb-4 md:mb-0">
@@ -485,7 +485,7 @@ const FavoritesPage = () => {
                 </div>
                 <div className="flex items-center">
                   <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm">
-                    {favorites.length} مورد
+                    {totalFavorites} مورد
                   </span>
                 </div>
               </div>
@@ -506,41 +506,37 @@ const FavoritesPage = () => {
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setSelectedCategory('all')}
-                    className={`px-4 py-2 rounded-xl transition-colors duration-300 ${
-                      selectedCategory === 'all' 
-                        ? 'bg-blue-600 text-white' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+                    className={`px-4 py-2 rounded-xl transition-colors duration-300 ${selectedCategory === 'all'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
                   >
                     همه
                   </button>
                   <button
                     onClick={() => setSelectedCategory('house')}
-                    className={`px-4 py-2 rounded-xl transition-colors duration-300 ${
-                      selectedCategory === 'house' 
-                        ? 'bg-blue-600 text-white' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+                    className={`px-4 py-2 rounded-xl transition-colors duration-300 ${selectedCategory === 'house'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
                   >
                     اقامتگاه‌ها
                   </button>
                   <button
                     onClick={() => setSelectedCategory('food')}
-                    className={`px-4 py-2 rounded-xl transition-colors duration-300 ${
-                      selectedCategory === 'food' 
-                        ? 'bg-green-600 text-white' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+                    className={`px-4 py-2 rounded-xl transition-colors duration-300 ${selectedCategory === 'food'
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
                   >
                     غذاها
                   </button>
                   <button
                     onClick={() => setSelectedCategory('bus')}
-                    className={`px-4 py-2 rounded-xl transition-colors duration-300 ${
-                      selectedCategory === 'bus' 
-                        ? 'bg-purple-600 text-white' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+                    className={`px-4 py-2 rounded-xl transition-colors duration-300 ${selectedCategory === 'bus'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
                   >
                     اتوبوس‌ها
                   </button>
@@ -602,8 +598,8 @@ const FavoritesPage = () => {
                     </div>
                     <h3 className="text-xl font-bold text-gray-700 mt-4">موردی یافت نشد</h3>
                     <p className="text-gray-500 mt-2">
-                      {searchTerm || selectedCategory !== 'all' 
-                        ? 'هیچ موردی با فیلترهای انتخاب شده مطابقت ندارد' 
+                      {searchTerm || selectedCategory !== 'all'
+                        ? 'هیچ موردی با فیلترهای انتخاب شده مطابقت ندارد'
                         : 'شما هنوز هیچ موردی به علاقه‌مندی‌ها اضافه نکرده‌اید'}
                     </p>
                     {(searchTerm || selectedCategory !== 'all') ? (

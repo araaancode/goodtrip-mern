@@ -23,111 +23,18 @@ import { IoIosCamera } from 'react-icons/io';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // React Icons from pi package for sidebar
-import { 
-  PiUser,
-  PiHouse,
-  PiHeart,
-  PiCreditCard,
-  PiBell,
-  PiHeadset
-} from 'react-icons/pi';
+import { PiUser } from 'react-icons/pi';
+import { BsHouses } from "react-icons/bs";
+import { LiaBusSolid } from "react-icons/lia";
+import {
+  RiHeart2Line,
+  RiBankCard2Line,
+  RiNotificationLine,
+  RiCustomerService2Line,
+} from '@remixicon/react';
 
-// Mock data since we don't have the actual store
-const mockBankAccounts = [
-  {
-    _id: '1',
-    cardNumber: '6037-9912-3456-7890',
-    cardHolder: 'علی رضایی',
-    bankName: 'بانک ملی',
-    sheba: 'IR580120000000003144851234',
-    isDefault: true
-  },
-  {
-    _id: '2',
-    cardNumber: '5022-2910-3847-5621',
-    cardHolder: 'علی رضایی',
-    bankName: 'بانک پاسارگاد',
-    sheba: 'IR650570028380010736839112',
-    isDefault: false
-  }
-];
-
-// Mock user authentication
-const useMockAuth = () => {
-  return {
-    user: {
-      name: 'علی رضایی',
-      phone: '09123456789',
-      avatar: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png'
-    },
-    isAuthenticated: true,
-    logout: () => {
-      toast.info('عملیات خروج انجام شد');
-    }
-  };
-};
-
-// Mock bank store
-const useMockBankStore = () => {
-  const [accounts, setAccounts] = useState(mockBankAccounts);
-  const [loading, setLoading] = useState(false);
-  
-  const fetchAccounts = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-  };
-  
-  const addAccount = (accountData) => {
-    return new Promise((resolve) => {
-      const newAccount = {
-        _id: Date.now().toString(),
-        ...accountData,
-        isDefault: accounts.length === 0
-      };
-      setAccounts([...accounts, newAccount]);
-      resolve(newAccount);
-    });
-  };
-  
-  const updateAccount = (accountId, updates) => {
-    return new Promise((resolve) => {
-      setAccounts(accounts.map(account => 
-        account._id === accountId ? { ...account, ...updates } : account
-      ));
-      resolve();
-    });
-  };
-  
-  const deleteAccount = (accountId) => {
-    return new Promise((resolve) => {
-      setAccounts(accounts.filter(account => account._id !== accountId));
-      resolve();
-    });
-  };
-  
-  const setDefaultAccount = (accountId) => {
-    return new Promise((resolve) => {
-      setAccounts(accounts.map(account => ({
-        ...account,
-        isDefault: account._id === accountId
-      })));
-      resolve();
-    });
-  };
-  
-  return {
-    accounts,
-    loading,
-    error: null,
-    fetchAccounts,
-    addAccount,
-    updateAccount,
-    deleteAccount,
-    setDefaultAccount
-  };
-};
+// Import your actual auth store
+import useUserAuthStore from '../store/authStore';
 
 const BankPage = () => {
   const navigate = useNavigate();
@@ -142,15 +49,117 @@ const BankPage = () => {
     sheba: ''
   });
 
-  // Use mock stores instead of the missing ones
-  const { accounts, loading, fetchAccounts, addAccount, updateAccount, deleteAccount, setDefaultAccount } = useMockBankStore();
-  const { user, isAuthenticated, logout } = useMockAuth();
+  // Use your actual auth store
+  const { user, isAuthenticated, logout, checkAuth } = useUserAuthStore();
+
+  // Mock bank accounts data - replace with actual API calls
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Check authentication status on component mount
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchAccounts();
+      loadBankAccounts();
     }
-  }, [isAuthenticated, fetchAccounts]);
+  }, [isAuthenticated]);
+
+  const loadBankAccounts = async () => {
+    try {
+      setLoading(true);
+      // Replace with actual API call to get user's bank accounts
+      // const response = await axios.get('/api/users/bank-accounts');
+      // setAccounts(response.data);
+
+      // Mock data for demonstration
+      setTimeout(() => {
+        setAccounts([
+          {
+            _id: '1',
+            cardNumber: '6037-9912-3456-7890',
+            cardHolder: user?.name || 'کاربر',
+            bankName: 'بانک ملی',
+            sheba: 'IR580120000000003144851234',
+            isDefault: true
+          },
+          {
+            _id: '2',
+            cardNumber: '5022-2910-3847-5621',
+            cardHolder: user?.name || 'کاربر',
+            bankName: 'بانک پاسارگاد',
+            sheba: 'IR650570028380010736839112',
+            isDefault: false
+          }
+        ]);
+        setLoading(false);
+      }, 1000);
+    } catch (error) {
+      console.error('Error loading bank accounts:', error);
+      toast.error('خطا در دریافت اطلاعات حساب‌های بانکی', {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      setLoading(false);
+    }
+  };
+
+  const addAccount = async (accountData) => {
+    try {
+      // Replace with actual API call
+      // const response = await axios.post('/api/users/bank-accounts', accountData);
+      const newAccount = {
+        _id: Date.now().toString(),
+        ...accountData,
+        isDefault: accounts.length === 0
+      };
+      setAccounts([...accounts, newAccount]);
+      return newAccount;
+    } catch (error) {
+      console.error('Error adding bank account:', error);
+      throw error;
+    }
+  };
+
+  const updateAccount = async (accountId, updates) => {
+    try {
+      // Replace with actual API call
+      // const response = await axios.put(`/api/users/bank-accounts/${accountId}`, updates);
+      setAccounts(accounts.map(account =>
+        account._id === accountId ? { ...account, ...updates } : account
+      ));
+    } catch (error) {
+      console.error('Error updating bank account:', error);
+      throw error;
+    }
+  };
+
+  const deleteAccount = async (accountId) => {
+    try {
+      // Replace with actual API call
+      // await axios.delete(`/api/users/bank-accounts/${accountId}`);
+      setAccounts(accounts.filter(account => account._id !== accountId));
+    } catch (error) {
+      console.error('Error deleting bank account:', error);
+      throw error;
+    }
+  };
+
+  const setDefaultAccount = async (accountId) => {
+    try {
+      // Replace with actual API call
+      // await axios.patch(`/api/users/bank-accounts/${accountId}/set-default`);
+      setAccounts(accounts.map(account => ({
+        ...account,
+        isDefault: account._id === accountId
+      })));
+    } catch (error) {
+      console.error('Error setting default account:', error);
+      throw error;
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -163,12 +172,12 @@ const BankPage = () => {
   const handleCardNumberChange = (e) => {
     let value = e.target.value.replace(/\D/g, '');
     if (value.length > 16) value = value.slice(0, 16);
-    
+
     // Format as XXXX-XXXX-XXXX-XXXX
     if (value.length > 0) {
       value = value.match(new RegExp('.{1,4}', 'g')).join('-');
     }
-    
+
     setFormData(prev => ({
       ...prev,
       cardNumber: value
@@ -182,13 +191,13 @@ const BankPage = () => {
     } else {
       value = 'IR' + value.replace(/\D/g, '');
     }
-    
+
     if (value.length > 26) value = value.slice(0, 26);
-    
+
     if (value.length > 4) {
       value = value.replace(/(IR\d{2})(\d{4})(\d{4})(\d{4})(\d{4})(\d{4})(\d{2})/, '$1-$2-$3-$4-$5-$6-$7');
     }
-    
+
     setFormData(prev => ({
       ...prev,
       sheba: value
@@ -244,7 +253,7 @@ const BankPage = () => {
     if (window.confirm('آیا از حذف این حساب بانکی مطمئن هستید؟')) {
       try {
         await deleteAccount(accountId);
-        toast.success('حساب بانکی با موفقیت حذف شد', {
+        toast.success('حساب بانکی با успеیت حذف شد', {
           position: "top-right",
           autoClose: 3000,
         });
@@ -285,20 +294,29 @@ const BankPage = () => {
   };
 
   const logoutUser = async () => {
-    await logout();
-    navigate('/');
+    try {
+      await logout();
+      toast.info('عملیات خروج انجام شد');
+      navigate('/');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast.error('خطا در خروج از حساب', {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
   };
 
-  // Navigation items with links - using same icons as previous components
+  // Navigation items
   const navItems = [
     { id: 'profile', icon: <PiUser className="ml-2 w-5 h-5" />, text: 'حساب کاربری', link: '/profile' },
-    { id: 'bookings', icon: <PiHouse className="ml-2 w-5 h-5" />, text: 'رزرو اقامتگاه', link: '/bookings' },
-    { id: 'order-foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارشات غذا', link: '/order-foods' },
-    { id: 'bus-tickets', icon: <RiBankLine className="ml-2 w-5 h-5" />, text: 'بلیط اتوبوس', link: '/bus-tickets' },
-    { id: 'favorites', icon: <PiHeart className="ml-2 w-5 h-5" />, text: 'علاقه‌مندی‌ها', link: '/favorites' },
-    { id: 'bank', icon: <PiCreditCard className="ml-2 w-5 h-5" />, text: 'حساب بانکی', link: '/bank' },
-    { id: 'notifications', icon: <PiBell className="ml-2 w-5 h-5" />, text: 'اعلان‌ها', link: '/notifications' },
-    { id: 'support', icon: <PiHeadset className="ml-2 w-5 h-5" />, text: 'پشتیبانی', link: '/support' },
+    { id: 'bookings', icon: <BsHouses className="ml-2 w-5 h-5" />, text: 'رزروهای اقامتگاه', link: '/bookings' },
+    { id: 'foods', icon: <IoFastFoodOutline className="ml-2 w-5 h-5" />, text: 'سفارش های غذا', link: '/order-foods' },
+    { id: 'bus', icon: <LiaBusSolid className="ml-2 w-5 h-5" />, text: 'بلیط های اتوبوس', link: '/bus-tickets' },
+    { id: 'favorites', icon: <RiHeart2Line className="ml-2 w-5 h-5" />, text: 'لیست علاقه مندی ها', link: '/favorites' },
+    { id: 'bank', icon: <RiBankCard2Line className="ml-2 w-5 h-5" />, text: 'اطلاعات حساب بانکی', link: '/bank' },
+    { id: 'notifications', icon: <RiNotificationLine className="ml-2 w-5 h-5" />, text: 'لیست اعلان ها', link: '/notifications' },
+    { id: 'support', icon: <RiCustomerService2Line className="ml-2 w-5 h-5" />, text: 'پشتیبانی', link: '/support' },
   ];
 
   const renderBankCard = (account) => (
@@ -312,7 +330,7 @@ const BankPage = () => {
       <div className="absolute top-4 left-4 opacity-20">
         <RiBankLine size={40} />
       </div>
-      
+
       <div className="flex justify-between items-start mb-6">
         <div>
           <h3 className="font-bold text-lg mb-1">{account.bankName}</h3>
@@ -324,7 +342,7 @@ const BankPage = () => {
           </span>
         )}
       </div>
-      
+
       <div className="mb-6">
         <div className="flex items-center mb-2">
           <RiMoneyDollarCircleLine className="ml-2" />
@@ -332,7 +350,7 @@ const BankPage = () => {
         </div>
         <p className="font-mono text-xl tracking-wider">{account.cardNumber}</p>
       </div>
-      
+
       <div className="mb-6">
         <div className="flex items-center mb-2">
           <RiInformationLine className="ml-2" />
@@ -340,7 +358,7 @@ const BankPage = () => {
         </div>
         <p className="font-mono text-sm tracking-wide">{account.sheba}</p>
       </div>
-      
+
       <div className="flex justify-between items-center">
         <div className="flex items-center">
           {account.cardNumber.startsWith('6037') || account.cardNumber.startsWith('5892') ? (
@@ -351,7 +369,7 @@ const BankPage = () => {
             <RiBankLine size={24} />
           )}
         </div>
-        
+
         <div className="flex gap-2">
           {!account.isDefault && (
             <button
@@ -366,7 +384,7 @@ const BankPage = () => {
             className="bg-white text-blue-600 px-3 py-1 rounded-lg text-sm hover:bg-blue-50 transition-colors"
           >
             ویرایش
-            </button>
+          </button>
           <button
             onClick={() => handleDelete(account._id)}
             className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600 transition-colors"
@@ -407,11 +425,11 @@ const BankPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-4 md:px-8">
+    <div className="min-h-screen bg-gray-50 py-4 px-4 md:px-8">
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-between mb-4 p-4 bg-white rounded-xl shadow-sm">
         <h1 className="text-xl font-bold text-gray-800">حساب‌های بانکی</h1>
-        <button 
+        <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 rounded-lg bg-blue-50 text-blue-600 z-50 relative"
         >
@@ -422,18 +440,18 @@ const BankPage = () => {
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-4 md:gap-6">
         {/* Mobile Sidebar Overlay */}
         {isMobileMenuOpen && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" 
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           ></div>
         )}
-        
+
         {/* User Sidebar */}
         <div className={`
           w-full lg:w-1/4 bg-white rounded-2xl shadow-lg border border-gray-100 
           transition-all duration-300 z-50 lg:z-auto
-          ${isMobileMenuOpen 
-            ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5/6 max-w-md max-h-[80vh] overflow-y-auto' 
+          ${isMobileMenuOpen
+            ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5/6 max-w-md max-h-[80vh] overflow-y-auto'
             : 'hidden lg:block'
           }
         `}>
@@ -441,7 +459,7 @@ const BankPage = () => {
           {isMobileMenuOpen && (
             <div className="sticky top-0 bg-white p-4 border-b border-gray-200 flex justify-between items-center lg:hidden">
               <h2 className="text-lg font-semibold text-gray-800">منو</h2>
-              <button 
+              <button
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="p-1 rounded-full bg-gray-100 text-gray-600"
               >
@@ -449,11 +467,11 @@ const BankPage = () => {
               </button>
             </div>
           )}
-          
+
           <div className="p-4 md:p-6 text-center">
             <div className="relative mx-auto w-24 h-24 md:w-32 md:h-32 mb-4">
               <img
-                src={user.avatar}
+                src={"https://cdn-icons-png.flaticon.com/128/17384/17384295.png" || user?.avatar}
                 alt="پروفایل کاربر"
                 className="object-cover rounded-full w-full h-full border-4 border-white shadow-lg transition-all duration-300 hover:scale-105"
               />
@@ -462,7 +480,7 @@ const BankPage = () => {
               </button>
             </div>
             <h3 className="mt-2 text-lg md:text-xl font-semibold text-gray-800 truncate">
-              {user.name}
+              {user?.name || user?.phone || 'کاربر'}
             </h3>
             <p className="text-gray-500 mt-1 text-sm md:text-base truncate">کاربر عزیز، خوش آمدید</p>
           </div>
@@ -476,17 +494,17 @@ const BankPage = () => {
                   <Link
                     to={item.link}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 ${item.id === 'bank' 
-                      ? 'bg-blue-50 text-blue-600 shadow-inner' 
+                    className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 ${item.id === 'bank'
+                      ? 'bg-blue-50 text-blue-600 shadow-inner'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-blue-500'
-                    }`}
+                      }`}
                   >
                     {item.icon}
                     <span className="text-right flex-1 text-sm md:text-base">{item.text}</span>
                   </Link>
                 </li>
               ))}
-              
+
               <li>
                 <button
                   onClick={logoutUser}
@@ -504,14 +522,14 @@ const BankPage = () => {
         <div className="w-full lg:w-3/4">
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
             <div className="p-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
-            
+
             <div className="p-4 md:p-6 lg:p-8">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
                 <div className="mb-4 md:mb-0">
-                  <h2 className="text-xl md: text-2xl font-bold text-gray-800">حساب‌های بانکی</h2>
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-800">حساب‌های بانکی</h2>
                   <p className="text-gray-500 text-sm mt-1">مدیریت حساب‌های بانکی شما</p>
                 </div>
-                
+
                 {!isAddingAccount && (
                   <button
                     onClick={() => setIsAddingAccount(true)}
@@ -532,7 +550,7 @@ const BankPage = () => {
                   <h3 className="text-lg font-bold text-gray-800 mb-4">
                     {isEditing ? 'ویرایش حساب بانکی' : 'افزودن حساب بانکی جدید'}
                   </h3>
-                  
+
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -549,7 +567,7 @@ const BankPage = () => {
                           required
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-gray-700 text-sm font-medium mb-2">
                           نام دارنده کارت
@@ -565,7 +583,7 @@ const BankPage = () => {
                         />
                       </div>
                     </div>
-                    
+
                     <div>
                       <label className="block text-gray-700 text-sm font-medium mb-2">
                         شماره کارت
@@ -581,7 +599,7 @@ const BankPage = () => {
                         required
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-gray-700 text-sm font-medium mb-2">
                         شماره شبا
@@ -596,7 +614,7 @@ const BankPage = () => {
                         required
                       />
                     </div>
-                    
+
                     <div className="flex gap-3 pt-4">
                       <button
                         type="submit"
@@ -647,7 +665,7 @@ const BankPage = () => {
                     <div>
                       <h4 className="font-bold text-blue-800 mb-2">اطلاعات امنیتی</h4>
                       <p className="text-blue-600 text-sm">
-                        اطلاعات حساب بانکی شما با استانداردهای امنیتی بالا محافظت می‌شود. 
+                        اطلاعات حساب بانکی شما با استانداردهای امنیتی بالا محافظت می‌شود.
                         این اطلاعات فقط برای پرداخت‌های مربوط به رزرو اقامتگاه استفاده می‌شود.
                       </p>
                     </div>
