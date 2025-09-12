@@ -1292,82 +1292,80 @@ exports.searchOneSideBusTickes = async (req, res) => {
     let userCount = req.body.count;
     let userMovingDate = convertDate(req.body.movingDate);
 
+    console.log("userMovingDate: ",userMovingDate);
+    
+
     let results = [];
 
+    //  Validate required fields
     if (!userFirstCity || !userLastCity || !userCount || !userMovingDate) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         msg: "لطفاً تمام فیلدها را پر کنید (firstCity, lastCity, count, movingDate)",
       });
     }
 
+    //  Validate passenger count
     if (isNaN(userCount) || userCount < 1) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         msg: "تعداد مسافران باید عددی و بزرگتر از صفر باشد",
       });
     }
 
+    //  Validate date
     if (!isValidDate(userMovingDate)) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         msg: "تاریخ حرکت نامعتبر است (فرمت صحیح: YYYY/MM/DD)",
       });
     }
 
-    // test api
+    console.log("Found buses:", buses.length);
 
-    // const [month, day, year] = buses[0].driver.movingDate
-    //   .toLocaleDateString()
-    //   .split("/");
+    if (buses && buses.length > 0) {
+      buses.forEach((bus) => {
+        //  Skip if driver or movingDate is missing
+        if (!bus.driver || !bus.driver.movingDate) return;
 
-    // const attachedDateMovingDate = `${year}/${addZero(month)}/${addZero(day-1)}`;
+        //  Safely convert date
+        const dateString = new Date(bus.driver.movingDate).toLocaleDateString();
+        const [month, day, year] = dateString.split("/");
 
-    // console.log("userFirstCity: ", userFirstCity);
-    // console.log("userLastCity: ", userLastCity);
-    // console.log("userCount: ", userCount);
-    // console.log("userMovingDate: ", userMovingDate);
-    // console.log("=========================================");
-    // console.log("driverFirstCity: ", buses[0].driver.firstCity);
-    // console.log("driverLastCity: ", buses[0].driver.lastCity);
-    // console.log("driverCount: ", buses[0].seats);
-    // console.log("driverMovingDate: ", attachedDateMovingDate);
+        //  Create comparable date string (YYYY/MM/DD)
+        const attachedDate = `${year}/${addZero(month)}/${addZero(day - 1)}`;
 
-    // test api
-
-    buses.forEach((bus) => {
-      // change driver date in a new format
-      const [month, day, year] = bus.driver.movingDate
-        .toLocaleDateString()
-        .split("/");
-
-      const attachedDate = `${year}/${addZero(month)}/${addZero(day - 1)}`; // YYYY/MM/DD
-
-      if (
-        bus.driver.firstCity === userFirstCity &&
-        bus.driver.lastCity === userLastCity
-      ) {
-        if (bus.seats >= userCount) {
-          if (attachedDate == convertDate(userMovingDate)) {
-            results.push(bus);
+        //  Apply filters
+        if (
+          bus.driver.firstCity === userFirstCity &&
+          bus.driver.lastCity === userLastCity
+        ) {
+          if (bus.seats >= userCount) {
+            if (attachedDate === convertDate(userMovingDate)) {
+              results.push(bus);
+            }
           }
         }
-      }
-    });
-
-    if (results.length > 0) {
-      res.status(StatusCodes.OK).json({
-        msg: "بلیط های اتوبوس پیدا شدند",
-        count: results.length,
-        buses: results,
       });
+
+      if (results.length > 0) {
+        return res.status(StatusCodes.OK).json({
+          msg: "بلیط های اتوبوس پیدا شدند",
+          count: results.length,
+          buses: results,
+        });
+      } else {
+        return res.status(StatusCodes.NOT_FOUND).json({
+          msg: "بلیطی پیدا نشد",
+        });
+      }
     } else {
-      res.status(StatusCodes.NOT_FOUND).json({
-        msg: "بلیطی پیدا نشد",
+      return res.status(StatusCodes.NOT_FOUND).json({
+        msg: "اتوبوسی پیدا نشد",
       });
     }
   } catch (error) {
-    console.error(error);
+    console.error("Error in searchOneSideBusTickes:", error);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       msg: "خطای داخلی سرور",
-      error,
+      error: error.message,
     });
   }
 };

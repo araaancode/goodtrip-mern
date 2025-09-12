@@ -21,7 +21,7 @@ const HeaderPages = () => {
 
           {/* Desktop Navigation */}
           <nav className="desktop-nav">
-            <Link to="/booking-house" className="nav-link">
+            <Link to="/" className="nav-link">
               رزرو اقامتگاه
             </Link>
             <Link to="/booking-bus" className="nav-link">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useBusStore } from '../store/busStore';
 import { useNavigate } from 'react-router-dom';
 import { DateObject, Calendar } from 'react-multi-date-picker';
@@ -25,6 +25,20 @@ const BookingBus = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDates, setSelectedDates] = useState([]);
   const [dateError, setDateError] = useState('');
+
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    // Close date picker when clicking outside
+    const handleClickOutside = (e) => {
+      if (showDatePicker && !e.target.closest('.date-picker-container')) {
+        setShowDatePicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDatePicker]);
 
   // Format price to Persian style
   const formatPrice = (price) => {
@@ -133,19 +147,24 @@ const BookingBus = () => {
   // Handle search submission with validation
   const handleSearch = async (e) => {
     e.preventDefault();
+    setIsSearching(true);
+    setDateError('');
 
     if (!filters.firstCity || !filters.lastCity) {
       setDateError('لطفاً مبدا و مقصد را انتخاب کنید');
+      setIsSearching(false);
       return;
     }
 
     if (!isValidDate(filters.movingDate)) {
       setDateError('لطفاً تاریخ رفت معتبر انتخاب کنید');
+      setIsSearching(false);
       return;
     }
 
     if (filters.ticketType === 'twoSide' && !isValidDate(filters.returningDate)) {
       setDateError('لطفاً تاریخ برگشت معتبر انتخاب کنید');
+      setIsSearching(false);
       return;
     }
 
@@ -160,7 +179,6 @@ const BookingBus = () => {
       return;
     }
 
-
     let newTicket = await bookTicket({
       firstCity: filters.firstCity,
       lastCity: filters.lastCity,
@@ -169,20 +187,22 @@ const BookingBus = () => {
       returningDate: filters.returningDate,
       bus: busId,
       count: filters.count
-    })
-
-    navigate(`/confirm-bus-ticket/${newTicket._id}`, {
-      state: {
-        ...filters,
-        firstCityName: provincesCities.find(p => p.id === filters.firstCity)?.name,
-        lastCityName: provincesCities.find(p => p.id === filters.lastCity)?.name
-      }
     });
+
+    if (newTicket && newTicket._id) {
+      navigate(`/confirm-bus-ticket/${newTicket._id}`, {
+        state: {
+          ...filters,
+          firstCityName: provincesCities.find(p => p.id === filters.firstCity)?.name,
+          lastCityName: provincesCities.find(p => p.id === filters.lastCity)?.name
+        }
+      });
+    }
   };
 
   // Custom Range Date Picker component
   const RangeDatePicker = () => (
-    <div className="absolute z-20 bg-white shadow-lg rounded-xl p-5 border border-gray-200 mt-2 w-full min-w-[580px]">
+    <div className="date-picker-container absolute z-20 bg-white shadow-lg rounded-xl p-5 border border-gray-200 mt-2 w-full min-w-[580px]">
       {dateError && (
         <div className="text-red-500 mb-3 text-center text-sm">
           {dateError}
@@ -225,6 +245,7 @@ const BookingBus = () => {
         </div>
         <div className="flex gap-3">
           <button
+            type="button"
             onClick={() => {
               setSelectedDates([]);
               setFilters(prev => ({
@@ -239,6 +260,7 @@ const BookingBus = () => {
             پاک کردن
           </button>
           <button
+            type="button"
             onClick={() => {
               if (selectedDates.length === 0) {
                 setDateError('لطفاً تاریخ رفت را انتخاب کنید');
@@ -484,7 +506,7 @@ const BookingBus = () => {
                   </div>
                   <button
                     onClick={() => handleBookNow(bus._id)}
-                    className="w-full px-3 py-3 bg-white text-green-600 border border-green-600 border-dashed rounded-md cursor-pointer font-bold transition-colors"
+                    className="w-full px-3 py-3 bg-white text-green-600 border border-green-600 border-dashed rounded-md cursor-pointer font-bold transition-colors hover:bg-green-50"
                   >
                     رزرو بلیط
                   </button>
@@ -492,7 +514,7 @@ const BookingBus = () => {
               </div>
             </div>
           ))
-        ) : (
+        ) : isSearching ? (
           <div className="bg-white rounded-xl shadow-sm p-8 text-center">
             {loading ? (
               <div className="flex items-center justify-center">
@@ -510,6 +532,15 @@ const BookingBus = () => {
                 <p className="text-gray-500 text-lg">نتیجه‌ای یافت نشد. لطفاً فیلترهای جستجو را تغییر دهید.</p>
               </div>
             )}
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-gray-500 text-lg">برای مشاهده نتایج، جستجو کنید.</p>
+            </div>
           </div>
         )}
       </div>

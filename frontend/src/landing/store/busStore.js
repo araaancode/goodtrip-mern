@@ -61,13 +61,14 @@ export const useBusStore = create(
 
       searchTickets: async (params) => {
         set({ loading: true, error: null });
+
         try {
           const endpoint =
             params.ticketType === "twoSide"
               ? "/api/users/buses/search-two-side-bus-tickets"
               : "/api/users/buses/search-one-side-bus-tickets";
 
-          const { data } = await axios.post(endpoint, params);
+          const { data } = await axios.post(endpoint,params);
           set({ searchResults: data.buses, loading: false });
         } catch (err) {
           set({

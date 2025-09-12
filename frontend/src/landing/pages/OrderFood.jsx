@@ -273,7 +273,7 @@ const OrderFood = () => {
               loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-           
+
           </div>
 
           {/* Search box */}
@@ -367,9 +367,7 @@ const OrderFood = () => {
             <div className="popular-foods-section mt-6 px-4 py-5 bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-sm">
               <h3 className="section-title text-lg font-bold text-gray-800 mb-3 flex items-center">
                 <span className="ml-2">غذاهای پرطرفدار</span>
-                <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
+
               </h3>
 
               <div className="food-tags-container flex flex-wrap gap-2 md:gap-3">
@@ -424,26 +422,26 @@ const OrderFood = () => {
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 {/* Mobile filter button */}
                 <div className="md:hidden mb-4">
-                  <button 
+                  <button
                     onClick={() => setShowFilters(!showFilters)}
                     className="filter-button flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-gray-700 hover:bg-gray-50"
                   >
                     <FaFilter className="w-4 h-4" />
                     <span>فیلترها</span>
-                    {Object.values(filters).some(filter => 
+                    {Object.values(filters).some(filter =>
                       Array.isArray(filter) ? filter.length > 0 : filter !== 0 && filter !== false
                     ) && (
-                      <span className="bg-blue-900 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        !
-                      </span>
-                    )}
+                        <span className="bg-blue-900 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          !
+                        </span>
+                      )}
                   </button>
                 </div>
 
                 {/* Filters and Results */}
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* Filters Sidebar */}
-                  <div 
+                  <div
                     ref={filtersRef}
                     className={`w-full md:w-1/4 bg-white rounded-lg shadow p-4 h-fit transition-all duration-300 ${showFilters ? 'block' : 'hidden'} md:block md:sticky top-4`}
                   >
@@ -478,21 +476,45 @@ const OrderFood = () => {
 
                       {/* Price Range Filter */}
                       <div className="mb-6">
-                        <h4 className="font-bold mb-2 text-gray-700">محدوده قیمت</h4>
+                        <h4 className="mb-2 font-bold text-gray-700">
+                          محدوده قیمت
+                        </h4>
+
+                        {/* Custom Styled Range Slider */}
                         <input
                           type="range"
-                          min="0"
-                          max="1000000"
-                          step="10000"
+                          min={0}
+                          max={1_000_000}
+                          step={10_000}
                           value={filters.priceRange[1]}
-                          onChange={(e) => handleFilterChange('priceRange', [filters.priceRange[0], parseInt(e.target.value)])}
-                          className="w-full range-blue-900"
+                          onChange={(e) =>
+                            handleFilterChange("priceRange", [
+                              filters.priceRange[0],
+                              parseInt(e.target.value, 10),
+                            ])
+                          }
+                          className="w-full appearance-none bg-gray-200 h-2 rounded-lg outline-none accent-blue-600 
+               [&::-webkit-slider-thumb]:appearance-none
+               [&::-webkit-slider-thumb]:h-5
+               [&::-webkit-slider-thumb]:w-5
+               [&::-webkit-slider-thumb]:rounded-full
+               [&::-webkit-slider-thumb]:bg-blue-600
+               [&::-webkit-slider-thumb]:cursor-pointer
+               [&::-moz-range-thumb]:appearance-none
+               [&::-moz-range-thumb]:h-5
+               [&::-moz-range-thumb]:w-5
+               [&::-moz-range-thumb]:rounded-full
+               [&::-moz-range-thumb]:bg-blue-600
+               [&::-moz-range-thumb]:cursor-pointer"
                         />
-                        <div className="flex justify-between text-xs mt-1 text-gray-600">
-                          <span>0 تومان</span>
+
+                        <div className="mt-2 flex justify-between text-xs text-gray-600">
+                          <span>۰ تومان</span>
                           <span>{filters.priceRange[1].toLocaleString()} تومان</span>
                         </div>
                       </div>
+
+
 
                       {/* Rating Filter */}
                       <div className="mb-6">
@@ -720,7 +742,7 @@ const OrderFood = () => {
                               >
                                 {food.isAvailable ? (
                                   <>
-                                  
+
                                     <span>سفارش غذا</span>
                                   </>
                                 ) : (
