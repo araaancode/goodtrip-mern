@@ -219,7 +219,7 @@ const MyHouses = () => {
         {!isOwnerAuthenticated ? (
           <div className="text-center py-10">
             <p className="text-red-500">
-              لطفاً برای مشاهده ملک‌های خود وارد شوید
+              لطفا برای مشاهده ملک‌های خود وارد شوید
             </p>
           </div>
         ) : (

@@ -86,7 +86,7 @@ const ProfilePage = () => {
         progress: undefined,
       });
     } catch (error) {
-      toast.error('خطایی رخ داده است. لطفاً دوباره تلاش کنید.', {
+      toast.error('خطایی رخ داده است. لطفا دوباره تلاش کنید.', {
         position: 'top-right',
         autoClose: 5000,
         hideProgressBar: false,

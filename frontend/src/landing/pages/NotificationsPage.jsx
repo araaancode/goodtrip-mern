@@ -86,7 +86,7 @@ const NotificationsPage = () => {
             _id: '2',
             type: 'warning',
             title: 'یادآوری پرداخت',
-            message: 'لطفاً برای تکمیل رزرو خود، مبلغ 250,000 تومان را پرداخت کنید.',
+            message: 'لطفا برای تکمیل رزرو خود، مبلغ 250,000 تومان را پرداخت کنید.',
             time: '5 ساعت پیش',
             read: false,
             link: '/bookings/2',
@@ -406,7 +406,7 @@ const NotificationsPage = () => {
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
         <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full text-center">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">دسترسی محدود</h2>
-          <p className="text-gray-600 mb-6">برای مشاهده اعلان‌ها لطفاً وارد حساب کاربری شوید</p>
+          <p className="text-gray-600 mb-6">برای مشاهده اعلان‌ها لطفا وارد حساب کاربری شوید</p>
           <Link
             to="/login"
             className="inline-block bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg"

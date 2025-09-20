@@ -9,7 +9,8 @@ import {
   PiHouseLine,
   PiInfo,
   PiListChecks,
-  PiMapPinLine
+  PiMapPinLine,
+  PiX
 } from "react-icons/pi";
 
 // Components
@@ -24,6 +25,8 @@ import houseStore from "../store/houseStore";
 export default function HousePage() {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState('description');
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [showMap, setShowMap] = useState(true);
 
   // Get state and actions from the store
   const {
@@ -38,6 +41,15 @@ export default function HousePage() {
       fetchHouse(id);
     }
   }, [id, fetchHouse]);
+
+  // Hide map when gallery opens, show when gallery closes
+  useEffect(() => {
+    if (isGalleryOpen) {
+      setShowMap(false);
+    } else {
+      setShowMap(true);
+    }
+  }, [isGalleryOpen]);
 
   if (loading) return (
     <div className="flex justify-center items-center min-h-screen bg-gray-50">
@@ -67,10 +79,14 @@ export default function HousePage() {
   if (!currentHouse) return null;
 
   return (
-    <div className="bg-gray-50 min-h-screen ">
+    <div className="min-h-screen mt-10">
       {/* Gallery Section */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
-        <HouseGallery house={currentHouse} />
+        <HouseGallery 
+          house={currentHouse} 
+          onGalleryOpen={() => setIsGalleryOpen(true)}
+          onGalleryClose={() => setIsGalleryOpen(false)}
+        />
       </div>
 
       {/* Main Content */}
@@ -156,7 +172,7 @@ export default function HousePage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       {currentHouse.houseRoles?.map((rule, index) => (
                         <div key={index} className="flex items-start p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors">
-                          <span className="bg-blue-100 text-blue-600 rounded-full p-1 flex items-center justify-center mr-2 flex-shrink-0">
+                          <span className="bg-blue-100 text-blue-600 rounded-full ml-2 p-1 flex items-center justify-center mr-2 flex-shrink-0">
                             <PiInfo className="text-xs" />
                           </span>
                           <span className="text-gray-700 text-sm font-medium">{rule}</span>
@@ -180,18 +196,42 @@ export default function HousePage() {
         </div>
       </div>
 
-      {/* Map Section */}
-      <div className="bg-white border-t border-gray-200 py-6 sm:py-8 mt-6 sm:mt-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-center flex items-center justify-center">
-            <PiMapPinLine className="ml-2 text-blue-500" />
-            موقعیت مکانی
-          </h2>
-          <div className="h-64 sm:h-80 md:h-96 rounded-xl overflow-hidden border border-gray-200">
-            <MapPage currentHouse={currentHouse} />
+      {/* Map Section - Conditionally Rendered */}
+      {showMap && (
+        <div className="bg-white border-t border-gray-200 py-6 sm:py-8 mt-6 sm:mt-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg sm:text-xl font-semibold flex items-center">
+                <PiMapPinLine className="ml-2 text-blue-500" />
+                موقعیت مکانی
+              </h2>
+              <button 
+                onClick={() => setShowMap(false)}
+                className="text-gray-500 hover:text-gray-700 flex items-center text-sm"
+              >
+                <PiX className="ml-1" />
+                بستن نقشه
+              </button>
+            </div>
+            <div className="h-64 sm:h-80 md:h-96 rounded-xl overflow-hidden border border-gray-200">
+              <MapPage currentHouse={currentHouse} />
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Show Map Button - Appears when map is hidden */}
+      {!showMap && (
+        <div className="fixed bottom-6 left-6 z-10">
+          <button
+            onClick={() => setShowMap(true)}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center transition-colors"
+          >
+            <PiMapPinLine className="ml-2" />
+            نمایش نقشه
+          </button>
+        </div>
+      )}
     </div>
   );
 }

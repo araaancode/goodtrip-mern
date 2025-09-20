@@ -98,7 +98,7 @@ const Rooms = () => {
       } else if (err.response) {
         // Server responded with error status
         if (err.response.status === 401) {
-          errorMessage = 'لطفاً مجدداً وارد شوید';
+          errorMessage = 'لطفا مجدداً وارد شوید';
           logout();
         } else if (err.response.status === 403) {
           errorMessage = 'شما دسترسی لازم را ندارید';
@@ -111,7 +111,7 @@ const Rooms = () => {
         }
       } else if (err.request) {
         // Request was made but no response received
-        errorMessage = 'پاسخی از سرور دریافت نشد. لطفاً اتصال اینترنت را بررسی کنید';
+        errorMessage = 'پاسخی از سرور دریافت نشد. لطفا اتصال اینترنت را بررسی کنید';
       }
       
       setError(errorMessage);
@@ -167,7 +167,7 @@ const Rooms = () => {
       
       if (err.response) {
         if (err.response.status === 401) {
-          errorMessage = 'لطفاً مجدداً وارد شوید';
+          errorMessage = 'لطفا مجدداً وارد شوید';
           logout();
         } else if (err.response.data && err.response.data.message) {
           errorMessage = err.response.data.message;

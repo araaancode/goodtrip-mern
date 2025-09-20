@@ -35,7 +35,7 @@ const BusTicketDatePicker = () => {
         // این قسمت را می‌توانید بر اساس نیاز تغییر دهید
         renderFooter={() => (
           <div style={{ textAlign: "center", marginTop: "1rem", fontSize: "0.9rem" }}>
-            لطفاً تاریخ رفت و برگشت را انتخاب کنید.
+            لطفا تاریخ رفت و برگشت را انتخاب کنید.
           </div>
         )}
       />

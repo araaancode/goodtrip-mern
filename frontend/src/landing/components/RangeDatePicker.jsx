@@ -61,7 +61,7 @@ const RangeDatePicker = ({
         let returningDate = '';
         if (ticketType === 'twoSide') {
           if (dates.length < 2) {
-            setDateError('لطفاً تاریخ برگشت را انتخاب کنید');
+            setDateError('لطفا تاریخ برگشت را انتخاب کنید');
             return;
           }
 
@@ -151,9 +151,9 @@ const RangeDatePicker = ({
           <button
             onClick={() => {
               if (selectedDates.length === 0) {
-                setDateError('لطفاً تاریخ رفت را انتخاب کنید');
+                setDateError('لطفا تاریخ رفت را انتخاب کنید');
               } else if (ticketType === 'twoSide' && selectedDates.length < 2) {
-                setDateError('لطفاً تاریخ برگشت را انتخاب کنید');
+                setDateError('لطفا تاریخ برگشت را انتخاب کنید');
               } else {
                 setShowDatePicker(false);
               }

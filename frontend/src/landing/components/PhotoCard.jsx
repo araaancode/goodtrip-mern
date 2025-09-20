@@ -222,7 +222,7 @@ const PhotoCard = ({ images, house }) => {
     e.stopPropagation();
 
     if (!user) {
-      toast.info('لطفاً برای افزودن به علاقه‌مندی‌ها وارد شوید');
+      toast.info('لطفا برای افزودن به علاقه‌مندی‌ها وارد شوید');
       return;
     }
 

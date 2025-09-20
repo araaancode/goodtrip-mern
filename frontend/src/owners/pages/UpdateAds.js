@@ -94,7 +94,7 @@ function UpdateAds() {
 
   useEffect(() => {
     if (!isOwnerAuthenticated) {
-      toast.error("لطفاً ابتدا وارد شوید");
+      toast.error("لطفا ابتدا وارد شوید");
       return;
     }
 

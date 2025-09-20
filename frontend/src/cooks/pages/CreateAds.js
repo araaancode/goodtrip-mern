@@ -176,7 +176,7 @@ function CreateAds() {
     e.preventDefault();
 
     if (!isCookAuthenticated) {
-      toast.error("لطفاً ابتدا وارد حساب کاربری خود شوید");
+      toast.error("لطفا ابتدا وارد حساب کاربری خود شوید");
       navigate("/login");
       return;
     }

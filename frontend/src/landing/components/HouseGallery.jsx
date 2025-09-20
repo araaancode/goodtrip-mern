@@ -24,7 +24,7 @@ export default function HouseGallery() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black bg-opacity-95 overflow-y-auto"
+        className="fixed inset-0 z-50 bg-black bg-opacity-95 overflow-y-auto "
       >
         <div className="container mx-auto px-4 py-8">
           {/* Header with close button */}

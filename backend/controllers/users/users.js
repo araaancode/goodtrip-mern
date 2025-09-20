@@ -1300,7 +1300,7 @@ exports.searchOneSideBusTickes = async (req, res) => {
     //  Validate required fields
     if (!userFirstCity || !userLastCity || !userCount || !userMovingDate) {
       return res.status(StatusCodes.BAD_REQUEST).json({
-        msg: "لطفاً تمام فیلدها را پر کنید (firstCity, lastCity, count, movingDate)",
+        msg: "لطفا تمام فیلدها را پر کنید (firstCity, lastCity, count, movingDate)",
       });
     }
 
@@ -1393,7 +1393,7 @@ exports.searchTwoSideBusTickes = async (req, res) => {
       !userReturningDate
     ) {
       return res.status(StatusCodes.BAD_REQUEST).json({
-        msg: "لطفاً تمام فیلدها را پر کنید (firstCity, lastCity, count, movingDate)",
+        msg: "لطفا تمام فیلدها را پر کنید (firstCity, lastCity, count, movingDate)",
       });
     }
 

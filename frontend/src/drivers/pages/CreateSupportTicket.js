@@ -131,7 +131,7 @@ function CreateSupportTicket() {
                 let errorMessage = 'خطایی وجود دارد. دوباره امتحان کنید !';
                 
                 if (error.response?.status === 401) {
-                    errorMessage = 'لطفاً ابتدا وارد حساب کاربری خود شوید';
+                    errorMessage = 'لطفا ابتدا وارد حساب کاربری خود شوید';
                 } else if (error.response?.status === 403) {
                     errorMessage = 'شما مجوز ایجاد تیکت پشتیبانی را ندارید';
                 }

@@ -203,14 +203,14 @@ function MyBus() {
     (response) => response,
     (error) => {
       if (error.code === 'ECONNABORTED') {
-        toast.error("اتصال به سرور زمان‌بر شد. لطفاً دوباره تلاش کنید");
+        toast.error("اتصال به سرور زمان‌بر شد. لطفا دوباره تلاش کنید");
       } else if (error.response) {
         const status = error.response.status;
         const message = error.response.data?.msg || error.response.data?.message || "خطای سرور";
         
         switch (status) {
           case 401:
-            toast.error("احراز هویت ناموفق. لطفاً دوباره وارد شوید");
+            toast.error("احراز هویت ناموفق. لطفا دوباره وارد شوید");
             break;
           case 403:
             toast.error("دسترسی غیرمجاز");
@@ -222,13 +222,13 @@ function MyBus() {
             toast.error("داده‌های ارسالی نامعتبر هستند");
             break;
           case 500:
-            toast.error("خطای سرور داخلی. لطفاً بعداً تلاش کنید");
+            toast.error("خطای سرور داخلی. لطفا بعداً تلاش کنید");
             break;
           default:
             toast.error(message);
         }
       } else if (error.request) {
-        toast.error("اتصال به سرور برقرار نشد. لطفاً اتصال اینترنت خود را بررسی کنید");
+        toast.error("اتصال به سرور برقرار نشد. لطفا اتصال اینترنت خود را بررسی کنید");
       } else {
         toast.error("خطای غیرمنتظره رخ داد");
       }
@@ -553,7 +553,7 @@ function MyBus() {
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error("لطفاً تمام فیلدهای ضروری را به درستی پر کنید");
+      toast.error("لطفا تمام فیلدهای ضروری را به درستی پر کنید");
       return;
     }
 

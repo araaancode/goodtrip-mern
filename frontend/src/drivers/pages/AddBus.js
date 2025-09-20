@@ -102,7 +102,7 @@ function AddBus() {
   // // Check authentication status
   // useEffect(() => {
   //   if (!isDriverAuthenticated) {
-  //     toast.error("لطفاً ابتدا وارد حساب کاربری خود شوید");
+  //     toast.error("لطفا ابتدا وارد حساب کاربری خود شوید");
   //   }
   // }, [isDriverAuthenticated]);
 
@@ -288,7 +288,7 @@ function AddBus() {
     e.preventDefault();
     
     // if (!isDriverAuthenticated) {
-    //   toast.error("لطفاً ابتدا وارد حساب کاربری خود شوید");
+    //   toast.error("لطفا ابتدا وارد حساب کاربری خود شوید");
     //   return;
     // }
 
@@ -373,7 +373,7 @@ function AddBus() {
   //   return (
   //     <TitleCard title="ثبت اطلاعات اتوبوس" topMargin="mt-2">
   //       <div className="text-center py-10">
-  //         <p className="text-red-500 text-lg">لطفاً ابتدا وارد حساب کاربری خود شوید</p>
+  //         <p className="text-red-500 text-lg">لطفا ابتدا وارد حساب کاربری خود شوید</p>
   //       </div>
   //     </TitleCard>
   //   );

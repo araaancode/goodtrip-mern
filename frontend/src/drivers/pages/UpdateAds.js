@@ -96,7 +96,7 @@ function UpdateAds() {
 
   useEffect(() => {
     // if (!isDriverAuthenticated) {
-    //   toast.error("لطفاً ابتدا وارد شوید");
+    //   toast.error("لطفا ابتدا وارد شوید");
     //   return;
     // }
 

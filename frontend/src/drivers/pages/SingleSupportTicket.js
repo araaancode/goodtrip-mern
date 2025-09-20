@@ -77,7 +77,7 @@ function SingleSupportTicket() {
                 setLoading(false);
                 
                 if (error.response?.status === 401) {
-                    toast.error('لطفاً ابتدا وارد حساب کاربری خود شوید', {
+                    toast.error('لطفا ابتدا وارد حساب کاربری خود شوید', {
                         position: "top-left",
                         autoClose: 5000,
                         hideProgressBar: false,
@@ -148,7 +148,7 @@ function SingleSupportTicket() {
             console.log('error', error);
             
             if (error.response?.status === 401) {
-                toast.error('لطفاً ابتدا وارد حساب کاربری خود شوید', {
+                toast.error('لطفا ابتدا وارد حساب کاربری خود شوید', {
                     position: "top-left",
                     autoClose: 5000,
                     hideProgressBar: false,

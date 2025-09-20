@@ -57,7 +57,7 @@ function UpdateAds() {
   // Fetch ad data
   useEffect(() => {
     if (!isCookAuthenticated) {
-      toast.error("لطفاً ابتدا وارد حساب کاربری خود شوید");
+      toast.error("لطفا ابتدا وارد حساب کاربری خود شوید");
       navigate("/cooks/login");
       return;
     }

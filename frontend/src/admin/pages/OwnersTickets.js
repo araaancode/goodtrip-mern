@@ -34,7 +34,7 @@ const OwnersTickets = () => {
     if (isAdminAuthenticated) {
       fetchTickets();
     } else {
-      setError("لطفاً ابتدا وارد سیستم شوید");
+      setError("لطفا ابتدا وارد سیستم شوید");
       setLoading(false);
     }
   }, [isAdminAuthenticated]);
@@ -63,7 +63,7 @@ const OwnersTickets = () => {
         errorMessage = 'اتصال به سرور timeout خورد';
       } else if (err.response) {
         if (err.response.status === 401) {
-          errorMessage = 'لطفاً مجدداً وارد شوید';
+          errorMessage = 'لطفا مجدداً وارد شوید';
           logout();
           navigate('/admins/login'); // Redirect to login on unauthorized
         } else if (err.response.status === 403) {
@@ -76,7 +76,7 @@ const OwnersTickets = () => {
           errorMessage = err.response.data.message;
         }
       } else if (err.request) {
-        errorMessage = 'پاسخی از سرور دریافت نشد. لطفاً اتصال اینترنت را بررسی کنید';
+        errorMessage = 'پاسخی از سرور دریافت نشد. لطفا اتصال اینترنت را بررسی کنید';
       }
       
       setError(errorMessage);
@@ -131,7 +131,7 @@ const OwnersTickets = () => {
       
       if (err.response) {
         if (err.response.status === 401) {
-          errorMessage = 'لطفاً مجدداً وارد شوید';
+          errorMessage = 'لطفا مجدداً وارد شوید';
           logout();
           navigate('/admins/login'); // Redirect to login on unauthorized
         } else if (err.response.data && err.response.data.message) {

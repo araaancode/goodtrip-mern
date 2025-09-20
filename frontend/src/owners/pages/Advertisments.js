@@ -33,7 +33,7 @@ const Advertisments = () => {
       if (!isOwnerAuthenticated) {
         await checkAuthOwner();
         if (!isOwnerAuthenticated) {
-          throw new Error("لطفاً ابتدا وارد شوید");
+          throw new Error("لطفا ابتدا وارد شوید");
         }
       }
 
