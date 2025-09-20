@@ -384,19 +384,7 @@ const LoginPage = () => {
             {isLogin ? (
               <div style={{ padding: '20px 0' }}>
                 <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                  <div style={{
-                    margin: '0 auto 15px',
-                    width: isMobile ? '60px' : '70px',
-                    height: isMobile ? '60px' : '70px',
-                    background: 'linear-gradient(135deg, #2b6cb0 0%, #0D47A1 100%)',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 5px 15px rgba(102, 126, 234, 0.4)',
-                    transition: 'transform 0.3s ease'
-                  }}>
-                  </div>
+                
                   <h2 style={{ fontSize: isMobile ? '1.5rem' : '1.8rem', color: '#2d3748', marginBottom: '10px' }}>تایید کد</h2>
                   <p style={{ color: '#718096', fontSize: isMobile ? '0.9rem' : '1rem' }}>کد ارسال شده به شماره {formData.phone} را وارد کنید</p>
                   <button
