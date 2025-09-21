@@ -13,6 +13,9 @@ import { BsTelephone } from "react-icons/bs";
 import { TbClipboardText } from "react-icons/tb";
 import { IoIosInformationCircleOutline } from "react-icons/io";
 import { HiOutlineMapPin } from "react-icons/hi2";
+import { RiDeleteBin6Line } from "react-icons/ri";
+import { FiUploadCloud } from "react-icons/fi";
+import { padding } from "@mui/system";
 
 function CreateAds() {
   const { isCookAuthenticated } = useCookAuthStore();
@@ -25,7 +28,7 @@ function CreateAds() {
     address: "",
     title: "",
     description: "",
-    price: 0
+    price: 0,
   });
 
   // Error state initialization
@@ -36,7 +39,7 @@ function CreateAds() {
     title: { status: false, message: "" },
     description: { status: false, message: "" },
     photo: { status: false, message: "" },
-    photos: { status: false, message: "" }
+    photos: { status: false, message: "" },
   };
 
   const [errors, setErrors] = useState(initialErrors);
@@ -52,16 +55,16 @@ function CreateAds() {
   // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    
+
     // Clear error when typing
     if (errors[name]?.status) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: { status: false, message: "" }
+        [name]: { status: false, message: "" },
       }));
     }
   };
@@ -81,10 +84,12 @@ function CreateAds() {
     const newSelectedFiles = [];
     let hasError = false;
     const fileTypeRegex = new RegExp(acceptedFileExtensions.join("|"), "i");
-    
+
     filesArray.forEach((file) => {
       if (!fileTypeRegex.test(file.name.split(".").pop())) {
-        toast.error(`فقط فایل‌های ${acceptedFileExtensions.join(", ")} قابل قبول هستند`);
+        toast.error(
+          `فقط فایل‌های ${acceptedFileExtensions.join(", ")} قابل قبول هستند`
+        );
         hasError = true;
       } else {
         newSelectedFiles.push(file);
@@ -94,16 +99,16 @@ function CreateAds() {
     if (!hasError) {
       setFiles(newSelectedFiles);
       if (errors[field]?.status) {
-        setErrors(prev => ({
+        setErrors((prev) => ({
           ...prev,
-          [field]: { status: false, message: "" }
+          [field]: { status: false, message: "" },
         }));
       }
     }
   };
 
   const handleFileDelete = (index, setFiles) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   // Form validation
@@ -112,57 +117,57 @@ function CreateAds() {
     const newErrors = { ...initialErrors };
 
     if (!formData.name.trim()) {
-      newErrors.name = { 
-        status: true, 
-        message: "* نام و نام خانوادگی مشتری باید وارد شود" 
+      newErrors.name = {
+        status: true,
+        message: "* نام و نام خانوادگی مشتری باید وارد شود",
       };
       isValid = false;
     }
 
     if (!formData.phone.trim() || formData.phone.length !== 11) {
-      newErrors.phone = { 
-        status: true, 
-        message: "* شماره تماس باید 11 رقمی باشد" 
+      newErrors.phone = {
+        status: true,
+        message: "* شماره تماس باید 11 رقمی باشد",
       };
       isValid = false;
     }
 
     if (!formData.address.trim()) {
-      newErrors.address = { 
-        status: true, 
-        message: "* آدرس باید وارد شود" 
+      newErrors.address = {
+        status: true,
+        message: "* آدرس باید وارد شود",
       };
       isValid = false;
     }
 
     if (!formData.title.trim()) {
-      newErrors.title = { 
-        status: true, 
-        message: "* عنوان آگهی باید وارد شود" 
+      newErrors.title = {
+        status: true,
+        message: "* عنوان آگهی باید وارد شود",
       };
       isValid = false;
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = { 
-        status: true, 
-        message: "* توضیحات باید وارد شود" 
+      newErrors.description = {
+        status: true,
+        message: "* توضیحات باید وارد شود",
       };
       isValid = false;
     }
 
     if (selectedFiles.length === 0) {
-      newErrors.photo = { 
-        status: true, 
-        message: "* تصویر اصلی باید انتخاب شود" 
+      newErrors.photo = {
+        status: true,
+        message: "* تصویر اصلی باید انتخاب شود",
       };
       isValid = false;
     }
 
     if (selectedFiles2.length === 0) {
-      newErrors.photos = { 
-        status: true, 
-        message: "* حداقل یک تصویر باید انتخاب شود" 
+      newErrors.photos = {
+        status: true,
+        message: "* حداقل یک تصویر باید انتخاب شود",
       };
       isValid = false;
     }
@@ -194,13 +199,13 @@ function CreateAds() {
       formDataToSend.append("description", formData.description);
       formDataToSend.append("price", formData.price);
       formDataToSend.append("photo", selectedFiles[0]);
-      selectedFiles2.forEach(image => formDataToSend.append("photos", image));
+      selectedFiles2.forEach((image) => formDataToSend.append("photos", image));
 
       await axios.post(`/api/cooks/ads`, formDataToSend, {
         withCredentials: true,
         headers: {
-          "Content-Type": "multipart/form-data"
-        }
+          "Content-Type": "multipart/form-data",
+        },
       });
 
       toast.success("آگهی با موفقیت ایجاد شد");
@@ -221,274 +226,250 @@ function CreateAds() {
       address: "",
       title: "",
       description: "",
-      price: 0
+      price: 0,
     });
     setSelectedFiles([]);
     setSelectedFiles2([]);
     setErrors(initialErrors);
   };
 
+  // Input Field Component for better reusability
+  const InputField = ({
+    label,
+    name,
+    value,
+    onChange,
+    error,
+    icon: Icon,
+    type = "text",
+    placeholder,
+    textarea = false,
+    rows = 3,
+  }) => (
+    <div className="flex flex-col mb-6">
+      <label className="mb-2 text-sm font-medium text-gray-700">{label}</label>
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+          <Icon className="w-5 h-5" />
+        </div>
+        {textarea ? (
+          <textarea
+            name={name}
+            value={value}
+            onChange={onChange}
+            className={`block w-full pl-10 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 
+              bg-white border rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400
+              ${
+                error?.status ? "border-red-500" : "border-gray-300"
+              } outline-none`}
+            placeholder={placeholder}
+            rows={rows}
+          />
+        ) : (
+          <input
+            name={name}
+            type={type}
+            value={value}
+            onChange={onChange}
+            className={`block w-full pl-10 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 
+              bg-white border rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400
+              ${
+                error?.status ? "border-red-500" : "border-gray-300"
+              } outline-none`}
+            placeholder={placeholder}
+            style={{ borderRadius: "8px", padding: "10px",textAlign:'right' }}
+          />
+        )}
+      </div>
+      {error?.status && (
+        <span className="mt-1 text-sm text-red-600">{error.message}</span>
+      )}
+    </div>
+  );
+
+  // File Upload Component for better reusability
+  const FileUploadArea = ({
+    label,
+    selectedFiles,
+    fileInputRef,
+    handleFileChange,
+    handleFileDelete,
+    error,
+    multiple = false,
+  }) => (
+    <div className="flex flex-col mb-6">
+      <label className="mb-2 text-sm font-medium text-gray-700">{label}</label>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="flex items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors cursor-pointer bg-gray-50">
+          <div
+            className="text-center"
+            onClick={() => fileInputRef.current.click()}
+          >
+            <FiUploadCloud className="w-10 h-10 mx-auto text-gray-400 mb-2" />
+            <p className="text-sm text-gray-500">برای آپلود کلیک کنید</p>
+            <p className="text-xs text-gray-400 mt-1">JPG, PNG, JPEG</p>
+          </div>
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleFileChange}
+            accept=".jpg,.png,.jpeg"
+            multiple={multiple}
+            onClick={(e) => (e.target.value = null)}
+          />
+        </div>
+
+        <div className="md:col-span-2 rounded-lg bg-white p-4 border border-gray-200 shadow-sm max-h-60 overflow-auto">
+          {selectedFiles.length > 0 ? (
+            <ul className="space-y-2">
+              {selectedFiles.map((file, index) => (
+                <li
+                  key={index}
+                  className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-md"
+                >
+                  <span className="text-sm text-gray-700 truncate flex-1 mr-2">
+                    {file.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleFileDelete(
+                        index,
+                        multiple ? setSelectedFiles2 : setSelectedFiles
+                      )
+                    }
+                    className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors outline-none focus:ring-2 focus:ring-red-400"
+                    aria-label="حذف فایل"
+                  >
+                    <RiDeleteBin6Line className="w-4 h-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-400">
+              <p className="text-sm">هنوز تصویری آپلود نشده است...</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {error?.status && (
+        <span className="mt-1 text-sm text-red-600">{error.message}</span>
+      )}
+    </div>
+  );
+
   return (
     <>
       <TitleCard title="افزودن آگهی" topMargin="mt-2">
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-            {/* Name Field */}
-            <div className="flex flex-col mb-6">
-              <label className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">
-                نام و نام خانوادگی مشتری
-              </label>
-              <div className="relative">
-                <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                  <CiUser className="w-6 h-6 text-gray-400" />
-                </div>
-                <input
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                  placeholder="نام و نام خانوادگی مشتری"
-                  style={{ borderRadius: "5px" }}
-                />
-              </div>
-              {errors.name?.status && (
-                <span className="text-red-500 text-sm">{errors.name.message}</span>
-              )}
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <InputField
+              label="نام و نام خانوادگی مشتری"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              error={errors.name}
+              icon={CiUser}
+              placeholder="نام و نام خانوادگی مشتری"
+            />
 
-            {/* Phone Field */}
-            <div className="flex flex-col mb-6">
-              <label className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">
-                شماره مشتری
-              </label>
-              <div className="relative">
-                <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                  <BsTelephone className="w-6 h-6 text-gray-400" />
-                </div>
-                <input
-                  name="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                  placeholder="شماره مشتری"
-                  style={{ borderRadius: "5px" }}
-                />
-              </div>
-              {errors.phone?.status && (
-                <span className="text-red-500 text-sm">{errors.phone.message}</span>
-              )}
-            </div>
+            <InputField
+              label="شماره مشتری"
+              name="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={handleInputChange}
+              error={errors.phone}
+              icon={BsTelephone}
+              placeholder="شماره مشتری"
+            />
 
-            {/* Title Field */}
-            <div className="flex flex-col mb-6">
-              <label className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">
-                عنوان آگهی
-              </label>
-              <div className="relative">
-                <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                  <TbClipboardText className="w-6 h-6 text-gray-400" />
-                </div>
-                <input
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                  placeholder="عنوان آگهی"
-                  style={{ borderRadius: "5px" }}
-                />
-              </div>
-              {errors.title?.status && (
-                <span className="text-red-500 text-sm">{errors.title.message}</span>
-              )}
-            </div>
+            <InputField
+              label="عنوان آگهی"
+              name="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              error={errors.title}
+              icon={TbClipboardText}
+              placeholder="عنوان آگهی"
+            />
 
-            {/* Price Field */}
-            <div className="flex flex-col mb-6">
-              <label className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">
-                قیمت آگهی
-              </label>
-              <div className="relative">
-                <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                  <IoPricetagOutline className="w-6 h-6 text-gray-400" />
-                </div>
-                <input
-                  name="price"
-                  type="number"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                  placeholder="قیمت آگهی"
-                  style={{ borderRadius: "5px" }}
-                />
-              </div>
-            </div>
+            <InputField
+              label="قیمت آگهی"
+              name="price"
+              type="number"
+              value={formData.price}
+              onChange={handleInputChange}
+              error={null}
+              icon={IoPricetagOutline}
+              placeholder="قیمت آگهی"
+            />
           </div>
 
-          {/* Main Photo Upload */}
-          <div className="flex flex-col mb-6">
-            <label className="mb-2 text-xs sm:text-sm tracking-wide text-gray-600">
-              تصویر اصلی آگهی
-            </label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <div className="flex items-center">
-                <button
-                  type="button"
-                  className="app-btn-gray"
-                  onClick={() => fileInputRef.current.click()}
-                >
-                  انتخاب تصویر اصلی
-                </button>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  onChange={handleFileChange}
-                  accept=".jpg,.png,.jpeg"
-                  onClick={(e) => e.target.value = null}
-                />
-              </div>
+          <FileUploadArea
+            label="تصویر اصلی آگهی"
+            selectedFiles={selectedFiles}
+            fileInputRef={fileInputRef}
+            handleFileChange={handleFileChange}
+            handleFileDelete={handleFileDelete}
+            error={errors.photo}
+            multiple={false}
+          />
 
-              <div className="rounded-xl max-h-96 overflow-auto bg-white p-4 shadow-sm">
-                {selectedFiles.length > 0 ? (
-                  <ul>
-                    {selectedFiles.map((file, index) => (
-                      <li key={index} className="flex justify-between items-center py-2 border-b">
-                        <span className="text-sm text-gray-700">{file.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleFileDelete(index, setSelectedFiles)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          حذف
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-center text-gray-500 text-sm">
-                    هنوز تصویری آپلود نشده است...
-                  </p>
-                )}
-              </div>
-            </div>
-            {errors.photo?.status && (
-              <span className="text-red-500 text-sm">{errors.photo.message}</span>
-            )}
-          </div>
+          <FileUploadArea
+            label="تصاویر اضافی آگهی"
+            selectedFiles={selectedFiles2}
+            fileInputRef={fileInputRef2}
+            handleFileChange={handleFileChange2}
+            handleFileDelete={handleFileDelete}
+            error={errors.photos}
+            multiple={true}
+          />
 
-          {/* Additional Photos Upload */}
-          <div className="flex flex-col mb-6">
-            <label className="mb-2 text-xs sm:text-sm tracking-wide text-gray-600">
-              تصاویر اضافی آگهی
-            </label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <div className="flex items-center">
-                <button
-                  type="button"
-                  className="app-btn-gray"
-                  onClick={() => fileInputRef2.current.click()}
-                >
-                  انتخاب تصاویر اضافی
-                </button>
-                <input
-                  type="file"
-                  ref={fileInputRef2}
-                  className="hidden"
-                  onChange={handleFileChange2}
-                  accept=".jpg,.png,.jpeg"
-                  multiple
-                  onClick={(e) => e.target.value = null}
-                />
-              </div>
+          <InputField
+            label="توضیحات"
+            name="description"
+            value={formData.description}
+            onChange={handleInputChange}
+            error={errors.description}
+            icon={IoIosInformationCircleOutline}
+            placeholder="توضیحات"
+            textarea={true}
+            rows={4}
+          />
 
-              <div className="rounded-xl max-h-96 overflow-auto bg-white p-4 shadow-sm">
-                {selectedFiles2.length > 0 ? (
-                  <ul>
-                    {selectedFiles2.map((file, index) => (
-                      <li key={index} className="flex justify-between items-center py-2 border-b">
-                        <span className="text-sm text-gray-700">{file.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleFileDelete(index, setSelectedFiles2)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          حذف
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-center text-gray-500 text-sm">
-                    هنوز تصویری آپلود نشده است...
-                  </p>
-                )}
-              </div>
-            </div>
-            {errors.photos?.status && (
-              <span className="text-red-500 text-sm">{errors.photos.message}</span>
-            )}
-          </div>
+          <InputField
+            label="آدرس"
+            name="address"
+            value={formData.address}
+            onChange={handleInputChange}
+            error={errors.address}
+            icon={HiOutlineMapPin}
+            placeholder="آدرس"
+            textarea={true}
+            rows={3}
+          />
 
-          {/* Description Field */}
-          <div className="flex flex-col mb-6">
-            <label className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">
-              توضیحات
-            </label>
-            <div className="relative">
-              <div className="inline-flex items-center justify-center absolute left-0 h-full w-10 text-gray-400">
-                <IoIosInformationCircleOutline className="w-6 h-6 text-gray-400" />
-              </div>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                placeholder="توضیحات"
-                style={{ borderRadius: "5px", resize: "none", minHeight: "100px" }}
-              />
-            </div>
-            {errors.description?.status && (
-              <span className="text-red-500 text-sm">{errors.description.message}</span>
-            )}
-          </div>
-
-          {/* Address Field */}
-          <div className="flex flex-col mb-6">
-            <label className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">
-              آدرس
-            </label>
-            <div className="relative">
-              <div className="inline-flex items-center justify-center absolute left-0 h-full w-10 text-gray-400">
-                <HiOutlineMapPin className="w-6 h-6 text-gray-400" />
-              </div>
-              <textarea
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                placeholder="آدرس"
-                style={{ borderRadius: "5px", resize: "none", minHeight: "100px" }}
-              />
-            </div>
-            {errors.address?.status && (
-              <span className="text-red-500 text-sm">{errors.address.message}</span>
-            )}
-          </div>
-
-          {/* Submit Button */}
-          <div className="mt-4">
-            <button 
-              type="submit" 
-              className="app-btn-blue"
+          <div className="flex justify-end pt-4">
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 
+                text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none 
+                focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 disabled:opacity-70 disabled:cursor-not-allowed
+                min-w-[150px] outline-none"
               disabled={btnSpinner}
             >
               {btnSpinner ? (
-                <div className="px-10 py-1 flex items-center justify-center">
-                  <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
-                </div>
+                <>
+                  <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin mr-2"></div>
+                  در حال پردازش...
+                </>
               ) : (
-                <span>اضافه کردن آگهی</span>
+                "اضافه کردن آگهی"
               )}
             </button>
           </div>
