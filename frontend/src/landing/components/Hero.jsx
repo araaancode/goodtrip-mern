@@ -134,7 +134,7 @@ export default function Hero() {
             index === currentBackground ? 'opacity-100' : 'opacity-0'
           }`}
           style={{
-            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("${image}")`,
+            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url("${image}")`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
@@ -143,10 +143,10 @@ export default function Hero() {
       ))}
       
       {/* Persian Pattern Overlay */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDYwIDYwIj48ZyBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS1vcGFjaXR5PSIwLjEiIHN0cm9rZS13aWR0aD0iMSI+PHBhdGggZD0iTTAgMGw2MCA2ME02MCAwTDAgNjAiLz48L2c+PC9zdmc+')] opacity-30"></div>
+      <div className="absolute inset-0"></div>
       
       {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-900/50 via-transparent to-blue-800/40"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-900/40 via-transparent to-blue-800/30"></div>
       
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col">
@@ -163,7 +163,7 @@ export default function Hero() {
           </div>
           
           {/* Search Bar */}
-          <form onSubmit={handleSearch} className="bg-white/15 backdrop-blur-lg rounded-2xl p-6 md:p-8 w-full max-w-4xl shadow-2xl border border-white/20">
+          <form onSubmit={handleSearch} className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 md:p-8 w-full max-w-4xl shadow-2xl border border-white/20">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 relative">
                 <label className="block text-sm font-medium text-white/80 mb-2 text-right">مقصد</label>
@@ -173,7 +173,7 @@ export default function Hero() {
                     options={cityOptions}
                     value={selectedCity}
                     onChange={handleCityChange}
-                    placeholder="جستجو..."
+                    placeholder="شهر یا منطقه را انتخاب کنید"
                     isClearable
                     isSearchable
                     primaryColor="blue"
