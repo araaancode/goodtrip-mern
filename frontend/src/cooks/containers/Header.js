@@ -1,111 +1,155 @@
-import { themeChange } from 'theme-change'
-import React, { useEffect, useState } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
-import BellIcon from '@heroicons/react/24/outline/BellIcon'
-import Bars3Icon from '@heroicons/react/24/outline/Bars3Icon'
-import MoonIcon from '@heroicons/react/24/outline/MoonIcon'
-import SunIcon from '@heroicons/react/24/outline/SunIcon'
-import { openRightDrawer } from '../features/common/rightDrawerSlice';
-import { RIGHT_DRAWER_TYPES } from '../utils/globalConstantUtil'
-
-import axios from "axios"
-
-import { GoSun } from "react-icons/go";
+import { themeChange } from "theme-change";
+import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { openRightDrawer } from "../features/common/rightDrawerSlice";
+import { RIGHT_DRAWER_TYPES } from "../utils/globalConstantUtil";
+import axios from "axios";
 import { SlUser } from "react-icons/sl";
 import { PiBell } from "react-icons/pi";
-import { PiUsersFourLight } from "react-icons/pi";
-
-import { NavLink, Routes, Link, useLocation } from 'react-router-dom'
-
+import { Link } from "react-router-dom";
 
 function Header() {
+  const dispatch = useDispatch();
+  const { noOfNotifications, pageTitle } = useSelector((state) => state.header);
+  const [currentTheme, setCurrentTheme] = useState(
+    localStorage.getItem("theme")
+  );
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-    const dispatch = useDispatch()
-    const { noOfNotifications, pageTitle } = useSelector(state => state.header)
-    const [currentTheme, setCurrentTheme] = useState(localStorage.getItem("theme"))
-
-    useEffect(() => {
-        themeChange(false)
-        if (currentTheme === null) {
-            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                setCurrentTheme("dark")
-            } else {
-                setCurrentTheme("light")
-            }
-        }
-    }, [])
-
-
-    // Opening right sidebar for notification
-    const openNotification = () => {
-        dispatch(openRightDrawer({ header: "Notifications", bodyType: RIGHT_DRAWER_TYPES.NOTIFICATION }))
+  useEffect(() => {
+    themeChange(false);
+    if (currentTheme === null) {
+      if (
+        window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches
+      ) {
+        setCurrentTheme("dark");
+      } else {
+        setCurrentTheme("light");
+      }
     }
+  }, [currentTheme]);
 
+  const handleSidebarToggle = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
 
-    function logoutUser() {
-        axios.get(`/api/cooks/auth/logout`,{}).then((res) => {
-            console.log("cook logout");
-            localStorage.clear();
-            window.location.href = '/cooks/login'
-        }).catch((err) => {
-            console.log(err);
-        })
-    }
+  const openNotification = () => {
+    dispatch(
+      openRightDrawer({
+        header: "Notifications",
+        bodyType: RIGHT_DRAWER_TYPES.NOTIFICATION,
+      })
+    );
+  };
 
-    return (
+  const logoutUser = () => {
+    axios
+      .get(`/api/cooks/auth/logout`, {})
+      .then((res) => {
+        console.log("cook logout");
+        localStorage.clear();
+        window.location.href = "/cooks/login";
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
 
-        <>
-            <div className="navbar sticky top-0 bg-base-100  z-10 shadow-md ">
+  return (
+    <header className="sticky top-0 bg-base-100 z-50 shadow-md backdrop-blur-sm bg-opacity-90">
+      <div className="navbar max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Mobile menu button and title */}
+        <div className="flex-1 min-w-0">
+          <label
+            htmlFor="left-sidebar-drawer"
+            className="btn btn-ghost btn-circle drawer-button lg:hidden"
+            aria-label="Open menu"
+            onClick={handleSidebarToggle}
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          </label>
+          
+          {/* Page title - hidden on mobile when sidebar is open */}
+          <h1 className={`
+            text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white 
+            truncate ml-2 sm:ml-4 transition-opacity duration-200
+            lg:block
+            ${isSidebarOpen ? 'hidden sm:block' : 'block'}
+          `}>
+            {pageTitle}
+          </h1>
+        </div>
 
+        {/* Navigation controls */}
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          {/* Notification button */}
+          <button
+            onClick={openNotification}
+            className="btn btn-ghost btn-circle relative"
+            aria-label="Notifications"
+          >
+            <PiBell className="w-5 h-5 sm:w-6 sm:h-6" />
+            {noOfNotifications > 0 && (
+              <span className="absolute -top-1 -right-1 badge badge-primary badge-xs sm:badge-sm">
+                {Math.min(noOfNotifications, 9)}
+              </span>
+            )}
+          </button>
 
-                {/* Menu toogle for mobile view or small screen */}
-                <div className="flex-1">
-                    <label htmlFor="left-sidebar-drawer" className="btn btn-primary drawer-button lg:hidden">
-                        <Bars3Icon className="h-5 inline-block w-5" /></label>
-                    <h1 className="text-2xl font-semibold mx-4 my-2">{pageTitle}</h1>
-                </div>
-
-
-
-                <div className="flex items-center flex-end">
-                    {/* <label className="swap ">
-                        <input type="checkbox" />
-                        <GoSun data-set-theme="light" data-act-className="ACTIVECLASS" className={"fill-current w-6 h-6 " + (currentTheme === "dark" ? "swap-on" : "swap-off")} />
-                        <MoonIcon data-set-theme="dark" data-act-className="ACTIVECLASS" className={"fill-current w-6 h-6 " + (currentTheme === "light" ? "swap-on" : "swap-off")} />
-                    </label> */}
-
-
-                    {/* Notification icon */}
-                    <button className="mx-2" onClick={() => openNotification()}>
-                        <div className="indicator">
-                            <PiBell className="h-6 w-6" />
-                            {noOfNotifications > 0 ? <span className="indicator-item badge badge-secondary badge-sm">{0}</span> : null}
-                        </div>
-                    </button>
-
-
-                    {/* Profile icon, opening menu on click */}
-                    <div className="dropdown dropdown-end">
-                        <label tabIndex={0} className="avatar">
-                            <div className="mx-4 hover:cursor-pointer">
-                                <SlUser className="w-6 h-6" />
-                            </div>
-                        </label>
-                        <ul tabIndex={0} className="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52">
-                            <li className="justify-between">
-                                <Link to={'/cooks/profile'}>
-                                    دیدن پروفایل
-                                </Link>
-                            </li>
-                            <div className="divider mt-0 mb-0"></div>
-                            <li><a onClick={logoutUser}>خروج</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-        </>
-    )
+          {/* Profile dropdown */}
+          <div className="dropdown dropdown-end">
+            <label
+              tabIndex={0}
+              className="btn btn-ghost btn-circle avatar"
+              aria-label="User menu"
+            >
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                <SlUser className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-300" />
+              </div>
+            </label>
+            
+            <ul
+              tabIndex={0}
+              className="dropdown-content menu menu-compact mt-3 p-2 shadow bg-base-100 rounded-box w-48 border border-gray-200 dark:border-gray-700"
+            >
+              <li>
+                <Link
+                  to="/cooks/profile"
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  دیدن پروفایل
+                </Link>
+              </li>
+              
+              <li className="border-t border-gray-200 dark:border-gray-700 my-1" />
+              
+              <li>
+                <button
+                  onClick={logoutUser}
+                  className="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
+                >
+                  خروج
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
 }
 
-export default Header
+export default Header;

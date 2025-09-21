@@ -20,18 +20,6 @@ const routes = [
     icon: <BiListUl size="140" className={iconClasses} />,
     name: 'لیست سفارش ها',
   },
-  // {
-  //   path: '/cooks/cook-info',
-  //   icon: <PiChefHat className={iconClasses} />,
-  //   name: 'ثبت اطلاعات غذادار',
-  // },
-
-  // {
-  //   path: '/cooks/comments',
-  //   icon: <ChatIcon size="140" className={iconClasses} />,
-  //   name: ' نظرات کاربران ',
-  // },
-
   {
     path: '/cooks/create-advertisment',
     icon: <TbNewSection className={iconClasses} />,
@@ -55,12 +43,6 @@ const routes = [
     icon: <IoFastFoodOutline className={iconClasses} />,
     name: ' غذاها',
   },
-
-  // {
-  //   path: '/cooks/rates',
-  //   icon: <StarIcon className={iconClasses} />,
-  //   name: 'امتیاز',
-  // },
 
   {
     path: '/cooks/create-support-ticket',
