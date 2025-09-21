@@ -80,6 +80,25 @@ const NoDataMessage = () => (
   </div>
 );
 
+// Distribution Info Component - Added to show percentages separately
+const DistributionInfo = ({ data, total }) => (
+  <div className="mt-4 grid grid-cols-2 gap-2">
+    {data.map((item, index) => {
+      const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : 0;
+      return (
+        <div key={index} className="flex items-center p-2 bg-gray-50 rounded-lg">
+          <div 
+            className="w-3 h-3 rounded-full mr-2" 
+            style={{ backgroundColor: COLORS[index % COLORS.length] }}
+          ></div>
+          <span className="text-sm font-medium text-gray-700">{item.name}:</span>
+          <span className="mr-auto text-sm font-bold text-gray-900">{percentage}%</span>
+        </div>
+      );
+    })}
+  </div>
+);
+
 const Dashboard = () => {
   const { cook, isCookAuthenticated } = useCookAuthStore();
   const dispatch = useDispatch();
@@ -137,6 +156,8 @@ const Dashboard = () => {
     count: data[key],
   }));
 
+  const totalValue = chartData.reduce((sum, item) => sum + item.value, 0);
+
   // Check if there's any data to display in charts
   const hasChartData = Object.values(data).some(value => value > 0);
 
@@ -164,7 +185,7 @@ const Dashboard = () => {
         <>
           {/* Charts Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Pie Chart */}
+            {/* Pie Chart - Updated to remove labels from the chart */}
             <ChartCard title="درصد توزیع" className="h-80 md:h-96">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -175,8 +196,7 @@ const Dashboard = () => {
                     cy="50%"
                     outerRadius={80}
                     innerRadius={60}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    labelLine={false}
+                    // Removed label and labelLine props to eliminate text/badges on chart
                   >
                     {chartData.map((entry, index) => (
                       <Cell
@@ -188,6 +208,8 @@ const Dashboard = () => {
                   <Tooltip content={<CustomTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
+              {/* Added distribution info below the chart */}
+              <DistributionInfo data={chartData} total={totalValue} />
             </ChartCard>
 
             {/* Bar Chart */}
