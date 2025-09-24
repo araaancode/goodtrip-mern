@@ -332,7 +332,7 @@ function UpdateAds() {
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="mx-auto max-w-sm rounded-lg border border-gray-300 bg-white p-6 shadow-xl">
             <Dialog.Title className="text-lg font-semibold text-gray-800">
-              تأیید به‌روزرسانی آگهی
+              تایید به‌روزرسانی آگهی
             </Dialog.Title>
             <Dialog.Description className="my-2 text-sm text-gray-500">
               آیا از به‌روزرسانی این آگهی اطمینان دارید؟
@@ -343,7 +343,7 @@ function UpdateAds() {
                 className="mt-4 rounded bg-blue-900 px-8 py-2 mx-2 text-white"
                 onClick={sendUpdateRequest}
               >
-                تأیید
+                تایید
               </button>
               <button
                 className="mt-4 rounded bg-gray-300 px-8 py-2 mx-2"

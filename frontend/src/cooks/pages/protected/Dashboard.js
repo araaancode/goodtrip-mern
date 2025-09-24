@@ -40,19 +40,6 @@ const METRICS_CONFIG = [
 // Custom Components
 // =======================
 
-// Tooltip for charts
-const CustomTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white p-3 shadow-md rounded-lg border border-gray-200 text-center">
-        <p className="font-semibold text-gray-800">{label}</p>
-        <p className="text-gray-600">تعداد: {payload[0].value}</p>
-      </div>
-    );
-  }
-  return null;
-};
-
 // Metric card for showing summary numbers
 const MetricCard = ({ label, value, Icon }) => (
   <div className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl p-4 flex flex-col items-center h-full">
@@ -185,7 +172,7 @@ const Dashboard = () => {
       {/* Charts */}
       {hasChartData ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Pie Chart */}
+          {/* Pie Chart - Tooltip removed */}
           <ChartCard title="درصد توزیع" className="h-80 md:h-96">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -196,26 +183,28 @@ const Dashboard = () => {
                   cy="50%"
                   outerRadius={80}
                   innerRadius={60}
+                  // Remove labels from pie slices as well
+                  label={false}
                 >
                   {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip content={<CustomTooltip />} />
+                {/* Tooltip component completely removed */}
               </PieChart>
             </ResponsiveContainer>
 
             <DistributionInfo data={chartData} total={totalValue} />
           </ChartCard>
 
-          {/* Bar Chart */}
+          {/* Bar Chart - Tooltip removed */}
           <ChartCard title="آمار کلی" className="h-80 md:h-96">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" tickMargin={10} fontSize={12} />
                 <YAxis tickMargin={10} fontSize={12} />
-                <Tooltip content={<CustomTooltip />} />
+                {/* Tooltip component completely removed */}
                 <Bar dataKey="count" fill="#00C49F" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

@@ -143,35 +143,61 @@ const SingleOrder = () => {
 
   return (
     <TitleCard title="جزئیات سفارش" topMargin="mt-2" dir="rtl">
-      <Box sx={{ p: 3 }}>
-        {/* Order Summary */}
-        <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3} mb={4}>
-          <Paper sx={{ p: 3, flex: 1 }} elevation={2}>
-            <Box display="flex" alignItems="center" gap={1} mb={2}>
+      <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+        {/* Order Summary Cards */}
+        <Box 
+          display="flex" 
+          flexDirection={{ xs: 'column', md: 'row' }} 
+          gap={3} 
+          mb={4}
+        >
+          {/* Order Information Card */}
+          <Paper 
+            sx={{ 
+              p: { xs: 2, sm: 3 }, 
+              flex: 1,
+              minWidth: { xs: 'auto', md: 300 }
+            }} 
+            elevation={2}
+          >
+            <Box display="flex" alignItems="center" gap={1} mb={3}>
               <Receipt color="primary" />
-              <Typography variant="h6">اطلاعات سفارش</Typography>
-            </Box>
-            
-            <Box mb={2}>
-              <Typography variant="body2" color="text.secondary">شماره سفارش:</Typography>
-              <Typography variant="body1">{order._id}</Typography>
-            </Box>
-            
-            <Box mb={2}>
-              <Typography variant="body2" color="text.secondary">تاریخ:</Typography>
-              <Typography variant="body1">
-                {new Date(order.createdAt).toLocaleDateString('fa-IR')}
+              <Typography variant="h6" fontWeight="600">
+                اطلاعات سفارش
               </Typography>
             </Box>
             
-            <Box>
-              <Typography variant="body2" color="text.secondary">وضعیت:</Typography>
-              <Chip
-                icon={statusIcons[order.orderStatus]}
-                label={statusToPersian[order.orderStatus]}
-                color={statusColors[order.orderStatus]}
-                sx={{ mt: 1 }}
-              />
+            <Box display="flex" flexDirection="column" gap={2}>
+              <Box>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  شماره سفارش:
+                </Typography>
+                <Typography variant="body2" fontFamily="monospace">
+                  {order._id}
+                </Typography>
+              </Box>
+              
+              <Box>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  تاریخ:
+                </Typography>
+                <Typography variant="body2">
+                  {new Date(order.createdAt).toLocaleDateString('fa-IR')}
+                </Typography>
+              </Box>
+              
+              <Box>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  وضعیت:
+                </Typography>
+                <Chip
+                  icon={statusIcons[order.orderStatus]}
+                  label={statusToPersian[order.orderStatus]}
+                  color={statusColors[order.orderStatus]}
+                  sx={{ mt: 0.5 }}
+                  size="small"
+                />
+              </Box>
             </Box>
             
             <Box mt={3}>
@@ -179,70 +205,135 @@ const SingleOrder = () => {
                 variant="determinate" 
                 value={getStatusProgress(order.orderStatus)} 
                 color="primary"
-                sx={{ height: 8, borderRadius: 4 }}
+                sx={{ 
+                  height: 6, 
+                  borderRadius: 3,
+                  backgroundColor: 'grey.200'
+                }}
               />
             </Box>
           </Paper>
 
-          <Paper sx={{ p: 3, flex: 1 }} elevation={2}>
-            <Box display="flex" alignItems="center" gap={1} mb={2}>
+          {/* Delivery Information Card */}
+          <Paper 
+            sx={{ 
+              p: { xs: 2, sm: 3 }, 
+              flex: 1,
+              minWidth: { xs: 'auto', md: 300 }
+            }} 
+            elevation={2}
+          >
+            <Box display="flex" alignItems="center" gap={1} mb={3}>
               <LocationOn color="primary" />
-              <Typography variant="h6">اطلاعات تحویل</Typography>
-            </Box>
-            
-            <Box mb={2}>
-              <Typography variant="body2" color="text.secondary">آدرس:</Typography>
-              <Typography variant="body1">
-                {deliveryAddressText || "آدرس مشخص نشده"}
+              <Typography variant="h6" fontWeight="600">
+                اطلاعات تحویل
               </Typography>
             </Box>
             
-            <Box mb={2}>
-              <Typography variant="body2" color="text.secondary">شماره تماس:</Typography>
-              <Typography variant="body1">{order.contactNumber}</Typography>
-            </Box>
-            
-            <Box>
-              <Typography variant="body2" color="text.secondary">توضیحات:</Typography>
-              <Typography variant="body1">
-                {order.description || "بدون توضیحات"}
-              </Typography>
+            <Box display="flex" flexDirection="column" gap={2}>
+              <Box>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  آدرس:
+                </Typography>
+                <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
+                  {deliveryAddressText || "آدرس مشخص نشده"}
+                </Typography>
+              </Box>
+              
+              <Box>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  شماره تماس:
+                </Typography>
+                <Typography variant="body2" dir="ltr" textAlign="right">
+                  {order.contactNumber}
+                </Typography>
+              </Box>
+              
+              <Box>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  توضیحات:
+                </Typography>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    fontStyle: order.description ? 'normal' : 'italic',
+                    color: order.description ? 'text.primary' : 'text.secondary'
+                  }}
+                >
+                  {order.description || "بدون توضیحات"}
+                </Typography>
+              </Box>
             </Box>
           </Paper>
         </Box>
 
-        {/* Order Items */}
-        <Paper sx={{ p: 3, mb: 4 }} elevation={2}>
+        {/* Order Items Table */}
+        <Paper 
+          sx={{ 
+            p: { xs: 2, sm: 3 }, 
+            mb: 4,
+            overflow: 'hidden'
+          }} 
+          elevation={2}
+        >
           <Box display="flex" alignItems="center" gap={1} mb={3}>
             <LocalShipping color="primary" />
-            <Typography variant="h6">اقلام سفارش</Typography>
+            <Typography variant="h6" fontWeight="600">
+              اقلام سفارش
+            </Typography>
           </Box>
           
-          <TableContainer>
-            <Table>
+          <TableContainer sx={{ maxHeight: { xs: 400, md: 'none' } }}>
+            <Table stickyHeader>
               <TableHead>
-                <TableRow sx={{ backgroundColor: 'action.hover' }}>
-                  <TableCell>تصویر</TableCell>
-                  <TableCell>نام غذا</TableCell>
-                  <TableCell align="center">تعداد</TableCell>
-                  <TableCell align="center">قیمت واحد (ریال)</TableCell>
-                  <TableCell align="center">جمع (ریال)</TableCell>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: '600', py: 2 }}>تصویر</TableCell>
+                  <TableCell sx={{ fontWeight: '600', py: 2 }}>نام غذا</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: '600', py: 2 }}>تعداد</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: '600', py: 2 }}>قیمت واحد</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: '600', py: 2 }}>جمع</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {order.items?.map((item, index) => (
-                  <TableRow key={index} hover>
+                  <TableRow 
+                    key={index} 
+                    hover
+                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                  >
                     <TableCell>
                       <Avatar 
                         src={item.food?.image} 
                         alt={item.food?.name}
-                        sx={{ width: 56, height: 56 }}
+                        sx={{ 
+                          width: { xs: 40, sm: 56 }, 
+                          height: { xs: 40, sm: 56 } 
+                        }}
                       />
                     </TableCell>
-                    <TableCell>{item.food?.name || item.name}</TableCell>
-                    <TableCell align="center">{item.quantity}</TableCell>
-                    <TableCell align="center">{item.price.toLocaleString()}</TableCell>
-                    <TableCell align="center">{(item.price * item.quantity).toLocaleString()}</TableCell>
+                    <TableCell>
+                      <Typography variant="body2">
+                        {item.food?.name || item.name}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip 
+                        label={item.quantity} 
+                        size="small" 
+                        color="primary"
+                        variant="outlined"
+                      />
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2">
+                        {item.price.toLocaleString()} ریال
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2" fontWeight="600">
+                        {(item.price * item.quantity).toLocaleString()} ریال
+                      </Typography>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -251,39 +342,69 @@ const SingleOrder = () => {
         </Paper>
 
         {/* Order Total */}
-        <Box display="flex" justifyContent="space-between" alignItems="center" p={2} bgcolor="grey.100" borderRadius={2}>
-          <Typography variant="h6">جمع کل سفارش:</Typography>
-          <Typography variant="h5" fontWeight="bold" color="primary">
+        <Box 
+          display="flex" 
+          justifyContent="space-between" 
+          alignItems="center" 
+          p={3} 
+          borderRadius={2}
+          sx={{ backgroundColor: 'primary.50' }}
+        >
+          <Typography variant="h6" fontWeight="600">
+            جمع کل سفارش:
+          </Typography>
+          <Typography variant="h5" fontWeight="700" color="primary.main">
             {order.totalAmount.toLocaleString()} ریال
           </Typography>
         </Box>
 
         {/* Action Buttons */}
-        <Box display="flex" justifyContent="flex-end" mt={4}>
+        <Box 
+          display="flex" 
+          justifyContent={{ xs: 'center', md: 'flex-end' }} 
+          mt={4}
+        >
           <Button 
             variant="contained" 
             color="primary"
             onClick={() => setIsModalOpen(true)}
-            sx={{ px: 4, py: 1.5 }}
+            sx={{ 
+              px: 4, 
+              py: 1.5,
+              minWidth: { xs: '100%', sm: 'auto' }
+            }}
+            size="large"
           >
             تغییر وضعیت سفارش
           </Button>
         </Box>
 
         {/* Status Change Modal */}
-        <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <Modal 
+          open={isModalOpen} 
+          onClose={() => setIsModalOpen(false)}
+          aria-labelledby="status-modal-title"
+        >
           <Box sx={{
             position: 'absolute',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            width: 400,
+            width: { xs: '90%', sm: 400 },
+            maxWidth: 400,
             bgcolor: 'background.paper',
             boxShadow: 24,
             p: 4,
-            borderRadius: 2
+            borderRadius: 2,
+            outline: 'none'
           }}>
-            <Typography variant="h6" mb={3} textAlign="center">
+            <Typography 
+              id="status-modal-title"
+              variant="h6" 
+              mb={3} 
+              textAlign="center"
+              fontWeight="600"
+            >
               تغییر وضعیت سفارش
             </Typography>
             
@@ -292,6 +413,7 @@ const SingleOrder = () => {
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
               sx={{ mb: 3 }}
+              size="small"
             >
               <MenuItem value="Pending">در حال آماده سازی</MenuItem>
               <MenuItem value="Confirmed">تایید شده</MenuItem>
@@ -303,6 +425,7 @@ const SingleOrder = () => {
               <Button 
                 variant="outlined" 
                 onClick={() => setIsModalOpen(false)}
+                size="small"
               >
                 انصراف
               </Button>
@@ -310,8 +433,9 @@ const SingleOrder = () => {
                 variant="contained" 
                 onClick={handleStatusChange}
                 disabled={selectedStatus === order.orderStatus}
+                size="small"
               >
-                تأیید تغییر
+                تایید تغییر
               </Button>
             </Box>
           </Box>

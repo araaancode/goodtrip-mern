@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+
+.menu li > *:not(ul):not(.menu-title):not(details).active, 
+.menu li > details > summary:active {
+  background-color: #f3f4f6 !important;
+  color: #374151 !important;
+}
+
+
 @font-face {
   font-family: "IranianSans";
   src: url("../public/fonts/IranianSans.ttf") format("truetype");

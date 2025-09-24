@@ -75,8 +75,8 @@ const NotificationsPage = () => {
           {
             _id: '1',
             type: 'success',
-            title: 'رزرو شما تأیید شد',
-            message: 'رزرو ویلای شمال در تاریخ 1402/08/15 با موفقیت تأیید شد.',
+            title: 'رزرو شما تایید شد',
+            message: 'رزرو ویلای شمال در تاریخ 1402/08/15 با موفقیت تایید شد.',
             time: '2 ساعت پیش',
             read: false,
             link: '/bookings/1',

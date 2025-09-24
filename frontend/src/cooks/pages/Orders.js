@@ -3,8 +3,7 @@ import { useDispatch } from "react-redux";
 import TitleCard from "../components/Cards/TitleCard";
 import { setPageTitle } from "../features/common/headerSlice";
 import axios from "axios";
-import { PiNewspaperClipping } from "react-icons/pi";
-import { IoEyeOutline } from "react-icons/io5";
+import { PiNewspaperClipping, PiReceipt, PiCurrencyCircleDollar, PiCalendar, PiMagnifyingGlass, PiListBullets, PiUser, PiPhone, PiEye } from "react-icons/pi";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useCookAuthStore } from "../stores/authStore";
@@ -12,7 +11,7 @@ import { useCookAuthStore } from "../stores/authStore";
 import { DataGrid } from "@mui/x-data-grid";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { faIR } from "@mui/x-data-grid/locales";
-import { Box, TextField, useMediaQuery } from "@mui/material";
+import { Box, TextField, useMediaQuery, Chip, Avatar } from "@mui/material";
 import { IconButton } from "@mui/material";
 import { ArrowForwardIos, ArrowBackIos } from "@mui/icons-material";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -22,7 +21,13 @@ import "dayjs/locale/fa";
 
 const TopSideButtons = () => (
   <div className="inline-block">
-    <h6 className="text-lg font-semibold text-gray-800">لیست سفارش‌ها</h6>
+    <div className="flex items-center gap-3">
+   
+      <div>
+        <h6 className="text-xl font-bold text-gray-800">لیست سفارش‌ها</h6>
+        <p className="text-sm text-gray-600 mt-1">مدیریت و پیگیری سفارش‌های مشتریان</p>
+      </div>
+    </div>
   </div>
 );
 
@@ -53,12 +58,28 @@ const Orders = () => {
       .then((response) => {
         setOrders(response.data.orders);
         setLoading(false);
+        console.log(response.data.orders)
       })
       .catch((error) => {
         console.error("Error fetching orders:", error);
         setLoading(false);
       });
   }, [isCookAuthenticated]);
+
+  const getStatusIcon = (status) => {
+    switch(status) {
+      case "Pending":
+        return <PiListBullets className="w-4 h-4" />;
+      case "Completed":
+        return <PiReceipt className="w-4 h-4" />;
+      case "Cancelled":
+        return <PiListBullets className="w-4 h-4" />;
+      case "Confirmed":
+        return <PiReceipt className="w-4 h-4" />;
+      default:
+        return <PiListBullets className="w-4 h-4" />;
+    }
+  };
 
   const columns = [
     {
@@ -68,7 +89,44 @@ const Orders = () => {
       width: isMobile ? 120 : undefined,
       renderCell: (params) => (
         <div className="flex items-center gap-2">
-          <span className="text-sm truncate">{params.value}</span>
+          <div className="p-2 bg-blue-50 rounded-lg">
+            <PiReceipt className="w-4 h-4 text-blue-600" />
+          </div>
+          <span className="text-sm font-medium text-gray-900 font-mono truncate">
+            {params.value.slice(-8)}
+          </span>
+        </div>
+      ),
+    },
+    {
+      field: "userName",
+      headerName: "مشتری",
+      flex: isMobile ? 0 : 1,
+      width: isMobile ? 100 : undefined,
+      renderCell: (params) => (
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-green-50 rounded-full">
+            <PiUser className="w-3.5 h-3.5 text-green-600" />
+          </div>
+          <span className="text-sm text-gray-700 truncate">
+            {params.value}
+          </span>
+        </div>
+      ),
+    },
+    {
+      field: "phone",
+      headerName: "تلفن",
+      flex: isMobile ? 0 : 1,
+      width: isMobile ? 100 : undefined,
+      renderCell: (params) => (
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-purple-50 rounded-full">
+            <PiPhone className="w-3.5 h-3.5 text-purple-600" />
+          </div>
+          <span className="text-sm text-gray-700 dir-ltr">
+            {params.value}
+          </span>
         </div>
       ),
     },
@@ -81,33 +139,40 @@ const Orders = () => {
         const status = params.value;
         let statusClass = "";
         let statusText = "";
+        let iconColor = "";
         
         switch(status) {
           case "Pending":
-            statusClass = "bg-blue-100 text-blue-800";
+            statusClass = "bg-blue-50 border border-blue-200 text-blue-700";
             statusText = "در حال پردازش";
+            iconColor = "text-blue-600";
             break;
           case "Completed":
-            statusClass = "bg-green-100 text-green-800";
-            statusText = "بسته شده";
+            statusClass = "bg-green-50 border border-green-200 text-green-700";
+            statusText = "تکمیل شده";
+            iconColor = "text-green-600";
             break;
           case "Cancelled":
-            statusClass = "bg-yellow-100 text-yellow-800";
+            statusClass = "bg-red-50 border border-red-200 text-red-700";
             statusText = "لغو شده";
+            iconColor = "text-red-600";
             break;
           case "Confirmed":
-            statusClass = "bg-green-100 text-green-800";
+            statusClass = "bg-emerald-50 border border-emerald-200 text-emerald-700";
             statusText = "تایید شده";
+            iconColor = "text-emerald-600";
             break;
           default:
-            statusClass = "bg-gray-100 text-gray-800";
+            statusClass = "bg-gray-50 border border-gray-200 text-gray-700";
             statusText = status;
+            iconColor = "text-gray-600";
         }
         
         return (
-          <span className={`${statusClass} text-xs font-medium px-2.5 py-0.5 rounded-sm`}>
-            {statusText}
-          </span>
+          <div className={`${statusClass} px-3 py-1.5 rounded-lg flex items-center gap-2`}>
+            {getStatusIcon(status)}
+            <span className="text-xs font-medium">{statusText}</span>
+          </div>
         );
       },
     },
@@ -115,11 +180,16 @@ const Orders = () => {
       field: "price",
       headerName: "قیمت",
       flex: isMobile ? 0 : 1,
-      width: isMobile ? 80 : undefined,
+      width: isMobile ? 100 : undefined,
       renderCell: (params) => (
-        <span className="whitespace-nowrap text-sm">
-          {new Intl.NumberFormat('fa-IR').format(params.value)} تومان
-        </span>
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-amber-50 rounded-full">
+            <PiCurrencyCircleDollar className="w-3.5 h-3.5 text-amber-600" />
+          </div>
+          <span className="whitespace-nowrap text-sm font-bold text-gray-900">
+            {new Intl.NumberFormat('fa-IR').format(params.value)} تومان
+          </span>
+        </div>
       ),
     },
     {
@@ -129,7 +199,10 @@ const Orders = () => {
       width: isMobile ? 100 : undefined,
       renderCell: (params) => (
         <div className="flex items-center gap-2">
-          <span className="text-sm">
+          <div className="p-1.5 bg-rose-50 rounded-full">
+            <PiCalendar className="w-3.5 h-3.5 text-rose-600" />
+          </div>
+          <span className="text-sm text-gray-700">
             {new Date(params.value).toLocaleDateString("fa")}
           </span>
         </div>
@@ -137,7 +210,7 @@ const Orders = () => {
     },
     {
       field: "details",
-      headerName: isMobile ? "" : "جزئیات",
+      headerName: isMobile ? "" : "عملیات",
       flex: 0.5,
       width: isMobile ? 60 : undefined,
       sortable: false,
@@ -145,11 +218,11 @@ const Orders = () => {
       renderCell: (params) => (
         <a 
           href={`/cooks/orders/${params.row._id}/show-details`}
-          className="flex items-center justify-center p-1 rounded-md hover:bg-gray-100 transition-colors"
+          className="flex items-center justify-center p-2 rounded-xl"
           aria-label="مشاهده جزئیات"
         >
-          <IoEyeOutline className="w-5 h-5 text-gray-600" />
-          {!isMobile && <span className="mr-1 text-sm">مشاهده</span>}
+          <PiEye className="w-4 h-4" />
+          {!isMobile && <span className="mr-2 text-sm font-medium">مشاهده</span>}
         </a>
       ),
     },
@@ -162,7 +235,7 @@ const Orders = () => {
     phone: order.user?.phone || "—",
     orderStatus: order.orderStatus,
     createdAt: order.createdAt || null,
-    price: order.totalPrice,
+    price: order.totalAmount,
   }));
 
   const filteredRows = rows.filter((row) =>
@@ -185,54 +258,65 @@ const Orders = () => {
           xl: 1920,
         },
       },
+      palette: {
+        primary: {
+          main: '#3B82F6',
+        },
+      },
     },
     faIR
   );
 
   return (
-    <div className="p-2 md:p-4 bg-gray-50 min-h-screen">
+    <div className="p-2 md:p-4 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
       <TitleCard 
         title="" 
         topMargin="mt-2" 
         TopSideButtons={<TopSideButtons />}
-        className="shadow-md rounded-lg overflow-hidden border-0"
+        className="shadow-xl rounded-2xl overflow-hidden border-0 bg-white/80 backdrop-blur-sm"
       >
         <ThemeProvider theme={theme}>
-          <Box sx={{ height: 500, width: "100%" }}>
+          <Box sx={{ height: 550, width: "100%" }}>
             <Box
               sx={{
-                mb: 2,
+                mb: 3,
                 display: "flex",
                 justifyContent: "flex-start",
               }}
             >
               <TextField
-                placeholder="جستجو..."
+                placeholder="جستجو در سفارش‌ها ..."
                 variant="outlined"
                 size="small"
                 onChange={(e) => setSearchQuery(e.target.value)}
                 sx={{
-                  width: { xs: "100%", sm: 300 },
+                  width: { xs: "100%", sm: 350 },
                   "& .MuiOutlinedInput-root": {
                     "& fieldset": {
                       borderColor: "#e2e8f0",
-                      borderRadius: "8px",
+                      borderRadius: "12px",
+                      borderWidth: "2px",
                     },
                     "&:hover fieldset": {
                       borderColor: "#cbd5e0",
                     },
                     "&.Mui-focused fieldset": {
-                      borderColor: "#4299e1",
-                      borderWidth: "1px",
+                      borderColor: "#3B82F6",
+                      borderWidth: "2px",
                     },
                   },
+                  "& .MuiInputBase-input": {
+                    paddingRight: "12px",
+                  }
                 }}
                 inputProps={{
                   style: {
                     textAlign: "right",
                     direction: "rtl",
+                    fontSize: "14px",
                   },
                 }}
+               
               />
             </Box>
 
@@ -241,8 +325,10 @@ const Orders = () => {
               width: "100%",
               "& .MuiDataGrid-root": {
                 border: "none",
-                borderRadius: "8px",
+                borderRadius: "16px",
                 overflow: "hidden",
+                background: "white",
+                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
               }
             }}>
               <DataGrid
@@ -266,28 +352,34 @@ const Orders = () => {
                   "& .MuiDataGrid-cell": {
                     textAlign: "right",
                     justifyContent: "flex-end",
-                    padding: isMobile ? "4px" : "8px 16px",
+                    padding: isMobile ? "8px" : "12px 16px",
                     fontSize: isMobile ? "0.75rem" : "0.875rem",
-                    borderBottom: "1px solid #e2e8f0",
+                    borderBottom: "1px solid #f1f5f9",
+                    borderColor: "#f1f5f9",
                   },
                   "& .MuiDataGrid-columnHeaderTitle": {
                     textAlign: "right",
                     justifyContent: "flex-end",
                     width: "100%",
                     fontSize: isMobile ? "0.75rem" : "0.875rem",
-                    fontWeight: "600",
+                    fontWeight: "700",
+                    color: "#374151",
                   },
                   "& .MuiDataGrid-columnHeaders": {
-                    backgroundColor: "#f7fafc",
+                    backgroundColor: "#f8fafc",
                     borderBottom: "2px solid #e2e8f0",
+                    background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
                   },
                   "& .MuiDataGrid-row": {
                     backgroundColor: "#fff",
+                    transition: "all 0.2s ease-in-out",
                     "&:hover": {
                       backgroundColor: "#f8fafc",
+                      transform: "translateY(-1px)",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                     },
                     "&:nth-of-type(even)": {
-                      backgroundColor: "#fafafa",
+                      backgroundColor: "#fafbfc",
                       "&:hover": {
                         backgroundColor: "#f1f5f9",
                       },
@@ -295,6 +387,7 @@ const Orders = () => {
                   },
                   "& .MuiTablePagination-root": {
                     direction: "rtl",
+                    borderTop: "1px solid #e2e8f0",
                   },
                   "& .MuiTablePagination-actions": {
                     direction: "rtl",
@@ -308,10 +401,14 @@ const Orders = () => {
                         justifyContent: "center",
                         alignItems: "center",
                         height: "100%",
-                        backgroundColor: "rgba(255, 255, 255, 0.7)",
+                        backgroundColor: "rgba(255, 255, 255, 0.8)",
+                        backdropFilter: "blur(4px)",
                       }}
                     >
-                      <CircularProgress size={24} />
+                      <div className="text-center">
+                        <CircularProgress size={32} className="text-blue-500" />
+                        <p className="mt-2 text-gray-600">در حال بارگذاری سفارش‌ها...</p>
+                      </div>
                     </Box>
                   ),
                   noRowsOverlay: () => (
@@ -322,12 +419,17 @@ const Orders = () => {
                         alignItems: "center",
                         height: "100%",
                         flexDirection: "column",
-                        gap: 1,
+                        gap: 2,
                         color: "text.secondary",
                       }}
                     >
-                      <PiNewspaperClipping className="w-12 h-12 opacity-50" />
-                      <p>هیچ سفارشی یافت نشد</p>
+                      <div className="p-4 bg-gray-100 rounded-full">
+                        <PiNewspaperClipping className="w-12 h-12 text-gray-400" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg font-semibold text-gray-600">هیچ سفارشی یافت نشد</p>
+                        <p className="text-sm text-gray-500 mt-1">هنوز سفارشی ثبت نشده است</p>
+                      </div>
                     </Box>
                   ),
                 }}
@@ -336,13 +438,13 @@ const Orders = () => {
                     labelRowsPerPage: "تعداد ردیف در هر صفحه:",
                     rowsPerPageOptions: isMobile ? [5, 8] : [5, 8, 10, 20],
                     nextIconButton: (
-                      <IconButton size="small">
-                        <ArrowForwardIos fontSize="small" />
+                      <IconButton size="small" className="bg-blue-50 hover:bg-blue-100">
+                        <ArrowForwardIos fontSize="small" className="text-blue-600" />
                       </IconButton>
                     ),
                     previousIconButton: (
-                      <IconButton size="small">
-                        <ArrowBackIos fontSize="small" />
+                      <IconButton size="small" className="bg-blue-50 hover:bg-blue-100">
+                        <ArrowBackIos fontSize="small" className="text-blue-600" />
                       </IconButton>
                     ),
                   },
@@ -372,7 +474,7 @@ const Orders = () => {
 
       <style jsx>{`
         :global(body) {
-          background-color: #f8fafc;
+          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
         }
         
         @media (max-width: 600px) {
@@ -383,6 +485,10 @@ const Orders = () => {
           :global(.MuiDataGrid-row) {
             min-width: 600px;
           }
+        }
+        
+        .dir-ltr {
+          direction: ltr;
         }
       `}</style>
     </div>
