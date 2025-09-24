@@ -1,4 +1,5 @@
 import React, { lazy, Suspense } from 'react';
+import Loader from '../../Loader/Loader';
 
 // Lazy load all components
 const AddFood = lazy(() => import("../pages/AddFood"));
@@ -20,12 +21,10 @@ const Foods = lazy(() => import("../pages/Foods"));
 const UpdateFood = lazy(() => import("../pages/UpdateFood"));
 const SingleSupportTicket = lazy(() => import("../pages/SingleSupportTicket"));
 
-// Create a loading component
-const Loading = () => <div>Loading...</div>; // Replace with your custom loading component
 
 // Wrap each component with Suspense
 const withSuspense = (Component) => (props) => (
-  <Suspense fallback={<Loading />}>
+  <Suspense fallback={<Loader />}>
     <Component {...props} />
   </Suspense>
 );

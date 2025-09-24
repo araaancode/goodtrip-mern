@@ -1,60 +1,80 @@
-import XMarkIcon from '@heroicons/react/24/solid/XMarkIcon'
-import { useDispatch, useSelector } from 'react-redux'
-import NotificationBodyRightDrawer from '../features/common/components/NotificationBodyRightDrawer'
-import { closeRightDrawer } from '../features/common/rightDrawerSlice'
-import { RIGHT_DRAWER_TYPES } from '../utils/globalConstantUtil'
-import CalendarEventsBodyRightDrawer from '../features/calendar/CalendarEventsBodyRightDrawer'
-
+import { XMarkIcon } from "@heroicons/react/24/solid";
+import { useDispatch, useSelector } from "react-redux";
+import NotificationBodyRightDrawer from "../features/common/components/NotificationBodyRightDrawer";
+import CalendarEventsBodyRightDrawer from "../features/calendar/CalendarEventsBodyRightDrawer";
+import { closeRightDrawer } from "../features/common/rightDrawerSlice";
+import { RIGHT_DRAWER_TYPES } from "../utils/globalConstantUtil";
 
 function RightSidebar() {
+  const { isOpen, bodyType, extraObject, header } = useSelector(
+    (state) => state.rightDrawer
+  );
+  const dispatch = useDispatch();
 
-    const { isOpen, bodyType, extraObject, header } = useSelector(state => state.rightDrawer)
-    const dispatch = useDispatch()
+  const close = () => {
+    dispatch(closeRightDrawer());
+  };
 
-    const close = (e) => {
-        dispatch(closeRightDrawer(e))
-    }
+  return (
+    <div
+      className={`fixed inset-0 z-50 overflow-hidden bg-gray-900 bg-opacity-40 transition-all duration-300 ease-in-out ${
+        isOpen
+          ? "opacity-100 pointer-events-auto"
+          : "opacity-0 pointer-events-none delay-300"
+      }`}
+    >
+      {/* Overlay (click to close) */}
+      <div
+        className="absolute inset-0 w-full h-full cursor-pointer"
+        onClick={close}
+        aria-hidden="true"
+      />
 
+      {/* Sidebar panel */}
+      <aside
+        className={`absolute right-0 top-0 h-full w-full max-w-sm bg-base-100 shadow-xl transform transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+            <h2 className="text-xl font-semibold text-gray-800">
+              {header || "پیام‌ها"}
+            </h2>
+            <button
+              onClick={close}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              aria-label="Close sidebar"
+            >
+              <XMarkIcon className="w-6 h-6 text-gray-600" />
+            </button>
+          </div>
 
-
-    return (
-        <div className={"fixed overflow-hidden z-20 bg-gray-900 bg-opacity-25 inset-0 transform ease-in-out " + (isOpen ? " transition-opacity opacity-100 duration-500 translate-x-0  " : " transition-all delay-500 opacity-0 translate-x-full  ")}>
-
-            <section className={"w-80 md:w-96 left-0 absolute bg-base-100 h-full shadow-xl delay-400 duration-500 ease-in-out transition-all transform  " + (isOpen ? " translate-x-0 " : " translate-x-full ")}>
-
-                <div className="relative  pb-5 flex flex-col  h-full">
-
-                    {/* Header */}
-                    <div className="navbar flex pl-4 pr-4 shadow-md ">
-                        <button className="float-left btn btn-circle btn-outline btn-sm" onClick={() => close()}>
-                            <XMarkIcon className="h-5 w-5" />
-                        </button>
-                        <span className="ml-2 font-bold text-xl mr-5">پیام ها</span>
-                    </div>
-
-
-                    {/* ------------------ Content Start ------------------ */}
-                    <div className="overflow-y-scroll pl-4 pr-4">
-                        <div className="flex flex-col w-full">
-                            {/* Loading drawer body according to different drawer type */}
-                            {
-                                {
-                                    [RIGHT_DRAWER_TYPES.NOTIFICATION]: <NotificationBodyRightDrawer {...extraObject} closeRightDrawer={close} />,
-                                    [RIGHT_DRAWER_TYPES.CALENDAR_EVENTS]: <CalendarEventsBodyRightDrawer {...extraObject} closeRightDrawer={close} />,
-                                    [RIGHT_DRAWER_TYPES.DEFAULT]: <div></div>
-                                }[bodyType]
-                            }
-
-                        </div>
-                    </div>
-                    {/* ------------------ Content End ------------------ */}
-                </div>
-
-            </section>
-
-            <section className=" w-screen h-full cursor-pointer " onClick={() => close()} ></section>
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+            {
+              {
+                [RIGHT_DRAWER_TYPES.NOTIFICATION]: (
+                  <NotificationBodyRightDrawer
+                    {...extraObject}
+                    closeRightDrawer={close}
+                  />
+                ),
+                [RIGHT_DRAWER_TYPES.CALENDAR_EVENTS]: (
+                  <CalendarEventsBodyRightDrawer
+                    {...extraObject}
+                    closeRightDrawer={close}
+                  />
+                ),
+                [RIGHT_DRAWER_TYPES.DEFAULT]: <div />,
+              }[bodyType]
+            }
+          </div>
         </div>
-    )
+      </aside>
+    </div>
+  );
 }
 
-export default RightSidebar
+export default RightSidebar;
