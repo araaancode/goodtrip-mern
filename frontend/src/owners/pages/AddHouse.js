@@ -23,7 +23,15 @@ import { TbCircleDashedNumber4 } from "react-icons/tb";
 import { HiOutlineDocumentArrowUp } from "react-icons/hi2";
 import { TbHomeEdit } from "react-icons/tb";
 import { LiaConciergeBellSolid } from "react-icons/lia";
-import { FiInfo, FiMapPin, FiUpload, FiX, FiFile, FiCheckCircle, FiImage } from "react-icons/fi";
+import {
+  FiInfo,
+  FiMapPin,
+  FiUpload,
+  FiX,
+  FiFile,
+  FiCheckCircle,
+  FiImage,
+} from "react-icons/fi";
 import { BsHouseExclamation } from "react-icons/bs";
 import { MdOutlineAdd } from "react-icons/md";
 
@@ -350,6 +358,30 @@ const bedRoomOptionList = [
 ];
 
 function AddHouse() {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isActive, setIsActive] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+
+  const buttonStyle = {
+    width: "12.5rem",
+    padding: "1rem 2rem",
+    border: "1px solid transparent",
+    fontSize: "1rem",
+    fontWeight: "700",
+    borderRadius: "1rem",
+    boxShadow: isFocused
+      ? "0 0 0 4px rgba(59, 130, 246, 0.5)"
+      : "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+    background: "linear-gradient(to right, #3b82f6, #4f46e5)",
+    color: "white",
+  
+    position: "relative",
+    overflow: "hidden",
+    outline: "none",
+    opacity: 1,
+    cursor: "pointer",
+  };
+
   const { token, isOwnerAuthenticated } = useOwnerAuthStore();
   const dispatch = useDispatch();
 
@@ -417,7 +449,9 @@ function AddHouse() {
   const [errors, setErrors] = useState({});
 
   const acceptedFileExtensions = ["jpg", "png", "jpeg", "pdf"];
-  const acceptedFileTypesString = acceptedFileExtensions.map((ext) => `.${ext}`).join(",");
+  const acceptedFileTypesString = acceptedFileExtensions
+    .map((ext) => `.${ext}`)
+    .join(",");
 
   // Page title effect
   useEffect(() => {
@@ -458,9 +492,9 @@ function AddHouse() {
   // Form handlers
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
 
     // Clear error when typing
@@ -510,7 +544,9 @@ function AddHouse() {
 
     filesArray.forEach((file) => {
       if (!fileTypeRegex.test(file.name.split(".").pop())) {
-        toast.error(`فقط فایل‌های ${acceptedFileExtensions.join(", ")} قابل قبول هستند`);
+        toast.error(
+          `فقط فایل‌های ${acceptedFileExtensions.join(", ")} قابل قبول هستند`
+        );
         hasError = true;
       } else {
         newSelectedFiles.push(file);
@@ -537,16 +573,30 @@ function AddHouse() {
   // Validation
   const validateForm = () => {
     const newErrors = {};
-    
+
     // Required fields validation
     const requiredFields = [
-      'name', 'houseOwner', 'housePhone', 'meters', 'year', 
-      'capacity', 'postalCode', 'address', 'houseNumber',
-      'price', 'parking', 'rooms', 'floor', 'discount',
-      'description', 'houseRoles', 'critrias', 'reservationRoles'
+      "name",
+      "houseOwner",
+      "housePhone",
+      "meters",
+      "year",
+      "capacity",
+      "postalCode",
+      "address",
+      "houseNumber",
+      "price",
+      "parking",
+      "rooms",
+      "floor",
+      "discount",
+      "description",
+      "houseRoles",
+      "critrias",
+      "reservationRoles",
     ];
-    
-    requiredFields.forEach(field => {
+
+    requiredFields.forEach((field) => {
       if (!formData[field]) {
         newErrors[field] = `* ${field} الزامی است`;
       }
@@ -558,16 +608,21 @@ function AddHouse() {
     if (!ownerType) newErrors.ownerType = "* نوع مالکیت الزامی است";
     if (!houseType) newErrors.houseType = "* نوع ملک الزامی است";
     if (hobbies.length === 0) newErrors.hobbies = "* امکانات تفریحی الزامی است";
-    if (enviornment.length === 0) newErrors.enviornment = "* محیط ملک الزامی است";
-    if (freeDates.length === 0) newErrors.freeDates = "* روزهای آزاد الزامی است";
+    if (enviornment.length === 0)
+      newErrors.enviornment = "* محیط ملک الزامی است";
+    if (freeDates.length === 0)
+      newErrors.freeDates = "* روزهای آزاد الزامی است";
     if (options.length === 0) newErrors.options = "* امکانات ملک الزامی است";
     if (cooling.length === 0) newErrors.cooling = "* سیستم سرمایش الزامی است";
     if (heating.length === 0) newErrors.heating = "* سیستم گرمایش الزامی است";
     if (floorType.length === 0) newErrors.floorType = "* نوع کف پوش الزامی است";
-    if (kitchenOptions.length === 0) newErrors.kitchenOptions = "* امکانات آشپزخانه الزامی است";
-    if (bedRoomOptions.length === 0) newErrors.bedRoomOptions = "* امکانات اتاق خواب الزامی است";
+    if (kitchenOptions.length === 0)
+      newErrors.kitchenOptions = "* امکانات آشپزخانه الزامی است";
+    if (bedRoomOptions.length === 0)
+      newErrors.bedRoomOptions = "* امکانات اتاق خواب الزامی است";
     if (selectedFiles.length === 0) newErrors.cover = "* تصویر اصلی الزامی است";
-    if (selectedFiles2.length === 0) newErrors.images = "* تصاویر ملک الزامی است";
+    if (selectedFiles2.length === 0)
+      newErrors.images = "* تصاویر ملک الزامی است";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -576,7 +631,7 @@ function AddHouse() {
   // Form submission
   const addHouseFunction = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast.error("لطفا تمام فیلدهای الزامی را پر کنید");
       return;
@@ -591,38 +646,50 @@ function AddHouse() {
 
     try {
       const formDataToSend = new FormData();
-      
+
       // Add all form data
       Object.entries(formData).forEach(([key, value]) => {
         formDataToSend.append(key, value);
       });
 
       // Add position
-      formDataToSend.append('lat', position[0]);
-      formDataToSend.append('lng', position[1]);
+      formDataToSend.append("lat", position[0]);
+      formDataToSend.append("lng", position[1]);
 
       // Add select values
-      formDataToSend.append('province', selectedProvince.label);
-      formDataToSend.append('city', selectedCity.label);
-      formDataToSend.append('ownerType', ownerType.label);
-      formDataToSend.append('houseType', houseType.label);
-      
+      formDataToSend.append("province", selectedProvince.label);
+      formDataToSend.append("city", selectedCity.label);
+      formDataToSend.append("ownerType", ownerType.label);
+      formDataToSend.append("houseType", houseType.label);
+
       // Add arrays
-      hobbies.forEach(item => formDataToSend.append('hobbies', item.label));
-      enviornment.forEach(item => formDataToSend.append('enviornment', item.label));
-      freeDates.forEach(item => formDataToSend.append('freeDates', item.label));
-      options.forEach(item => formDataToSend.append('options', item.label));
-      cooling.forEach(item => formDataToSend.append('cooling', item.label));
-      heating.forEach(item => formDataToSend.append('heating', item.label));
-      floorType.forEach(item => formDataToSend.append('floorType', item.label));
-      kitchenOptions.forEach(item => formDataToSend.append('kitchenOptions', item.label));
-      bedRoomOptions.forEach(item => formDataToSend.append('bedRoomOptions', item.label));
+      hobbies.forEach((item) => formDataToSend.append("hobbies", item.label));
+      enviornment.forEach((item) =>
+        formDataToSend.append("enviornment", item.label)
+      );
+      freeDates.forEach((item) =>
+        formDataToSend.append("freeDates", item.label)
+      );
+      options.forEach((item) => formDataToSend.append("options", item.label));
+      cooling.forEach((item) => formDataToSend.append("cooling", item.label));
+      heating.forEach((item) => formDataToSend.append("heating", item.label));
+      floorType.forEach((item) =>
+        formDataToSend.append("floorType", item.label)
+      );
+      kitchenOptions.forEach((item) =>
+        formDataToSend.append("kitchenOptions", item.label)
+      );
+      bedRoomOptions.forEach((item) =>
+        formDataToSend.append("bedRoomOptions", item.label)
+      );
 
       // Add files
-      formDataToSend.append('cover', selectedFiles[0]);
-      selectedFiles2.forEach(file => formDataToSend.append('images', file));
-      selectedFilesBill.forEach(file => formDataToSend.append('bill', file));
-      selectedFilesDocument.forEach(file => formDataToSend.append('document', file));
+      formDataToSend.append("cover", selectedFiles[0]);
+      selectedFiles2.forEach((file) => formDataToSend.append("images", file));
+      selectedFilesBill.forEach((file) => formDataToSend.append("bill", file));
+      selectedFilesDocument.forEach((file) =>
+        formDataToSend.append("document", file)
+      );
 
       const response = await axios.post(`/api/owners/houses`, formDataToSend, {
         headers: {
@@ -633,7 +700,6 @@ function AddHouse() {
 
       toast.success("ملک با موفقیت ثبت شد");
       // Reset form or redirect as needed
-      
     } catch (error) {
       console.error("Error adding house:", error);
       toast.error(error.response?.data?.msg || "خطایی در ثبت ملک رخ داد");
@@ -646,40 +712,46 @@ function AddHouse() {
   const customSelectStyles = {
     menu: (provided) => ({
       ...provided,
-      borderRadius: '12px',
-      border: '2px solid #e5e7eb',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+      borderRadius: "12px",
+      border: "2px solid #e5e7eb",
+      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
     }),
     control: (provided, state) => ({
       ...provided,
-      borderRadius: '12px',
-      border: `2px solid ${errors[state.name] ? '#fca5a5' : '#e5e7eb'}`,
-      padding: '8px 4px',
-      backgroundColor: errors[state.name] ? '#fef2f2' : 'rgba(255, 255, 255, 0.5)',
-      backdropBlur: 'sm',
-      minHeight: '56px',
-      '&:focus-within': {
-        borderColor: '#3b82f6',
-        boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.1)',
+      borderRadius: "12px",
+      border: `2px solid ${errors[state.name] ? "#fca5a5" : "#e5e7eb"}`,
+      padding: "8px 4px",
+      backgroundColor: errors[state.name]
+        ? "#fef2f2"
+        : "rgba(255, 255, 255, 0.5)",
+      backdropBlur: "sm",
+      minHeight: "56px",
+      "&:focus-within": {
+        borderColor: "#3b82f6",
+        boxShadow: "0 0 0 4px rgba(59, 130, 246, 0.1)",
       },
     }),
     option: (provided, state) => ({
       ...provided,
-      backgroundColor: state.isSelected ? '#3b82f6' : state.isFocused ? '#dbeafe' : 'white',
-      color: state.isSelected ? 'white' : '#374151',
-      padding: '12px 16px',
+      backgroundColor: state.isSelected
+        ? "#3b82f6"
+        : state.isFocused
+        ? "#dbeafe"
+        : "white",
+      color: state.isSelected ? "white" : "#374151",
+      padding: "12px 16px",
     }),
   };
 
   return (
     <div className="min-h-screen py-1 px-1">
       <div className="w-full mx-auto">
-        <TitleCard 
+        <TitleCard
           title={
             <div className="flex space-x-3 rtl:space-x-reverse">
               <span>ثبت ملک جدید</span>
             </div>
-          } 
+          }
           topMargin="mt-0"
           className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm rounded-3xl overflow-hidden"
         >
@@ -690,11 +762,15 @@ function AddHouse() {
                 ثبت ملک جدید
               </h2>
               <p className="text-gray-600 text-sm md:text-base max-w-md mx-auto leading-relaxed">
-                اطلاعات ملک جدید را با دقت وارد کنید تا در پلتفرم ما نمایش داده شود
+                اطلاعات ملک جدید را با دقت وارد کنید تا در پلتفرم ما نمایش داده
+                شود
               </p>
             </div>
 
-            <form className="space-y-6 md:space-y-8" onSubmit={addHouseFunction}>
+            <form
+              className="space-y-6 md:space-y-8"
+              onSubmit={addHouseFunction}
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                 {/* House Name */}
                 <div className="flex flex-col">
@@ -714,12 +790,12 @@ function AddHouse() {
                       value={formData.name}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
-                        errors.name 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.name
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="نام ملک"
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.name && (
@@ -748,12 +824,12 @@ function AddHouse() {
                       value={formData.houseOwner}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
-                        errors.houseOwner 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.houseOwner
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="نام صاحب ملک"
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.houseOwner && (
@@ -782,12 +858,12 @@ function AddHouse() {
                       value={formData.housePhone}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
-                        errors.housePhone 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.housePhone
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="شماره ثابت ملک"
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.housePhone && (
@@ -817,12 +893,12 @@ function AddHouse() {
                       value={formData.meters}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
-                        errors.meters 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.meters
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="متراژ ملک"
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.meters && (
@@ -852,12 +928,12 @@ function AddHouse() {
                       value={formData.year}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
-                        errors.year 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.year
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="سال ساخت"
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.year && (
@@ -887,12 +963,12 @@ function AddHouse() {
                       value={formData.capacity}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
-                        errors.capacity 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.capacity
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="ظرفیت"
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.capacity && (
@@ -921,12 +997,12 @@ function AddHouse() {
                       value={formData.postalCode}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
-                        errors.postalCode 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.postalCode
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="کد پستی"
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.postalCode && (
@@ -956,12 +1032,12 @@ function AddHouse() {
                       value={formData.rooms}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
-                        errors.rooms 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.rooms
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="تعداد اتاق‌ها"
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.rooms && (
@@ -991,12 +1067,12 @@ function AddHouse() {
                       value={formData.floor}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
-                        errors.floor 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.floor
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="تعداد طبقات"
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.floor && (
@@ -1026,12 +1102,12 @@ function AddHouse() {
                       value={formData.parking}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
-                        errors.parking 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.parking
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="تعداد پارکینگ"
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.parking && (
@@ -1061,12 +1137,12 @@ function AddHouse() {
                       value={formData.price}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
-                        errors.price 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.price
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="قیمت"
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.price && (
@@ -1095,12 +1171,12 @@ function AddHouse() {
                       value={formData.houseNumber}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
-                        errors.houseNumber 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.houseNumber
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="پلاک ملک"
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.houseNumber && (
@@ -1130,12 +1206,12 @@ function AddHouse() {
                       value={formData.discount}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
-                        errors.discount 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.discount
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="تخفیف"
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.discount && (
@@ -1162,11 +1238,12 @@ function AddHouse() {
                     placeholder="انتخاب استان"
                     isSearchable
                     classNames={{
-                      menuButton: () => `rounded-2xl border-2 transition-all duration-300 ${
-                        errors.province 
-                          ? "border-red-300 bg-red-50/50" 
-                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
-                      }`,
+                      menuButton: () =>
+                        `rounded-2xl border-2 transition-all duration-300 ${
+                          errors.province
+                            ? "border-red-300 bg-red-50/50"
+                            : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                        }`,
                     }}
                   />
                   {errors.province && (
@@ -1191,11 +1268,12 @@ function AddHouse() {
                     isSearchable
                     isDisabled={!selectedProvince}
                     classNames={{
-                      menuButton: () => `rounded-2xl border-2 transition-all duration-300 ${
-                        errors.city 
-                          ? "border-red-300 bg-red-50/50" 
-                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
-                      }`,
+                      menuButton: () =>
+                        `rounded-2xl border-2 transition-all duration-300 ${
+                          errors.city
+                            ? "border-red-300 bg-red-50/50"
+                            : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                        }`,
                     }}
                   />
                   {errors.city && (
@@ -1218,11 +1296,12 @@ function AddHouse() {
                     options={ownerTypeList}
                     placeholder="انتخاب نوع مالکیت"
                     classNames={{
-                      menuButton: () => `rounded-2xl border-2 transition-all duration-300 ${
-                        errors.ownerType 
-                          ? "border-red-300 bg-red-50/50" 
-                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
-                      }`,
+                      menuButton: () =>
+                        `rounded-2xl border-2 transition-all duration-300 ${
+                          errors.ownerType
+                            ? "border-red-300 bg-red-50/50"
+                            : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                        }`,
                     }}
                   />
                   {errors.ownerType && (
@@ -1245,11 +1324,12 @@ function AddHouse() {
                     options={houseTypeList}
                     placeholder="انتخاب نوع ملک"
                     classNames={{
-                      menuButton: () => `rounded-2xl border-2 transition-all duration-300 ${
-                        errors.houseType 
-                          ? "border-red-300 bg-red-50/50" 
-                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
-                      }`,
+                      menuButton: () =>
+                        `rounded-2xl border-2 transition-all duration-300 ${
+                          errors.houseType
+                            ? "border-red-300 bg-red-50/50"
+                            : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                        }`,
                     }}
                   />
                   {errors.houseType && (
@@ -1273,11 +1353,12 @@ function AddHouse() {
                     isMultiple={true}
                     placeholder="انتخاب امکانات تفریحی"
                     classNames={{
-                      menuButton: () => `rounded-2xl border-2 transition-all duration-300 ${
-                        errors.hobbies 
-                          ? "border-red-300 bg-red-50/50" 
-                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
-                      }`,
+                      menuButton: () =>
+                        `rounded-2xl border-2 transition-all duration-300 ${
+                          errors.hobbies
+                            ? "border-red-300 bg-red-50/50"
+                            : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                        }`,
                     }}
                   />
                   {errors.hobbies && (
@@ -1301,11 +1382,12 @@ function AddHouse() {
                     isMultiple={true}
                     placeholder="انتخاب محیط ملک"
                     classNames={{
-                      menuButton: () => `rounded-2xl border-2 transition-all duration-300 ${
-                        errors.enviornment 
-                          ? "border-red-300 bg-red-50/50" 
-                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
-                      }`,
+                      menuButton: () =>
+                        `rounded-2xl border-2 transition-all duration-300 ${
+                          errors.enviornment
+                            ? "border-red-300 bg-red-50/50"
+                            : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                        }`,
                     }}
                   />
                   {errors.enviornment && (
@@ -1329,11 +1411,12 @@ function AddHouse() {
                     isMultiple={true}
                     placeholder="انتخاب روزهای آزاد"
                     classNames={{
-                      menuButton: () => `rounded-2xl border-2 transition-all duration-300 ${
-                        errors.freeDates 
-                          ? "border-red-300 bg-red-50/50" 
-                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
-                      }`,
+                      menuButton: () =>
+                        `rounded-2xl border-2 transition-all duration-300 ${
+                          errors.freeDates
+                            ? "border-red-300 bg-red-50/50"
+                            : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                        }`,
                     }}
                   />
                   {errors.freeDates && (
@@ -1357,11 +1440,12 @@ function AddHouse() {
                     isMultiple={true}
                     placeholder="انتخاب امکانات ملک"
                     classNames={{
-                      menuButton: () => `rounded-2xl border-2 transition-all duration-300 ${
-                        errors.options 
-                          ? "border-red-300 bg-red-50/50" 
-                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
-                      }`,
+                      menuButton: () =>
+                        `rounded-2xl border-2 transition-all duration-300 ${
+                          errors.options
+                            ? "border-red-300 bg-red-50/50"
+                            : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                        }`,
                     }}
                   />
                   {errors.options && (
@@ -1385,11 +1469,12 @@ function AddHouse() {
                     isMultiple={true}
                     placeholder="انتخاب سیستم سرمایش"
                     classNames={{
-                      menuButton: () => `rounded-2xl border-2 transition-all duration-300 ${
-                        errors.cooling 
-                          ? "border-red-300 bg-red-50/50" 
-                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
-                      }`,
+                      menuButton: () =>
+                        `rounded-2xl border-2 transition-all duration-300 ${
+                          errors.cooling
+                            ? "border-red-300 bg-red-50/50"
+                            : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                        }`,
                     }}
                   />
                   {errors.cooling && (
@@ -1413,11 +1498,12 @@ function AddHouse() {
                     isMultiple={true}
                     placeholder="انتخاب سیستم گرمایش"
                     classNames={{
-                      menuButton: () => `rounded-2xl border-2 transition-all duration-300 ${
-                        errors.heating 
-                          ? "border-red-300 bg-red-50/50" 
-                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
-                      }`,
+                      menuButton: () =>
+                        `rounded-2xl border-2 transition-all duration-300 ${
+                          errors.heating
+                            ? "border-red-300 bg-red-50/50"
+                            : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                        }`,
                     }}
                   />
                   {errors.heating && (
@@ -1441,11 +1527,12 @@ function AddHouse() {
                     isMultiple={true}
                     placeholder="انتخاب نوع کف‌پوش"
                     classNames={{
-                      menuButton: () => `rounded-2xl border-2 transition-all duration-300 ${
-                        errors.floorType 
-                          ? "border-red-300 bg-red-50/50" 
-                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
-                      }`,
+                      menuButton: () =>
+                        `rounded-2xl border-2 transition-all duration-300 ${
+                          errors.floorType
+                            ? "border-red-300 bg-red-50/50"
+                            : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                        }`,
                     }}
                   />
                   {errors.floorType && (
@@ -1469,11 +1556,12 @@ function AddHouse() {
                     isMultiple={true}
                     placeholder="انتخاب امکانات آشپزخانه"
                     classNames={{
-                      menuButton: () => `rounded-2xl border-2 transition-all duration-300 ${
-                        errors.kitchenOptions 
-                          ? "border-red-300 bg-red-50/50" 
-                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
-                      }`,
+                      menuButton: () =>
+                        `rounded-2xl border-2 transition-all duration-300 ${
+                          errors.kitchenOptions
+                            ? "border-red-300 bg-red-50/50"
+                            : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                        }`,
                     }}
                   />
                   {errors.kitchenOptions && (
@@ -1497,11 +1585,12 @@ function AddHouse() {
                     isMultiple={true}
                     placeholder="انتخاب امکانات اتاق خواب"
                     classNames={{
-                      menuButton: () => `rounded-2xl border-2 transition-all duration-300 ${
-                        errors.bedRoomOptions 
-                          ? "border-red-300 bg-red-50/50" 
-                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
-                      }`,
+                      menuButton: () =>
+                        `rounded-2xl border-2 transition-all duration-300 ${
+                          errors.bedRoomOptions
+                            ? "border-red-300 bg-red-50/50"
+                            : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                        }`,
                     }}
                   />
                   {errors.bedRoomOptions && (
@@ -1520,45 +1609,59 @@ function AddHouse() {
                   تصویر اصلی ملک
                   <span className="text-red-500 mr-1">*</span>
                 </label>
-                
-                <div 
+
+                <div
                   className={`relative group rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden ${
-                    isDragOver 
-                      ? "scale-[1.02] shadow-lg" 
-                      : "hover:scale-[1.01]"
+                    isDragOver ? "scale-[1.02] shadow-lg" : "hover:scale-[1.01]"
                   }`}
                   onClick={() => fileInputRef.current.click()}
                   onDragOver={(e) => handleDragOver(e, setIsDragOver)}
                   onDragLeave={(e) => handleDragLeave(e, setIsDragOver)}
-                  onDrop={(e) => handleDrop(e, setIsDragOver, (files) => processFiles(files, setSelectedFiles, "cover"))}
+                  onDrop={(e) =>
+                    handleDrop(e, setIsDragOver, (files) =>
+                      processFiles(files, setSelectedFiles, "cover")
+                    )
+                  }
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-br ${
-                    isDragOver 
-                      ? "from-blue-50 to-indigo-50" 
-                      : errors.cover 
-                        ? "from-red-50 to-red-50" 
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${
+                      isDragOver
+                        ? "from-blue-50 to-indigo-50"
+                        : errors.cover
+                        ? "from-red-50 to-red-50"
                         : "from-gray-50 to-blue-50/30"
-                  } backdrop-blur-sm`} />
-                  
-                  <div className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 ${
-                    isDragOver 
-                      ? "border-blue-400 shadow-inner" 
-                      : errors.cover 
-                        ? "border-red-300" 
+                    } backdrop-blur-sm`}
+                  />
+
+                  <div
+                    className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 ${
+                      isDragOver
+                        ? "border-blue-400 shadow-inner"
+                        : errors.cover
+                        ? "border-red-300"
                         : "border-gray-300 group-hover:border-blue-400"
-                  }`}>
+                    }`}
+                  >
                     <div className="relative z-10 flex flex-col items-center justify-center space-y-4 py-4">
-                      <div className={`p-4 rounded-2xl transition-all duration-300 ${
-                        isDragOver ? "scale-110 bg-blue-100" : "bg-white/80 shadow-sm"
-                      }`}>
-                        <FiUpload className={`w-8 h-8 transition-colors ${
-                          isDragOver ? "text-blue-600" : "text-gray-400"
-                        }`} />
+                      <div
+                        className={`p-4 rounded-2xl transition-all duration-300 ${
+                          isDragOver
+                            ? "scale-110 bg-blue-100"
+                            : "bg-white/80 shadow-sm"
+                        }`}
+                      >
+                        <FiUpload
+                          className={`w-8 h-8 transition-colors ${
+                            isDragOver ? "text-blue-600" : "text-gray-400"
+                          }`}
+                        />
                       </div>
                       <div className="space-y-2">
-                        <p className={`text-lg font-semibold transition-colors ${
-                          isDragOver ? "text-blue-700" : "text-gray-700"
-                        }`}>
+                        <p
+                          className={`text-lg font-semibold transition-colors ${
+                            isDragOver ? "text-blue-700" : "text-gray-700"
+                          }`}
+                        >
                           {isDragOver ? "فایل را رها کنید" : "آپلود تصویر اصلی"}
                         </p>
                         <p className="text-sm text-gray-500 bg-white/50 px-3 py-1 rounded-full">
@@ -1578,7 +1681,9 @@ function AddHouse() {
                     accept={acceptedFileTypesString}
                     ref={fileInputRef}
                     className="hidden"
-                    onChange={(e) => handleFileChange(e, setSelectedFiles, "cover")}
+                    onChange={(e) =>
+                      handleFileChange(e, setSelectedFiles, "cover")
+                    }
                     onClick={(e) => (e.target.value = null)}
                   />
                 </div>
@@ -1613,7 +1718,13 @@ function AddHouse() {
                           </div>
                           <button
                             type="button"
-                            onClick={() => handleFileDelete(index, selectedFiles, setSelectedFiles)}
+                            onClick={() =>
+                              handleFileDelete(
+                                index,
+                                selectedFiles,
+                                setSelectedFiles
+                              )
+                            }
                             className="text-red-500 hover:text-red-700 p-2 rounded-xl hover:bg-red-50 transition-all duration-200 flex-shrink-0"
                             aria-label="حذف فایل"
                           >
@@ -1640,46 +1751,64 @@ function AddHouse() {
                   تصاویر ملک
                   <span className="text-red-500 mr-1">*</span>
                 </label>
-                
-                <div 
+
+                <div
                   className={`relative group rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden ${
-                    isDragOver2 
-                      ? "scale-[1.02] shadow-lg" 
+                    isDragOver2
+                      ? "scale-[1.02] shadow-lg"
                       : "hover:scale-[1.01]"
                   }`}
                   onClick={() => fileInputRef2.current.click()}
                   onDragOver={(e) => handleDragOver(e, setIsDragOver2)}
                   onDragLeave={(e) => handleDragLeave(e, setIsDragOver2)}
-                  onDrop={(e) => handleDrop(e, setIsDragOver2, (files) => processFiles(files, setSelectedFiles2, "images"))}
+                  onDrop={(e) =>
+                    handleDrop(e, setIsDragOver2, (files) =>
+                      processFiles(files, setSelectedFiles2, "images")
+                    )
+                  }
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-br ${
-                    isDragOver2 
-                      ? "from-blue-50 to-indigo-50" 
-                      : errors.images 
-                        ? "from-red-50 to-red-50" 
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${
+                      isDragOver2
+                        ? "from-blue-50 to-indigo-50"
+                        : errors.images
+                        ? "from-red-50 to-red-50"
                         : "from-gray-50 to-blue-50/30"
-                  } backdrop-blur-sm`} />
-                  
-                  <div className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 ${
-                    isDragOver2 
-                      ? "border-blue-400 shadow-inner" 
-                      : errors.images 
-                        ? "border-red-300" 
+                    } backdrop-blur-sm`}
+                  />
+
+                  <div
+                    className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 ${
+                      isDragOver2
+                        ? "border-blue-400 shadow-inner"
+                        : errors.images
+                        ? "border-red-300"
                         : "border-gray-300 group-hover:border-blue-400"
-                  }`}>
+                    }`}
+                  >
                     <div className="relative z-10 flex flex-col items-center justify-center space-y-4 py-4">
-                      <div className={`p-4 rounded-2xl transition-all duration-300 ${
-                        isDragOver2 ? "scale-110 bg-blue-100" : "bg-white/80 shadow-sm"
-                      }`}>
-                        <FiUpload className={`w-8 h-8 transition-colors ${
-                          isDragOver2 ? "text-blue-600" : "text-gray-400"
-                        }`} />
+                      <div
+                        className={`p-4 rounded-2xl transition-all duration-300 ${
+                          isDragOver2
+                            ? "scale-110 bg-blue-100"
+                            : "bg-white/80 shadow-sm"
+                        }`}
+                      >
+                        <FiUpload
+                          className={`w-8 h-8 transition-colors ${
+                            isDragOver2 ? "text-blue-600" : "text-gray-400"
+                          }`}
+                        />
                       </div>
                       <div className="space-y-2">
-                        <p className={`text-lg font-semibold transition-colors ${
-                          isDragOver2 ? "text-blue-700" : "text-gray-700"
-                        }`}>
-                          {isDragOver2 ? "فایل‌ها را رها کنید" : "آپلود تصاویر ملک"}
+                        <p
+                          className={`text-lg font-semibold transition-colors ${
+                            isDragOver2 ? "text-blue-700" : "text-gray-700"
+                          }`}
+                        >
+                          {isDragOver2
+                            ? "فایل‌ها را رها کنید"
+                            : "آپلود تصاویر ملک"}
                         </p>
                         <p className="text-sm text-gray-500 bg-white/50 px-3 py-1 rounded-full">
                           فرمت‌های مجاز: {acceptedFileExtensions.join(", ")}
@@ -1699,7 +1828,9 @@ function AddHouse() {
                     accept={acceptedFileTypesString}
                     ref={fileInputRef2}
                     className="hidden"
-                    onChange={(e) => handleFileChange(e, setSelectedFiles2, "images")}
+                    onChange={(e) =>
+                      handleFileChange(e, setSelectedFiles2, "images")
+                    }
                     onClick={(e) => (e.target.value = null)}
                   />
                 </div>
@@ -1734,7 +1865,13 @@ function AddHouse() {
                           </div>
                           <button
                             type="button"
-                            onClick={() => handleFileDelete(index, selectedFiles2, setSelectedFiles2)}
+                            onClick={() =>
+                              handleFileDelete(
+                                index,
+                                selectedFiles2,
+                                setSelectedFiles2
+                              )
+                            }
                             className="text-red-500 hover:text-red-700 p-2 rounded-xl hover:bg-red-50 transition-all duration-200 flex-shrink-0"
                             aria-label="حذف فایل"
                           >
@@ -1774,12 +1911,12 @@ function AddHouse() {
                       value={formData.description}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 min-h-[140px] resize-none backdrop-blur-sm ${
-                        errors.description 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.description
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="درباره ملک..."
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.description && (
@@ -1808,12 +1945,12 @@ function AddHouse() {
                       value={formData.address}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 min-h-[140px] resize-none backdrop-blur-sm ${
-                        errors.address 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.address
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="آدرس کامل..."
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.address && (
@@ -1842,12 +1979,12 @@ function AddHouse() {
                       value={formData.reservationRoles}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 min-h-[140px] resize-none backdrop-blur-sm ${
-                        errors.reservationRoles 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.reservationRoles
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="قوانین رزرو ملک..."
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.reservationRoles && (
@@ -1876,12 +2013,12 @@ function AddHouse() {
                       value={formData.houseRoles}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 min-h-[140px] resize-none backdrop-blur-sm ${
-                        errors.houseRoles 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.houseRoles
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="ضوابط و مقررات ملک..."
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.houseRoles && (
@@ -1910,12 +2047,12 @@ function AddHouse() {
                       value={formData.critrias}
                       onChange={handleChange}
                       className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 min-h-[140px] resize-none backdrop-blur-sm ${
-                        errors.critrias 
-                          ? "border-red-300 bg-red-50/50" 
+                        errors.critrias
+                          ? "border-red-300 bg-red-50/50"
                           : "border-gray-200/80 focus:border-blue-500 bg-white/50"
                       }`}
                       placeholder="محدودیت‌های ملک..."
-                      style={{borderRadius: '8px'}}
+                      style={{ borderRadius: "8px" }}
                     />
                   </div>
                   {errors.critrias && (
@@ -1952,7 +2089,9 @@ function AddHouse() {
                     <MapClickHandler />
                   </MapContainer>
                 </div>
-                <p className="mt-2 text-sm text-gray-600">مکان ملک خود را روی نقشه مشخص کنید</p>
+                <p className="mt-2 text-sm text-gray-600">
+                  مکان ملک خود را روی نقشه مشخص کنید
+                </p>
               </div>
 
               {/* Submit button */}
@@ -1960,11 +2099,19 @@ function AddHouse() {
                 <button
                   type="submit"
                   disabled={btnSpinner}
-
-                  style={{backgroundColor:"blue",color:"#fff"}}
+                  style={buttonStyle}
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => {
+                    setIsHovered(false);
+                    setIsActive(false);
+                  }}
+                  onMouseDown={() => setIsActive(true)}
+                  onMouseUp={() => setIsActive(false)}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                  
+
                   <div className="relative flex items-center justify-center space-x-2 rtl:space-x-reverse">
                     {btnSpinner ? (
                       <>
@@ -1973,7 +2120,6 @@ function AddHouse() {
                       </>
                     ) : (
                       <>
-                        <MdOutlineAdd className="w-5 h-5" />
                         <span>ثبت ملک</span>
                       </>
                     )}
@@ -1984,7 +2130,7 @@ function AddHouse() {
           </div>
         </TitleCard>
       </div>
-      
+
       <ToastContainer
         position="top-left"
         autoClose={5000}
