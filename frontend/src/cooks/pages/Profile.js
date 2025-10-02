@@ -6,7 +6,8 @@ import axios from "axios";
 
 import Select from "react-tailwindcss-select";
 import "react-tailwindcss-select/dist/index.css";
-import { FiPhone, FiUser, FiMail, FiMapPin } from "react-icons/fi";
+import { FiUser, FiMail, FiPhone, FiMapPin, FiSave } from "react-icons/fi";
+import { IoIosInformationCircleOutline } from "react-icons/io5";
 import { RiUser5Line } from "react-icons/ri";
 import { LiaIdCardSolid } from "react-icons/lia";
 import { CiCircleQuestion } from "react-icons/ci";
@@ -26,8 +27,6 @@ const markerIcon = new L.Icon({
   iconSize: [50, 50],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
-  //   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-  //   shadowSize: [55, 55],
 });
 
 const genderList = [
@@ -47,18 +46,13 @@ function Profile() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
-  const [lat, setLat] = useState("");
-  const [lng, setLng] = useState("");
-  const [cook, setCook] = useState("");
+  const [cook, setCook] = useState(null);
 
   const [isOpen, setIsOpen] = useState(false);
-
   const [position, setPosition] = useState([35.6892, 51.389]);
   const markerRef = useRef(null);
 
-  let token = localStorage.getItem("userToken");
-
-  // وقتی روی نقشه کلیک می‌کنیم
+  // Map handlers
   const MapClickHandler = () => {
     useMapEvents({
       click(e) {
@@ -68,7 +62,6 @@ function Profile() {
     return null;
   };
 
-  // وقتی مارکر کشیده و رها می‌شود
   const onDragEnd = () => {
     const marker = markerRef.current;
     if (marker != null) {
@@ -77,51 +70,31 @@ function Profile() {
     }
   };
 
-  // btn spinner
   const [btnSpinner, setBtnSpinner] = useState(false);
 
-  // errors
-  const [provinceError, setProvinceError] = useState(false);
-  const [provinceErrorMsg, setProvinceErrorMsg] = useState("");
+  // Error states
+  const [errors, setErrors] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    username: "",
+    province: "",
+    city: "",
+    nationalCode: "",
+    gender: "",
+    address: ""
+  });
 
-  const [cityError, setCityError] = useState(false);
-  const [cityErrorMsg, setCityErrorMsg] = useState("");
-
-  const [addressError, setAddressError] = useState(false);
-  const [addressErrorMsg, setAddressErrorMsg] = useState("");
-
-  const [nameError, setNameError] = useState(false);
-  const [nameErrorMsg, setNameErrorMsg] = useState("");
-
-  const [nationalCodeError, setNationalCodeError] = useState(false);
-  const [nationalCodeErrorMsg, setNationalCodeErrorMsg] = useState("");
-  const [genderError, setGenderError] = useState(false);
-  const [genderErrorMsg, setGenderErrorMsg] = useState("");
-
-  const [usernameError, setUsernameError] = useState(false);
-  const [usernameErrorMsg, setUsernameErrorMsg] = useState("");
-
-  const [emailError, setEmailError] = useState(false);
-  const [emailErrorMsg, setEmailErrorMsg] = useState("");
-
-  const [phoneError, setPhoneError] = useState(false);
-  const [phoneErrorMsg, setPhoneErrorMsg] = useState("");
-
-  // page main Title
+  // Page title
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(setPageTitle({ title: "ویرایش پروفایل" }));
   }, []);
 
-  // photo vars
+  // File upload state
   const [selectedFiles, setSelectedFiles] = useState([]);
-
   const fileInputRef = useRef(null);
   const acceptedFileExtensions = ["jpg", "png", "jpeg"];
-
-  const acceptedFileTypesString = acceptedFileExtensions
-    .map((ext) => `.${ext}`)
-    .join(",");
 
   const handleFileChange = (event) => {
     const newFilesArray = Array.from(event.target.files);
@@ -132,17 +105,13 @@ function Profile() {
     const newSelectedFiles = [...selectedFiles];
     let hasError = false;
     const fileTypeRegex = new RegExp(acceptedFileExtensions.join("|"), "i");
+    
     filesArray.forEach((file) => {
-      console.log(file);
-
       if (newSelectedFiles.some((f) => f.name === file.name)) {
-        alert("File names must be unique", "error");
+        toast.error("نام فایل ها باید منحصر به فرد باشد");
         hasError = true;
       } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
-        alert(
-          `Only ${acceptedFileExtensions.join(", ")} files are allowed`,
-          "error"
-        );
+        toast.error(`فقط فایل های ${acceptedFileExtensions.join(", ")} مجاز هستند`);
         hasError = true;
       } else {
         newSelectedFiles.push(file);
@@ -154,183 +123,14 @@ function Profile() {
     }
   };
 
-  const handleCustomButtonClick = () => {
-    fileInputRef.current.click();
-  };
-
   const handleFileDelete = (index) => {
     const updatedFiles = [...selectedFiles];
     updatedFiles.splice(index, 1);
     setSelectedFiles(updatedFiles);
   };
 
-  // photos vars
-  const [selectedFiles2, setSelectedFiles2] = useState([]);
-
-  const fileInputRef2 = useRef(null);
-  const acceptedFileExtensions2 = ["jpg", "png", "jpeg"];
-
-  const acceptedFileTypesString2 = acceptedFileExtensions2
-    .map((ext) => `.${ext}`)
-    .join(",");
-
-  const handleFileChange2 = (event) => {
-    const newFilesArray = Array.from(event.target.files);
-    processFiles2(newFilesArray);
-  };
-
-  const processFiles2 = (filesArray) => {
-    const newSelectedFiles2 = [...selectedFiles2];
-    let hasError = false;
-    const fileTypeRegex = new RegExp(acceptedFileExtensions2.join("|"), "i");
-    filesArray.forEach((file) => {
-      if (newSelectedFiles2.some((f) => f.name === file.name)) {
-        alert("File names must be unique", "error");
-        hasError = true;
-      } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
-        alert(
-          `Only ${acceptedFileExtensions2.join(", ")} files are allowed`,
-          "error"
-        );
-        hasError = true;
-      } else {
-        newSelectedFiles2.push(file);
-      }
-    });
-
-    if (!hasError) {
-      setSelectedFiles2(newSelectedFiles2);
-    }
-  };
-
-  const handleCustomButtonClick2 = () => {
-    fileInputRef2.current.click();
-  };
-
-  const handleFileDelete2 = (index) => {
-    const updatedFiles = [...selectedFiles2];
-    updatedFiles.splice(index, 1);
-    setSelectedFiles2(updatedFiles);
-  };
-
-  // bill vars
-  const [selectedFilesBill, setSelectedFilesBill] = useState([]);
-
-  const fileInputRefBill = useRef(null);
-  const acceptedFileExtensionsBill = [
-    "jpg",
-    "png",
-    "jpeg",
-    "pdf",
-    "txt",
-    "docx",
-  ];
-
-  const acceptedFileTypesStringBill = acceptedFileExtensionsBill
-    .map((ext) => `.${ext}`)
-    .join(",");
-
-  const handleFileChangeBill = (event) => {
-    const newFilesArray = Array.from(event.target.files);
-    processFilesBill(newFilesArray);
-  };
-
-  const processFilesBill = (filesArray) => {
-    const newSelectedFilesBill = [...selectedFilesBill];
-    let hasError = false;
-    const fileTypeRegex = new RegExp(acceptedFileExtensionsBill.join("|"), "i");
-    filesArray.forEach((file) => {
-      if (newSelectedFilesBill.some((f) => f.name === file.name)) {
-        alert("File names must be unique", "error");
-        hasError = true;
-      } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
-        alert(
-          `Only ${acceptedFileExtensionsBill.join(", ")} files are allowed`,
-          "error"
-        );
-        hasError = true;
-      } else {
-        newSelectedFilesBill.push(file);
-      }
-    });
-
-    if (!hasError) {
-      setSelectedFilesBill(newSelectedFilesBill);
-    }
-  };
-
-  const handleCustomButtonClickBill = () => {
-    fileInputRefBill.current.click();
-  };
-
-  const handleFileDeleteBill = (index) => {
-    const updatedFiles = [...selectedFilesBill];
-    updatedFiles.splice(index, 1);
-    setSelectedFilesBill(updatedFiles);
-  };
-
-  // document vars
-  const [selectedFilesDocument, setSelectedFilesDocument] = useState([]);
-
-  const fileInputRefDocument = useRef(null);
-  const acceptedFileExtensionsDocument = [
-    "jpg",
-    "png",
-    "jpeg",
-    "pdf",
-    "txt",
-    "docx",
-  ];
-
-  const acceptedFileTypesStringDocument = acceptedFileExtensionsDocument
-    .map((ext) => `.${ext}`)
-    .join(",");
-
-  const handleFileChangeDocument = (event) => {
-    const newFilesArray = Array.from(event.target.files);
-    processFilesDocument(newFilesArray);
-  };
-
-  const processFilesDocument = (filesArray) => {
-    const newSelectedFilesDocument = [...selectedFilesDocument];
-    let hasError = false;
-    const fileTypeRegex = new RegExp(
-      acceptedFileExtensionsDocument.join("|"),
-      "i"
-    );
-    filesArray.forEach((file) => {
-      if (newSelectedFilesDocument.some((f) => f.name === file.name)) {
-        alert("File names must be unique", "error");
-        hasError = true;
-      } else if (!fileTypeRegex.test(file.name.split(".").pop())) {
-        alert(
-          `Only ${acceptedFileExtensionsDocument.join(", ")} files are allowed`,
-          "error"
-        );
-        hasError = true;
-      } else {
-        newSelectedFilesDocument.push(file);
-      }
-    });
-
-    if (!hasError) {
-      setSelectedFilesDocument(newSelectedFilesDocument);
-    }
-  };
-
-  const handleCustomButtonClickDocument = () => {
-    fileInputRefDocument.current.click();
-  };
-
-  const handleFileDeleteDocument = (index) => {
-    const updatedFiles = [...selectedFilesDocument];
-    updatedFiles.splice(index, 1);
-    setSelectedFilesDocument(updatedFiles);
-  };
-
-  // province and city data
+  // Province and city data
   useEffect(() => {
-    // تبدیل داده‌ها به فرمتی که کامپوننت Select نیاز دارد
     const formattedProvinces = provincesData.map((province) => ({
       label: province.name,
       value: province.id,
@@ -347,215 +147,553 @@ function Profile() {
     setSelectedCity(null);
     const selected = provinces.find((p) => p.value === value.value);
     setCities(selected ? selected.cities : []);
+    if (errors.province) setErrors(prev => ({ ...prev, province: "" }));
   };
 
-  // fetch cook
-  useEffect(() => {
-    axios
-      .get(`/api/cooks/me`, {
-        headers: {
-          "Content-Type": "application/json",
-          authorization: "Bearer " + token,
-        },
-      })
-      .then((res) => {
-        setCook(res.data.cook);
-        setName(res.data.cook.name);
-        setAddress(res.data.cook.address);
-        setNationalCode(res.data.cook.nationalCode);
-        setPhone(res.data.cook.phone);
-        setEmail(res.data.cook.email);
-        setUsername(res.data.cook.username);
-        if (res.data.cook.lat && res.data.cook.lng) {
-          setPosition([res.data.cook.lat, res.data.cook.lng]);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }, [token]);
+  const handleCityChange = (value) => {
+    setSelectedCity(value);
+    if (errors.city) setErrors(prev => ({ ...prev, city: "" }));
+  };
 
-  // Call API add house
+  // Fetch cook data using withCredentials
+  useEffect(() => {
+    const fetchCookData = async () => {
+      try {
+        const response = await axios.get(`/api/cooks/me`, {
+          withCredentials: true
+        });
+        
+        const cookData = response.data.cook;
+        setCook(cookData);
+        setName(cookData.name || "");
+        setAddress(cookData.address || "");
+        setNationalCode(cookData.nationalCode || "");
+        setPhone(cookData.phone || "");
+        setEmail(cookData.email || "");
+        setUsername(cookData.username || "");
+        
+        if (cookData.gender) {
+          setGender({ 
+            value: cookData.gender, 
+            label: cookData.gender === "female" ? "زن" : "مرد" 
+          });
+        }
+        
+        if (cookData.lat && cookData.lng) {
+          setPosition([cookData.lat, cookData.lng]);
+        }
+
+        // Set province and city if available
+        if (cookData.province) {
+          const province = provinces.find(p => p.label === cookData.province);
+          if (province) {
+            setSelectedProvince(province);
+            setCities(province.cities || []);
+            
+            if (cookData.city) {
+              const city = province.cities.find(c => c.label === cookData.city);
+              if (city) {
+                setSelectedCity(city);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching cook data:", error);
+        toast.error("خطا در دریافت اطلاعات پروفایل");
+      }
+    };
+
+    fetchCookData();
+  }, [provinces]);
+
+  // Validation
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!name.trim()) newErrors.name = "* نام و نام خانوادگی الزامی است";
+    if (!phone.trim()) newErrors.phone = "* شماره همراه الزامی است";
+    if (!email.trim()) newErrors.email = "* ایمیل الزامی است";
+    if (!username.trim()) newErrors.username = "* نام کاربری الزامی است";
+    if (!selectedProvince) newErrors.province = "* استان الزامی است";
+    if (!selectedCity) newErrors.city = "* شهر الزامی است";
+    if (!nationalCode.trim()) newErrors.nationalCode = "* کدملی الزامی است";
+    if (!gender) newErrors.gender = "* جنسیت الزامی است";
+    if (!address.trim()) newErrors.address = "* آدرس الزامی است";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const updateProfileHandle = (e) => {
     e.preventDefault();
 
-    setBtnSpinner(true);
+    if (!validateForm()) return;
 
-    // // name error
-    if (!name || name === "" || name === undefined || name === null) {
-      setNameError(true);
-      setBtnSpinner(false);
-      setNameErrorMsg("* نام باید وارد شود");
-    }
-
-    if (!phone || phone === "" || phone === undefined || phone === null) {
-      setPhoneError(true);
-      setBtnSpinner(false);
-      setPhoneErrorMsg("* شماره همراه باید وارد شود");
-    }
-
-    if (!email || email === "" || email === undefined || email === null) {
-      setEmailError(true);
-      setBtnSpinner(false);
-      setEmailErrorMsg("* ایمیل باید وارد شود");
-    }
-
-    if (
-      !username ||
-      username === "" ||
-      username === undefined ||
-      username === null
-    ) {
-      setUsernameError(true);
-      setBtnSpinner(false);
-      setUsernameErrorMsg("* نام کاربری باید وارد شود");
-    }
-
-    if (
-      !selectedProvince ||
-      selectedProvince === "" ||
-      selectedProvince === undefined ||
-      selectedProvince === null ||
-      selectedProvince.length === 0
-    ) {
-      setProvinceError(true);
-      setBtnSpinner(false);
-      setProvinceErrorMsg("* نام استان باید وارد شود");
-    }
-
-    if (
-      !selectedCity ||
-      selectedCity === "" ||
-      selectedCity === undefined ||
-      selectedCity === null ||
-      selectedCity.length === 0
-    ) {
-      setCityError(true);
-      setBtnSpinner(false);
-      setCityErrorMsg("* نام شهر باید وارد شود");
-    }
-
-    if (
-      !nationalCode ||
-      nationalCode === "" ||
-      nationalCode === undefined ||
-      nationalCode === null
-    ) {
-      setNationalCodeError(true);
-      setBtnSpinner(false);
-      setNationalCodeErrorMsg("* کدملی باید وارد شود");
-    }
-
-    if (!gender || gender === "" || gender === undefined || gender === null) {
-      setGenderError(true);
-      setBtnSpinner(false);
-      setGenderErrorMsg("* جنسیت باید وارد شود");
-    }
-
-    if (
-      !address ||
-      address === "" ||
-      address === undefined ||
-      address === null
-    ) {
-      setAddressError(true);
-      setBtnSpinner(false);
-      setAddressErrorMsg("* آدرس باید وارد شود");
-    } else {
-      setBtnSpinner(false);
-      setIsOpen(true);
-    }
+    setIsOpen(true);
   };
 
-  // send update request
+  // Send update request using withCredentials
   const sendUpdateRequest = async () => {
-    setIsOpen(true);
     setBtnSpinner(true);
 
-    await axios
-      .put(
+    try {
+      await axios.put(
         `/api/cooks/update-profile`,
         {
           name,
           phone,
           email,
           username,
-          gender,
-          province: selectedProvince.label,
-          city: selectedCity.label,
+          gender: gender.value,
+          province: selectedProvince?.label,
+          city: selectedCity?.label,
           nationalCode,
           address,
           lat: position[0],
           lng: position[1],
         },
         {
-          headers: {
-            "Content-Type": "application/json",
-            authorization: `Bearer ${token}`,
-          },
+          withCredentials: true
         }
-      )
-      .then((data) => {
-        if(data){
-          setBtnSpinner(false);
-          setIsOpen(false)
-          toast.success("آگهی ویرایش شد", {
-            position: "top-left",
-            autoClose: 5000,
-          });
-        }else{
-          setBtnSpinner(false);
-          setIsOpen(false)
-          toast.info("تغییرات ذخیره نشد", {
-            position: "top-left",
-            autoClose: 5000,
-          });
-        }
-      })
-      .catch((error) => {
-        setBtnSpinner(false);
-        toast.error("خطایی وجود دارد. دوباره امتحان کنید!", {
-          position: "top-left",
-          autoClose: 5000,
-        });
-      });
+      );
+
+      toast.success("پروفایل با موفقیت ویرایش شد");
+      setIsOpen(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error(error.response?.data?.msg || "خطایی وجود دارد. دوباره امتحان کنید!");
+    } finally {
+      setBtnSpinner(false);
+      setIsOpen(false);
+    }
   };
 
   return (
-    <>
+    <div className="min-h-screen py-1 px-1">
+      <div className="w-full mx-auto">
+        <TitleCard 
+          title={
+            <div className="flex space-x-3 rtl:space-x-reverse">
+              <span>ویرایش پروفایل</span>
+            </div>
+          } 
+          topMargin="mt-0"
+          className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm rounded-3xl overflow-hidden"
+        >
+          <div className="p-6 md:p-8">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent mb-3">
+                ویرایش پروفایل
+              </h2>
+              <p className="text-gray-600 text-sm md:text-base max-w-md mx-auto leading-relaxed">
+                اطلاعات پروفایل خود را به روز رسانی کنید تا همیشه اطلاعات شما در سیستم به روز باشد
+              </p>
+            </div>
+
+            <form className="space-y-6 md:space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                {/* Name */}
+                <div className="flex flex-col">
+                  <label className="mb-3 text-base font-semibold text-gray-800 flex items-center">
+                    <FiUser className="ml-2 text-blue-500" />
+                    نام و نام خانوادگی
+                    <span className="text-red-500 mr-1">*</span>
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                      <div className="p-2">
+                        <FiUser className="w-5 h-5 text-blue-600" />
+                      </div>
+                    </div>
+                    <input
+                      value={name}
+                      onChange={(e) => {
+                        setName(e.target.value);
+                        if (errors.name) setErrors(prev => ({ ...prev, name: "" }));
+                      }}
+                      className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
+                        errors.name 
+                          ? "border-red-300 bg-red-50/50" 
+                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                      }`}
+                      placeholder="نام و نام خانوادگی"
+                      style={{borderRadius: '8px'}}
+                    />
+                  </div>
+                  {errors.name && (
+                    <span className="mt-2 text-sm text-red-600 flex items-center bg-red-50/50 px-3 py-2 rounded-lg">
+                      {errors.name}
+                    </span>
+                  )}
+                </div>
+
+                {/* Phone */}
+                <div className="flex flex-col">
+                  <label className="mb-3 text-base font-semibold text-gray-800 flex items-center">
+                    <FiPhone className="ml-2 text-blue-500" />
+                    شماره همراه
+                    <span className="text-red-500 mr-1">*</span>
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                      <div className="p-2">
+                        <FiPhone className="w-5 h-5 text-blue-600" />
+                      </div>
+                    </div>
+                    <input
+                      value={phone}
+                      onChange={(e) => {
+                        setPhone(e.target.value);
+                        if (errors.phone) setErrors(prev => ({ ...prev, phone: "" }));
+                      }}
+                      className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
+                        errors.phone 
+                          ? "border-red-300 bg-red-50/50" 
+                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                      }`}
+                      placeholder="شماره همراه"
+                      style={{borderRadius: '8px'}}
+                    />
+                  </div>
+                  {errors.phone && (
+                    <span className="mt-2 text-sm text-red-600 flex items-center bg-red-50/50 px-3 py-2 rounded-lg">
+                      {errors.phone}
+                    </span>
+                  )}
+                </div>
+
+                {/* Email */}
+                <div className="flex flex-col">
+                  <label className="mb-3 text-base font-semibold text-gray-800 flex items-center">
+                    <FiMail className="ml-2 text-blue-500" />
+                    ایمیل
+                    <span className="text-red-500 mr-1">*</span>
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                      <div className="p-2">
+                        <FiMail className="w-5 h-5 text-blue-600" />
+                      </div>
+                    </div>
+                    <input
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (errors.email) setErrors(prev => ({ ...prev, email: "" }));
+                      }}
+                      className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
+                        errors.email 
+                          ? "border-red-300 bg-red-50/50" 
+                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                      }`}
+                      placeholder="ایمیل"
+                      style={{borderRadius: '8px'}}
+                    />
+                  </div>
+                  {errors.email && (
+                    <span className="mt-2 text-sm text-red-600 flex items-center bg-red-50/50 px-3 py-2 rounded-lg">
+                      {errors.email}
+                    </span>
+                  )}
+                </div>
+
+                {/* Username */}
+                <div className="flex flex-col">
+                  <label className="mb-3 text-base font-semibold text-gray-800 flex items-center">
+                    <RiUser5Line className="ml-2 text-blue-500" />
+                    نام کاربری
+                    <span className="text-red-500 mr-1">*</span>
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                      <div className="p-2">
+                        <RiUser5Line className="w-5 h-5 text-blue-600" />
+                      </div>
+                    </div>
+                    <input
+                      value={username}
+                      onChange={(e) => {
+                        setUsername(e.target.value);
+                        if (errors.username) setErrors(prev => ({ ...prev, username: "" }));
+                      }}
+                      className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
+                        errors.username 
+                          ? "border-red-300 bg-red-50/50" 
+                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                      }`}
+                      placeholder="نام کاربری"
+                      style={{borderRadius: '8px'}}
+                    />
+                  </div>
+                  {errors.username && (
+                    <span className="mt-2 text-sm text-red-600 flex items-center bg-red-50/50 px-3 py-2 rounded-lg">
+                      {errors.username}
+                    </span>
+                  )}
+                </div>
+
+                {/* National Code */}
+                <div className="flex flex-col">
+                  <label className="mb-3 text-base font-semibold text-gray-800 flex items-center">
+                    <LiaIdCardSolid className="ml-2 text-blue-500" />
+                    کدملی
+                    <span className="text-red-500 mr-1">*</span>
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                      <div className="p-2">
+                        <LiaIdCardSolid className="w-5 h-5 text-blue-600" />
+                      </div>
+                    </div>
+                    <input
+                      type="number"
+                      value={nationalCode}
+                      onChange={(e) => {
+                        setNationalCode(e.target.value);
+                        if (errors.nationalCode) setErrors(prev => ({ ...prev, nationalCode: "" }));
+                      }}
+                      className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 backdrop-blur-sm ${
+                        errors.nationalCode 
+                          ? "border-red-300 bg-red-50/50" 
+                          : "border-gray-100 focus:border-blue-500 bg-white/50"
+                      }`}
+                      placeholder="کدملی"
+                      style={{borderRadius: '8px'}}
+                    />
+                  </div>
+                  {errors.nationalCode && (
+                    <span className="mt-2 text-sm text-red-600 flex items-center bg-red-50/50 px-3 py-2 rounded-lg">
+                      {errors.nationalCode}
+                    </span>
+                  )}
+                </div>
+
+                {/* Gender */}
+                <div className="flex flex-col">
+                  <label className="mb-3 text-base font-semibold text-gray-800 flex items-center">
+                    <FiUser className="ml-2 text-blue-500" />
+                    جنسیت
+                    <span className="text-red-500 mr-1">*</span>
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                      <div className="p-2">
+                        <FiUser className="w-5 h-5 text-blue-600" />
+                      </div>
+                    </div>
+                    <Select
+                      value={gender}
+                      onChange={(value) => {
+                        setGender(value);
+                        if (errors.gender) setErrors(prev => ({ ...prev, gender: "" }));
+                      }}
+                      options={genderList}
+                      placeholder="انتخاب جنسیت"
+                      classNames={{
+                        menuButton: () => `w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 ${
+                          errors.gender 
+                            ? "border-red-300 bg-red-50/50" 
+                            : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                        }`,
+                        menu: "rounded-2xl border-2 border-gray-200/80 shadow-lg",
+                        option: "px-4 py-3 hover:bg-blue-50"
+                      }}
+                    />
+                  </div>
+                  {errors.gender && (
+                    <span className="mt-2 text-sm text-red-600 flex items-center bg-red-50/50 px-3 py-2 rounded-lg">
+                      {errors.gender}
+                    </span>
+                  )}
+                </div>
+
+                {/* Province */}
+                <div className="flex flex-col">
+                  <label className="mb-3 text-base font-semibold text-gray-800 flex items-center">
+                    <FiMapPin className="ml-2 text-blue-500" />
+                    استان
+                    <span className="text-red-500 mr-1">*</span>
+                  </label>
+                  <Select
+                    value={selectedProvince}
+                    onChange={handleProvinceChange}
+                    options={provinces}
+                    placeholder="انتخاب استان"
+                    isSearchable
+                    searchInputPlaceholder="جستجو استان"
+                    classNames={{
+                      menuButton: () => `w-full px-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 ${
+                        errors.province 
+                          ? "border-red-300 bg-red-50/50" 
+                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                      }`,
+                      menu: "rounded-2xl border-2 border-gray-200/80 shadow-lg",
+                      option: "px-4 py-3 hover:bg-blue-50"
+                    }}
+                  />
+                  {errors.province && (
+                    <span className="mt-2 text-sm text-red-600 flex items-center bg-red-50/50 px-3 py-2 rounded-lg">
+                      {errors.province}
+                    </span>
+                  )}
+                </div>
+
+                {/* City */}
+                <div className="flex flex-col">
+                  <label className="mb-3 text-base font-semibold text-gray-800 flex items-center">
+                    <FiMapPin className="ml-2 text-blue-500" />
+                    شهر
+                    <span className="text-red-500 mr-1">*</span>
+                  </label>
+                  <Select
+                    value={selectedCity}
+                    onChange={handleCityChange}
+                    options={cities}
+                    placeholder="انتخاب شهر"
+                    isSearchable
+                    isDisabled={!selectedProvince}
+                    searchInputPlaceholder="جستجو شهر"
+                    classNames={{
+                      menuButton: () => `w-full px-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 ${
+                        errors.city 
+                          ? "border-red-300 bg-red-50/50" 
+                          : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                      }`,
+                      menu: "rounded-2xl border-2 border-gray-200/80 shadow-lg",
+                      option: "px-4 py-3 hover:bg-blue-50"
+                    }}
+                  />
+                  {errors.city && (
+                    <span className="mt-2 text-sm text-red-600 flex items-center bg-red-50/50 px-3 py-2 rounded-lg">
+                      {errors.city}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Address */}
+              <div className="flex flex-col">
+                <label className="mb-3 text-base font-semibold text-gray-800 flex items-center">
+                  <FiMapPin className="ml-2 text-blue-500" />
+                  آدرس
+                  <span className="text-red-500 mr-1">*</span>
+                </label>
+                <div className="relative group">
+                  <div className="absolute left-4 top-4 z-10">
+                    <div className="p-2">
+                      <FiMapPin className="w-5 h-5 text-blue-600" />
+                    </div>
+                  </div>
+                  <textarea
+                    value={address}
+                    onChange={(e) => {
+                      setAddress(e.target.value);
+                      if (errors.address) setErrors(prev => ({ ...prev, address: "" }));
+                    }}
+                    className={`w-full pl-14 pr-4 py-4 text-base rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-100/50 min-h-[100px] resize-none backdrop-blur-sm ${
+                      errors.address 
+                        ? "border-red-300 bg-red-50/50" 
+                        : "border-gray-200/80 focus:border-blue-500 bg-white/50"
+                    }`}
+                    placeholder="آدرس کامل"
+                    style={{borderRadius: '8px'}}
+                  />
+                </div>
+                {errors.address && (
+                  <span className="mt-2 text-sm text-red-600 flex items-center bg-red-50/50 px-3 py-2 rounded-lg">
+                    {errors.address}
+                  </span>
+                )}
+              </div>
+
+              {/* Map */}
+              <div className="flex flex-col">
+                <label className="mb-3 text-base font-semibold text-gray-800 flex items-center">
+                  <FiMapPin className="ml-2 text-blue-500" />
+                  موقعیت روی نقشه
+                </label>
+                <div className="rounded-2xl border-2 border-gray-200/80 overflow-hidden">
+                  <MapContainer
+                    center={position}
+                    zoom={13}
+                    style={{ height: "400px", width: "100%" }}
+                  >
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution="© OpenStreetMap contributors"
+                    />
+                    <Marker
+                      draggable={true}
+                      eventHandlers={{ dragend: onDragEnd }}
+                      position={position}
+                      icon={markerIcon}
+                      ref={markerRef}
+                    />
+                    <MapClickHandler />
+                  </MapContainer>
+                </div>
+                <p className="mt-2 text-sm text-gray-600">برای تغییر موقعیت، نشانگر را بکشید یا روی نقشه کلیک کنید</p>
+              </div>
+
+              {/* Submit Button */}
+              <div className="pt-6">
+                <button
+                  className="w-50 px-8 py-4 border border-transparent text-base font-bold rounded-2xl shadow-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white focus:outline-none focus:ring-4 focus:ring-blue-200/50 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden group"
+                  onClick={updateProfileHandle}
+                  disabled={btnSpinner}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                  
+                  <div className="relative flex items-center justify-center space-x-2 rtl:space-x-reverse">
+                    {btnSpinner ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+                        <span>در حال ویرایش پروفایل...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>ذخیره تغییرات</span>
+                      </>
+                    )}
+                  </div>
+                </button>
+              </div>
+            </form>
+          </div>
+        </TitleCard>
+      </div>
+
+      {/* Confirmation Dialog */}
       <Dialog
         open={isOpen}
         onClose={() => setIsOpen(false)}
-        className="relative z-[1000]" // Increased z-index to ensure Dialog is above the map
+        className="relative z-[1000]"
       >
-        {/* Backdrop */}
-        <div
-          className="fixed inset-0 " // Added semi-transparent backdrop
-          aria-hidden="true"
-        />
-
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="mx-auto max-w-sm rounded-lg border border-gray-300 bg-white p-6 shadow-xl z-[1001]">
-            <Dialog.Title className="text-lg font-semibold text-gray-800">
+          <Dialog.Panel className="mx-auto max-w-sm rounded-2xl border border-gray-200/50 bg-white/90 backdrop-blur-sm p-6 shadow-xl z-[1001]">
+            <Dialog.Title className="text-lg font-semibold text-gray-800 text-center">
               ویرایش پروفایل
             </Dialog.Title>
 
-            <Dialog.Description className="my-2 text-sm text-gray-500">
-              آیا از ویرایش پروفایل اطمینان دارید؟
+            <Dialog.Description className="my-4 text-sm text-gray-600 text-center">
+              آیا از ویرایش اطلاعات پروفایل اطمینان دارید؟
             </Dialog.Description>
 
-            <CiCircleQuestion className="my-2 flex justify-center items-center w-20 h-20 text-blue-900 mx-auto" />
+            <CiCircleQuestion className="my-2 flex justify-center items-center w-16 h-16 text-blue-600 mx-auto" />
 
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center space-x-4 rtl:space-x-reverse">
               <button
-                className="mt-4 rounded bg-blue-900 px-8 py-2 mx-2 text-white"
-                onClick={() => sendUpdateRequest()}
+                className="mt-4 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-2 text-white font-medium transition-all duration-200 hover:scale-105"
+                onClick={sendUpdateRequest}
               >
                 تایید
               </button>
 
               <button
-                className="mt-4 rounded bg-gray-300 px-8 py-2 mx-2"
+                className="mt-4 rounded-2xl bg-gray-300 px-6 py-2 text-gray-700 font-medium transition-all duration-200 hover:scale-105"
                 onClick={() => setIsOpen(false)}
               >
                 لغو
@@ -564,302 +702,22 @@ function Profile() {
           </Dialog.Panel>
         </div>
       </Dialog>
-      <TitleCard title="ثبت اطلاعات غذادار " topMargin="mt-2">
-        {/* name */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-          {/* name */}
-          <div className="flex flex-col mb-2">
-            <label
-              htmlFor="name"
-              className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-            >
-              نام و نام خانوادگی{" "}
-            </label>
-            <div className="relative">
-              <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                <FiUser className="w-6 h-6 text-gray-400" />
-              </div>
-              <input
-                style={{ borderRadius: "5px" }}
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                placeholder="نام و نام خانوادگی"
-              />
-            </div>
-            <span className="text-red-500 relative text-sm">
-              {nameError ? nameErrorMsg : ""}
-            </span>
-          </div>
-
-          {/* phone */}
-          <div className="flex flex-col mb-2">
-            <label
-              htmlFor="phone"
-              className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-            >
-              شماره همراه{" "}
-            </label>
-            <div className="relative">
-              <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                <FiPhone className="w-6 h-6 text-gray-400" />
-              </div>
-              <input
-                style={{ borderRadius: "5px" }}
-                type="text"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                placeholder="شماره همراه"
-              />
-            </div>
-            <span className="text-red-500 relative text-sm">
-              {phoneError ? phoneErrorMsg : ""}
-            </span>
-          </div>
-
-          {/* email */}
-          <div className="flex flex-col mb-2">
-            <label
-              htmlFor="email"
-              className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-            >
-              ایمیل{" "}
-            </label>
-            <div className="relative">
-              <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                <FiMail className="w-6 h-6 text-gray-400" />
-              </div>
-              <input
-                style={{ borderRadius: "5px" }}
-                type="text"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                placeholder="ایمیل"
-              />
-            </div>
-            <span className="text-red-500 relative text-sm">
-              {emailError ? emailErrorMsg : ""}
-            </span>
-          </div>
-
-          {/* username */}
-          <div className="flex flex-col mb-2">
-            <label
-              htmlFor="username"
-              className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-            >
-              نام کاربری{" "}
-            </label>
-            <div className="relative">
-              <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-                <RiUser5Line className="w-6 h-6 text-gray-400" />
-              </div>
-              <input
-                style={{ borderRadius: "5px" }}
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-                placeholder="نام کاربری"
-              />
-            </div>
-            <span className="text-red-500 relative text-sm">
-              {usernameError ? usernameErrorMsg : ""}
-            </span>
-          </div>
-        </div>
-        {/* nationalCode */}
-        <div className="flex flex-col mb-4">
-          <label
-            htmlFor="nationalCode"
-            className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-          >
-            {" "}
-            کدملی{" "}
-          </label>
-          <div className="relative">
-            <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-              <LiaIdCardSolid className="w-6 h-6 text-gray-400" />
-            </div>
-            <input
-              style={{ borderRadius: "5px" }}
-              type="number"
-              value={nationalCode}
-              onChange={(e) => setNationalCode(e.target.value)}
-              className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-              placeholder="کدملی"
-            />
-          </div>
-          <span className="text-red-500 relative text-sm">
-            {nationalCodeError ? nationalCodeErrorMsg : ""}
-          </span>
-        </div>
-
-        {/* gender */}
-        <div className="flex flex-col mb-4">
-          <label
-            htmlFor="gender"
-            className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600 inline"
-          >
-            جنیست
-          </label>
-          {cook.gender ? (
-            <small className="font-sm text-gray-500">
-              جنیست انتخاب شده: * {cook.gender}
-            </small>
-          ) : (
-            ""
-          )}
-          <div className="relative">
-            <div className="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
-              <FiPhone className="w-6 h-6 text-gray-400" />
-            </div>
-            <Select
-              value={gender}
-              onChange={(e) => setGender(e)}
-              options={genderList}
-              placeholder="انتخاب"
-              classNames={`placholder-gray-400`}
-            />
-          </div>
-          <span className="text-red-500 relative text-sm">
-            {genderError ? genderErrorMsg : ""}
-          </span>
-        </div>
-
-        {/* province*/}
-        <div className="mb-6 mt-4">
-          <label className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">
-            استان
-          </label>
-          {cook.province ? (
-            <small className="my-2 font-sm text-gray-500 block">
-              استان انتخاب شده: * {cook.province}
-            </small>
-          ) : (
-            ""
-          )}
-          <Select
-            value={selectedProvince}
-            onChange={handleProvinceChange}
-            options={provinces}
-            primaryColor={"blue"}
-            placeholder="انتخاب استان"
-            isSearchable
-            searchInputPlaceholder="جستجو استان"
-            classNames={{
-              searchIcon: "hidden", // This hides the search icon
-            }}
-          />
-          <span className="text-red-500 relative text-sm">
-            {provinceError ? provinceErrorMsg : ""}
-          </span>
-        </div>
-
-        {/* city */}
-        <div className="my-6">
-          <label className="text-xs sm:text-sm tracking-wide text-gray-600 block">
-            شهرستان
-          </label>
-          {cook.city ? (
-            <small className="my-2 font-sm text-gray-500">
-              استان انتخاب شده: * {cook.city}
-            </small>
-          ) : (
-            ""
-          )}
-
-          <Select
-            value={selectedCity}
-            onChange={setSelectedCity}
-            options={cities}
-            primaryColor={"blue"}
-            placeholder="انتخاب شهرستان"
-            isSearchable
-            isDisabled={!selectedProvince}
-            searchInputPlaceholder="جستجو شهرستان"
-            classNames={{
-              searchIcon: "hidden", // This hides the search icon
-            }}
-          />
-
-          <span className="text-red-500 relative text-sm">
-            {cityError ? cityErrorMsg : ""}
-          </span>
-        </div>
-
-        {/*  address */}
-        <div className="flex flex-col mt-8 mb-10">
-          <label
-            htmlFor="address"
-            className="mb-1 text-xs sm:text-sm tracking-wide text-gray-600"
-          >
-            آدرس{" "}
-          </label>
-          <div className="relative">
-            <div
-              className="inline-flex items-center justify-center absolute left-0 h-full w-10 text-gray-400"
-              style={{ bottom: "52px" }}
-            >
-              <FiMapPin className="w-6 h-6 text-gray-400" />
-            </div>
-            <textarea
-              style={{ borderRadius: "5px", resize: "none" }}
-              type="text"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className="text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border border-gray-300 w-full py-2 focus:outline-none focus:border-blue-800"
-              placeholder="آدرس "
-            ></textarea>
-          </div>
-          <span className="text-red-500 relative text-sm">
-            {addressError ? addressErrorMsg : ""}
-          </span>
-        </div>
-
-        {/* map */}
-        <div>
-          <h2 className="mb-2 mt-20">آدرس خود را روی نقشه انتخاب کنید</h2>
-          <div>
-            <MapContainer
-              center={position}
-              zoom={5}
-              style={{ height: "400px", width: "100%" }}
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution="© OpenStreetMap contributors"
-              />
-              <Marker
-                draggable={true}
-                eventHandlers={{ dragend: onDragEnd }}
-                position={position}
-                icon={markerIcon}
-                ref={markerRef}
-              />
-              <MapClickHandler />
-            </MapContainer>
-          </div>
-        </div>
-
-        {/* button */}
-        <div className="mb-2 mt-8 w-50">
-          <button className="app-btn-blue" onClick={updateProfileHandle}>
-            {btnSpinner ? (
-              <div className="px-10 py-1 flex items-center justify-center">
-                <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
-              </div>
-            ) : (
-              <span className="text-lg">ویرایش پروفایل</span>
-            )}
-          </button>
-        </div>
-      </TitleCard>
-      <ToastContainer />
-    </>
+      
+      <ToastContainer
+        position="top-left"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        toastClassName="rounded-2xl shadow-lg border border-gray-200/50"
+        progressClassName="bg-gradient-to-r from-blue-500 to-indigo-600"
+      />
+    </div>
   );
 }
 

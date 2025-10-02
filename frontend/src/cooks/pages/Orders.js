@@ -18,6 +18,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 
 import dayjs from "dayjs";
 import "dayjs/locale/fa";
+import { bgcolor } from "@mui/system";
 
 const TopSideButtons = () => (
   <div className="inline-block">
@@ -137,41 +138,56 @@ const Orders = () => {
       width: isMobile ? 100 : undefined,
       renderCell: (params) => {
         const status = params.value;
-        let statusClass = "";
-        let statusText = "";
-        let iconColor = "";
+        let statusConfig = {};
         
         switch(status) {
           case "Pending":
-            statusClass = "bg-blue-50 border border-blue-200 text-blue-700";
-            statusText = "در حال پردازش";
-            iconColor = "text-blue-600";
+            statusConfig = {
+              textClass: "text-blue-700",
+              statusText: "در حال پردازش",
+              bgClass: "bg-blue-50",
+              iconColor: "text-blue-600"
+            };
             break;
           case "Completed":
-            statusClass = "bg-green-50 border border-green-200 text-green-700";
-            statusText = "تکمیل شده";
-            iconColor = "text-green-600";
+            statusConfig = {
+              textClass: "text-green-700",
+              statusText: "تکمیل شده",
+              bgClass: "bg-green-50",
+              iconColor: "text-green-600"
+            };
             break;
           case "Cancelled":
-            statusClass = "bg-red-50 border border-red-200 text-red-700";
-            statusText = "لغو شده";
-            iconColor = "text-red-600";
+            statusConfig = {
+              textClass: "text-red-700",
+              statusText: "لغو شده",
+              bgClass: "bg-red-50",
+              iconColor: "text-red-600"
+            };
             break;
           case "Confirmed":
-            statusClass = "bg-emerald-50 border border-emerald-200 text-emerald-700";
-            statusText = "تایید شده";
-            iconColor = "text-emerald-600";
+            statusConfig = {
+              textClass: "text-emerald-700",
+              statusText: "تایید شده",
+              bgClass: "bg-emerald-50",
+              iconColor: "text-emerald-600"
+            };
             break;
           default:
-            statusClass = "bg-gray-50 border border-gray-200 text-gray-700";
-            statusText = status;
-            iconColor = "text-gray-600";
+            statusConfig = {
+              textClass: "text-gray-700",
+              statusText: status,
+              bgClass: "bg-gray-50",
+              iconColor: "text-gray-600"
+            };
         }
-        
+
         return (
-          <div className={`${statusClass} px-3 py-1.5 rounded-lg flex items-center gap-2`}>
-            {getStatusIcon(status)}
-            <span className="text-xs font-medium">{statusText}</span>
+          <div className={`${statusConfig.textClass} px-3 py-1.5 rounded-lg flex items-center gap-2`}>
+            <span className={`${statusConfig.bgClass} p-1.5 rounded-full`}>
+              {getStatusIcon(status)}
+            </span>
+            <span className="text-xs font-medium">{statusConfig.statusText}</span>
           </div>
         );
       },
@@ -218,11 +234,11 @@ const Orders = () => {
       renderCell: (params) => (
         <a 
           href={`/cooks/orders/${params.row._id}/show-details`}
-          className="flex items-center justify-center p-2 rounded-xl"
+          className="flex items-center justify-center p-2 rounded-xl hover:bg-gray-100 transition-colors"
           aria-label="مشاهده جزئیات"
         >
-          <PiEye className="w-4 h-4" />
-          {!isMobile && <span className="mr-2 text-sm font-medium">مشاهده</span>}
+          <PiEye className="w-4 h-4 text-gray-600" />
+          {!isMobile && <span className="mr-2 text-sm font-medium text-gray-700">مشاهده</span>}
         </a>
       ),
     },

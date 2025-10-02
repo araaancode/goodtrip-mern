@@ -117,12 +117,12 @@ textarea {
   text-align: right;
 }
 
-/* Ensure toolbar buttons appear correctly */
 .ql-toolbar {
   direction: rtl;
 }
 
-/* Fix Quill alignment issue */
 .ql-align-right {
   text-align: right;
 }
+
+
