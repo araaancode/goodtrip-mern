@@ -38,15 +38,8 @@ axios.defaults.withCredentials = true;
 const TopSideButtons = () => (
   <div className="inline-block">
     <div className="flex items-center gap-3">
-      <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
-        <PiHouse className="w-6 h-6 text-white" />
-      </div>
-      <div>
-        <h6 className="text-xl font-bold text-gray-800">لیست ملک‌ها</h6>
-        <p className="text-sm text-gray-600 mt-1">
-          مدیریت و مشاهده ملک‌های شما
-        </p>
-      </div>
+   
+     
     </div>
   </div>
 );
