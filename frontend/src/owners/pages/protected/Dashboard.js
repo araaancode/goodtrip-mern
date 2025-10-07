@@ -228,22 +228,7 @@ const Dashboard = () => {
             </ChartCard>
           </div>
 
-          {/* Line Chart */}
-          <ChartCard title="نمودار تغییرات" className="mb-8">
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tickMargin={10} fontSize={12} />
-                <YAxis tickMargin={10} fontSize={12} />
-                <Line
-                  type="monotone"
-                  dataKey="count"
-                  stroke="#FF8042"
-                  strokeWidth={3}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartCard>
+     
         </>
       ) : (
         <NoDataMessage />

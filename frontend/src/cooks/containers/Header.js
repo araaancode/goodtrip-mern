@@ -1,17 +1,23 @@
 import { themeChange } from "theme-change";
 import React, { useEffect, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Bars3Icon } from "@heroicons/react/24/outline";
 import { SlUser } from "react-icons/sl";
+import axios from "axios"
 import { Link } from "react-router-dom";
-import axios from "axios";
+
 
 import { openRightDrawer } from "../features/common/rightDrawerSlice";
 import { RIGHT_DRAWER_TYPES } from "../utils/globalConstantUtil";
+import { useCookAuthStore } from "../stores/authStore" 
 
 function Header() {
   const dispatch = useDispatch();
+  
+  // Get state and actions from authStore
+  const { cook, isCookAuthenticated, logout } = useCookAuthStore();
   const { noOfNotifications, pageTitle } = useSelector((state) => state.header);
+  
   const [currentTheme, setCurrentTheme] = useState(
     localStorage.getItem("theme")
   );
@@ -36,10 +42,18 @@ function Header() {
     );
   };
 
-  const logoutUser = async () => {
+  const handleLogout = async () => {
     try {
+      // Call the API to logout from server
       await axios.get(`/api/cooks/auth/logout`);
+      
+      // Clear local state using authStore
+      logout();
+      
+      // Clear localStorage
       localStorage.clear();
+      
+      // Redirect to login page
       window.location.href = "/cooks/login";
     } catch (err) {
       console.error(err);
@@ -64,7 +78,14 @@ function Header() {
 
         {/* Right section (icons + profile) */}
         <div className="flex items-center gap-4">
-   
+          {/* Display cook info if authenticated */}
+          {isCookAuthenticated && cook && (
+            <div className="hidden md:flex items-center gap-2">
+              <span className="text-sm text-gray-600">
+                {cook.name || cook.phone}
+              </span>
+            </div>
+          )}
 
           {/* Profile dropdown */}
           <div className="dropdown dropdown-end">
@@ -75,14 +96,31 @@ function Header() {
               tabIndex={0}
               className="menu menu-sm dropdown-content mt-3 p-2 shadow-lg bg-base-100 rounded-box w-52"
             >
-              <li>
-                <Link to="/cooks/profile" className="justify-between">
-                  دیدن پروفایل
-                </Link>
-              </li>
-              <li>
-                <button onClick={logoutUser}>خروج</button>
-              </li>
+              {isCookAuthenticated ? (
+                <>
+                  <li>
+                    <Link to="/cooks/profile" className="justify-between">
+                      دیدن پروفایل
+                    </Link>
+                  </li>
+                  <li>
+                    <button onClick={handleLogout}>خروج</button>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li>
+                    <Link to="/cooks/login" className="justify-between">
+                      ورود
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/cooks/register" className="justify-between">
+                      ثبت نام
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
         </div>
