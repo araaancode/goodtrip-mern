@@ -308,7 +308,7 @@ function Login() {
                             id="phone"
                             value={formData.phone}
                             onChange={(e) => handleInputChange("phone", e.target.value)}
-                            className={`text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 rounded-lg border w-full py-2 focus:outline-none ${
+                            className={`text-sm sm:text-base placeholder-gray-400 pl-10 pr-4 text-right rounded-lg border w-full py-2 focus:outline-none ${
                               fieldErrors.phone ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-blue-800"
                             }`}
                             placeholder="09123456789"

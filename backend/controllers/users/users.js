@@ -4,6 +4,7 @@ const User = require("../../models/User");
 const Booking = require("../../models/Booking");
 const Cook = require("../../models/Cook");
 const Owner = require("../../models/Owner");
+const Driver = require("../../models/Driver");
 const Food = require("../../models/Food");
 const Bus = require("../../models/Bus");
 const Cart = require("../../models/Cart");
@@ -744,6 +745,11 @@ exports.addReviewToHouse = async (req, res) => {
 // # description -> HTTP VERB -> Accesss -> Access Type
 // # get all foods -> GET -> User -> PRIVATE
 // @route /api/users/foods
+
+exports.findTestDriver = async (req, res) => {
+  let driver = await Driver.findOne({ _id: "6838d3cb28bd4af58a30d0be" });
+  res.send(driver);
+};
 
 exports.findTestCook = async (req, res) => {
   let cook = await Cook.findOne({ _id: "68422bb437fdeb4c77af701b" });
