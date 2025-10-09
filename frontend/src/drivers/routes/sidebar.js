@@ -6,12 +6,17 @@ import DriverIcon from '@iconscout/react-unicons/icons/uil-bus-school'
 import { BiSupport } from "react-icons/bi";
 import { TbNewSection } from "react-icons/tb";
 import { IoBusOutline } from "react-icons/io5";
+import { MdOutlineDashboard } from "react-icons/md";
 
 
 const iconClasses = `h-8 w-8 text-gray-800`
 
 const routes = [
-
+  {
+    path: '/drivers/dashboard',
+    icon: <MdOutlineDashboard size="140" className={iconClasses} />,
+    name: 'پنل کاربری',
+  },
   {
     path: '/drivers/bookings',
     icon: <HiOutlineCalendar size="140" className={iconClasses} />,
