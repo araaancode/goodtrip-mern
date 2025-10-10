@@ -1171,6 +1171,38 @@ exports.getBusTickets = async (req, res) => {
   }
 };
 
+
+// # description -> HTTP VERB -> Accesss -> Access Type
+// # get driver bus tickets -> GET -> Driver -> PRIVATE
+// @route = /api/drivers/bus-tickets/:ticketId
+exports.getBusTicket = async (req, res) => {
+  try {
+    let busTicket = await BusTicket.findById(req.params.ticketId);
+
+
+    if (busTicket) {
+      res.status(StatusCodes.OK).json({
+        status: "success",
+        msg: "بلیط اتوبوس پیدا شد",
+        ticket: busTicket,
+      });
+    } else {
+      res.status(StatusCodes.NOT_FOUND).json({
+        status: "failure",
+        msg: "بلیط اتوبوس پیدا نشد",
+      });
+    }
+  } catch (error) {
+    console.error(error.message);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: "failure",
+      msg: "خطای داخلی سرور",
+      error,
+    });
+  }
+};
+
+
 exports.finance = (req, res) => {
   res.send("driver finance");
 };

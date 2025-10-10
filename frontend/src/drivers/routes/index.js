@@ -5,6 +5,7 @@ const Dashboard = lazy(() => import('../pages/protected/Dashboard'));
 const Welcome = lazy(() => import('../pages/protected/Welcome'));
 const Blank = lazy(() => import('../pages/protected/Blank'));
 const Bookings = lazy(() => import('../pages/Bookings'));
+const SingleBooking = lazy(() => import('../pages/SingleBooking'));
 const Comments = lazy(() => import('../pages/Comments'));
 const Rates = lazy(() => import('../pages/Rates'));
 const Financials = lazy(() => import('../pages/Financials'));
@@ -36,7 +37,10 @@ const routes = [
     path: '/bookings', 
     component: withSuspense(Bookings),
   },
-
+  {
+    path: '/bookings/:bookingId/show-details', 
+    component: withSuspense(SingleBooking),
+  },
   {
     path: '/dashboard', 
     component: withSuspense(Dashboard),

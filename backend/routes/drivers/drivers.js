@@ -87,6 +87,7 @@ router.get('/finance', authDriver, driverCtrls.finance)
 
 // bus tickets
 router.get('/bus-tickets', authDriver, driverCtrls.getBusTickets)
+router.get('/bus-tickets/:ticketId', authDriver, driverCtrls.getBusTickets)
 
 
 module.exports = router
